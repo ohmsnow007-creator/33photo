@@ -111,6 +111,13 @@
   }
 
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: var(--field); border: 1px solid var(--border); }
+  .seg button {
+    font: inherit; font-family: var(--font-display); font-size: 0.95rem;
+    min-height: 44px; border: 0; border-radius: 9px; background: none; color: var(--muted); cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--ink-fg); font-weight: 500; }
+  .seg button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
   .date3 { display: grid; grid-template-columns: 0.8fr 1.6fr 1fr; gap: 8px; }
   .field { display: grid; gap: 4px; min-width: 0; }
   .field label, .lbl { font-size: 0.82rem; color: var(--muted); font-weight: 500; }
@@ -387,6 +394,10 @@
 
     <section class="card">
       <h2>ข้อมูลบิล</h2>
+      <div class="seg" role="group" aria-label="ประเภทเอกสาร">
+        <button type="button" data-doc="cash" aria-pressed="true">บิลเงินสด</button>
+        <button type="button" data-doc="quote" aria-pressed="false">ใบเสนอราคา</button>
+      </div>
       <div class="field"><label for="billNo">เลขที่</label><input id="billNo" type="text" autocomplete="off"></div>
       <div class="field">
         <label for="dD">วันที่</label>
@@ -505,7 +516,9 @@
   function freshState(prev) {
     return {
       logo: prev ? prev.logo : null,
-      billNo: prev ? nextNo(prev.billNo) : '33P-0001',
+      docType: prev ? prev.docType || 'cash' : 'cash',
+      billNo: prev ? (prev.docType === 'quote' ? prev.billNo : nextNo(prev.billNo)) : '33P-0001',
+      quoteNo: prev ? (prev.docType === 'quote' ? nextNo(prev.quoteNo || 'QT-0000') : prev.quoteNo || 'QT-0001') : 'QT-0001',
       date: todayISO(),
       cName: '', cAddr: '', cPhone: '', cTax: '',
       items: [blankItem()],
@@ -524,6 +537,15 @@
   try { state = JSON.parse(localStorage.getItem(KEY)); } catch (e) { state = null; }
   if (!state || !Array.isArray(state.items)) state = freshState(null);
   if (!state.pay) state.pay = 'cash';
+  if (state.docType !== 'quote') state.docType = 'cash';
+  if (!state.quoteNo) state.quoteNo = 'QT-0001';
+  var DOCS = {
+    cash: { th: 'บิลเงินสด', en: 'CASH BILL', grand: 'ยอดชำระ' },
+    quote: { th: 'ใบเสนอราคา', en: 'QUOTATION', grand: 'ยอดรวมทั้งสิ้น' }
+  };
+  function docInfo() { return DOCS[state.docType] || DOCS.cash; }
+  function noKey() { return state.docType === 'quote' ? 'quoteNo' : 'billNo'; }
+  function curNo() { return state[noKey()]; }
   state.items.forEach(function (it) { if (it.service === 'วีดิโอไลฟ์สด') it.service = 'ช่างภาพVDO'; });
   state.items = state.items.filter(function (it) { return it.service === OTHER || SERVICES.indexOf(it.service) >= 0; });
   if (!state.items.length) state.items = [blankItem()];
@@ -651,20 +673,20 @@
 
     return '' +
       '<div class="s-top"><div class="s-logo">' + logo + '</div>' +
-        '<div class="s-title"><div class="s-title-th">บิลเงินสด</div><div class="s-title-en">CASH BILL</div></div></div>' +
+        '<div class="s-title"><div class="s-title-th">' + docInfo().th + '</div><div class="s-title-en">' + docInfo().en + '</div></div></div>' +
       '<div class="s-co"><div><div class="s-coname">' + tx(COMPANY.name) + '</div><div class="s-addr">' + tx(COMPANY.address) + '</div></div>' +
         '<div class="s-tel">เบอร์ติดต่อ<b>' + esc(COMPANY.phone) + '</b></div></div>' +
       '<div class="s-box">' +
         '<div class="s-kv">' + kv('ลูกค้า:', state.cName) + kv('ที่อยู่:', state.cAddr) + kv('เบอร์โทร:', state.cPhone) +
           (state.cTax ? kv('เลขผู้เสียภาษี:', state.cTax) : '') + '</div>' +
-        '<div class="s-kv r">' + kv('เลขที่:', state.billNo) + kv('วันที่:', thaiDate(state.date)) + kv('ชำระโดย:', payText()) + '</div>' +
+        '<div class="s-kv r">' + kv('เลขที่:', curNo()) + kv('วันที่:', thaiDate(state.date)) + kv('ชำระโดย:', payText()) + '</div>' +
       '</div>' +
       '<table class="s-table"><thead><tr><th class="c-no">#</th><th>รายละเอียด</th><th class="c-qty">จำนวน (ชั่วโมง)</th><th class="c-price">ราคา (บาท)</th></tr></thead><tbody>' + rows + '</tbody></table>' +
       '<div class="s-sum"><div class="s-words"><div class="s-lbl">จำนวนเงิน (ตัวอักษร)</div><div class="s-words-v">(' + tx(bahtText(t.grand)) + ')</div>' +
         (state.pay === 'deposit'
           ? '<div class="s-dep"><div><span>มัดจำ 50%</span><b>฿' + money(t.deposit) + '</b></div><div><span>คงเหลือชำระ</span><b>฿' + money(t.grand - t.deposit) + '</b></div></div>'
           : '') + '</div>' +
-        '<div class="s-tot">' + totRows + '<div class="s-grand"><span>ยอดชำระ</span><span>฿' + money(t.grand) + '</span></div></div></div>' +
+        '<div class="s-tot">' + totRows + '<div class="s-grand"><span>' + docInfo().grand + '</span><span>฿' + money(t.grand) + '</span></div></div></div>' +
       '<div class="s-bottom"><div><div class="s-notes-h">หมายเหตุ</div><div class="s-notes-v">' + (state.notes.trim() ? tx(state.notes) : '-') + '</div></div>' +
         '<div class="s-sign"><div class="s-sign-h">ผู้เสนอราคา</div><div class="s-sign-space"></div><div class="s-sign-line"></div>' +
         '<div class="s-sign-name">(' + tx(SIGNER) + ')</div>' +
@@ -701,7 +723,21 @@
 
   // ---------- form ----------
   var $ = function (id) { return document.getElementById(id); };
-  var simple = ['billNo', 'cName', 'cAddr', 'cPhone', 'cTax', 'discount', 'notes'];
+  var simple = ['cName', 'cAddr', 'cPhone', 'cTax', 'discount', 'notes'];
+  $('billNo').addEventListener('input', function () { state[noKey()] = this.value; persist(); draw(); });
+  function renderDoc() {
+    var segs = document.querySelectorAll('.seg button');
+    for (var i = 0; i < segs.length; i++) segs[i].setAttribute('aria-pressed', String(segs[i].getAttribute('data-doc') === state.docType));
+    $('billNo').value = curNo() || '';
+    document.querySelector('.brand small').textContent = docInfo().th;
+    document.querySelector('.savebar-total small').textContent = docInfo().grand;
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.seg button'), function (b) {
+    b.addEventListener('click', function () {
+      state.docType = b.getAttribute('data-doc');
+      renderDoc(); persist(); draw();
+    });
+  });
   var map = {};
 
   var MONTHS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
@@ -730,6 +766,7 @@
   function fillForm() {
     simple.forEach(function (id) { $(id).value = state[map[id] || id] || ''; });
     $('vat').checked = !!state.vat;
+    renderDoc();
     renderDate();
     renderPay();
     renderLogo();
@@ -906,7 +943,7 @@
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !modal.hidden) closeModal(mIsText ? null : false); });
 
   $('newBill').addEventListener('click', function () {
-    openModal('เริ่มบิลใหม่', 'ล้างข้อมูลลูกค้าและรายการทั้งหมด เลขที่บิลจะขึ้นเลขถัดไป', false, '', 'เริ่มบิลใหม่', function (ok) {
+    openModal('เริ่ม' + docInfo().th + 'ใหม่', 'ล้างข้อมูลลูกค้าและรายการทั้งหมด เลขที่จะขึ้นเลขถัดไป', false, '', 'เริ่มใหม่', function (ok) {
       if (!ok) return;
       state = freshState(state);
       persist(); fillForm(); draw();
@@ -958,7 +995,7 @@
       if (Math.abs(hMM - 297) < 0.5) hMM = 297;
       var doc = new jsPDF({ unit: 'mm', format: [wMM, hMM], orientation: 'portrait', compress: true });
       doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, wMM, hMM, undefined, 'FAST');
-      doc.setProperties({ title: 'บิลเงินสด 33PHOTO ' + state.billNo, creator: '33PHOTO' });
+      doc.setProperties({ title: docInfo().th + ' 33PHOTO ' + curNo(), creator: '33PHOTO' });
       return doc;
     });
   }
@@ -966,21 +1003,23 @@
 
   function afterSave(no) {
     var next = nextNo(no);
-    openModal('บันทึก PDF แล้ว', 'บิลเลขที่ ' + no + ' บันทึกแล้ว เริ่มบิลถัดไปเลขที่ ' + next + ' เลยไหม ข้อมูลลูกค้าและรายการจะถูกล้าง', false, '', 'เริ่มบิล ' + next, function (ok) {
+    var kind = docInfo().th;
+    openModal('บันทึก PDF แล้ว', kind + 'เลขที่ ' + no + ' บันทึกแล้ว เริ่ม' + kind + 'ถัดไปเลขที่ ' + next + ' เลยไหม ข้อมูลลูกค้าและรายการจะถูกล้าง', false, '', 'เริ่ม ' + next, function (ok) {
       if (!ok) return;
+      var key = noKey();
       state = freshState(state);
-      state.billNo = next;
+      state[key] = next;
       persist(); fillForm(); draw();
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 'อยู่บิลนี้');
+    }, 'อยู่ใบนี้');
   }
 
   $('savePdf').addEventListener('click', function () {
     var btn = this;
     if (!window.html2canvas || !window.jspdf) { toast('ระบบสร้าง PDF ยังโหลดไม่เสร็จ ลองใหม่อีกครั้ง'); return; }
     btn.disabled = true; btn.textContent = 'กำลังสร้าง…';
-    var no = String(state.billNo || '').trim() || 'บิล';
-    var name = no.replace(/[\\/:*?"<>|]+/g, '-') + ' บิลเงินสด 33PHOTO.pdf';
+    var no = String(curNo() || '').trim() || docInfo().th;
+    var name = no.replace(/[\\/:*?"<>|]+/g, '-') + ' ' + docInfo().th + ' 33PHOTO.pdf';
     Promise.all([buildPdf(), downloadsP]).then(function (r) {
       var doc = r[0], dl = r[1];
       if (dl) {
