@@ -75,7 +75,7 @@
     margin: 0 auto;
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
-    padding-block: 16px 120px;
+    padding-block: 16px 170px;
     display: grid;
     gap: 16px;
   }
@@ -94,6 +94,39 @@
   .brand small { display: block; font-size: 0.8rem; font-weight: 400; color: var(--muted); font-family: var(--font-body); }
 
   .form-col, .preview-col { display: grid; gap: 12px; min-width: 0; }
+
+  /* mobile tab switching */
+  @media (max-width: 959px) {
+    .form-col { display: none; }
+    .form-col.tab-active { display: grid; }
+    .preview-col { display: none; }
+    .preview-col.tab-active { display: block; }
+    .app { padding-block: 16px 180px; }
+  }
+  @media (min-width: 960px) {
+    .tabbar { display: none !important; }
+    .form-col, .preview-col { display: grid !important; }
+  }
+
+  .tabbar {
+    position: fixed; left: 0; right: 0; z-index: 21;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 72px);
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding-left: max(0px, env(safe-area-inset-left, 0px));
+    padding-right: max(0px, env(safe-area-inset-right, 0px));
+  }
+  .tabbar-btn {
+    flex: 1; min-height: 52px; border: 0; background: none;
+    color: var(--muted); font: inherit; font-family: var(--font-display);
+    font-size: 0.82rem; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  }
+  .tabbar-btn i { font-size: 1.3rem; }
+  .tabbar-btn[aria-selected="true"] { color: var(--fg); }
+  .tabbar-btn[aria-selected="true"] i { opacity: 1; }
+  .tabbar-sep { width: 1px; background: var(--border); margin: 10px 0; }
 
   .card {
     background: var(--surface);
@@ -379,7 +412,17 @@
     <button class="btn" id="newBill" type="button">บิลใหม่</button>
   </header>
 
-  <div class="form-col">
+  <nav class="tabbar" role="tablist" aria-label="เมนูหลัก">
+    <button class="tabbar-btn" role="tab" aria-selected="true" id="tab-form" aria-controls="panel-form">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>กรอกข้อมูล
+    </button>
+    <div class="tabbar-sep"></div>
+    <button class="tabbar-btn" role="tab" aria-selected="false" id="tab-preview" aria-controls="panel-preview">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>ดูบิล
+    </button>
+  </nav>
+
+  <div class="form-col tab-active" id="panel-form" role="tabpanel" aria-labelledby="tab-form">
     <section class="card">
       <h2>โลโก้</h2>
       <div class="logo-row">
@@ -444,7 +487,7 @@
     </section>
   </div>
 
-  <div class="preview-col">
+  <div class="preview-col" id="panel-preview" role="tabpanel" aria-labelledby="tab-preview">
     <div class="preview-head"><h2>ตัวอย่างบิล</h2><span class="lbl">PDF จะออกมาตามนี้ทุกจุด</span></div>
     <div class="preview-frame" id="previewFrame"><div class="sheet" id="previewSheet"></div></div>
   </div>
@@ -701,9 +744,12 @@
 
   function fitPreview() {
     var w = previewFrame.clientWidth;
-    var scale = w / 794;
+    var isMobile = window.innerWidth < 960;
+    var scale = isMobile ? Math.max(w / 794, 0.55) : w / 794;
     previewSheet.style.transform = 'scale(' + scale + ')';
+    previewSheet.style.transformOrigin = 'top left';
     previewFrame.style.height = (previewSheet.offsetHeight * scale) + 'px';
+    previewFrame.style.overflowX = (scale > w / 794) ? 'auto' : 'hidden';
   }
 
   var drawQueued = false;
@@ -720,6 +766,22 @@
   }
   if (window.ResizeObserver) new ResizeObserver(fitPreview).observe(previewFrame);
   window.addEventListener('resize', fitPreview);
+
+  // ---- mobile tab bar ----
+  var tabForm = document.getElementById('tab-form');
+  var tabPreview = document.getElementById('tab-preview');
+  var panelForm = document.getElementById('panel-form');
+  var panelPreview = document.getElementById('panel-preview');
+  function switchTab(to) {
+    var toForm = (to === 'form');
+    tabForm.setAttribute('aria-selected', toForm ? 'true' : 'false');
+    tabPreview.setAttribute('aria-selected', toForm ? 'false' : 'true');
+    panelForm.classList.toggle('tab-active', toForm);
+    panelPreview.classList.toggle('tab-active', !toForm);
+    if (!toForm) { setTimeout(fitPreview, 50); }
+  }
+  tabForm.addEventListener('click', function () { switchTab('form'); });
+  tabPreview.addEventListener('click', function () { switchTab('preview'); });
 
   // ---------- form ----------
   var $ = function (id) { return document.getElementById(id); };
