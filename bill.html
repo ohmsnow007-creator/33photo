@@ -300,6 +300,62 @@
 
   #pdfRoot { position: fixed; left: -12000px; top: 0; pointer-events: none; }
 
+  .chips-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .chip {
+    font: inherit; font-family: var(--font-display); font-size: 0.82rem;
+    background: var(--field); border: 1px solid var(--border); border-radius: 20px;
+    padding: 5px 13px; cursor: pointer; color: var(--fg);
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .chip:hover { background: var(--border); }
+  .chip-del { color: var(--muted); font-size: 0.9rem; margin-left: 2px; }
+  .hist-modal {
+    position: fixed; inset: 0; z-index: 40;
+    background: rgba(0,0,0,.45);
+    display: flex; align-items: flex-end; justify-content: center;
+    padding-left: max(0px, env(safe-area-inset-left, 0px));
+    padding-right: max(0px, env(safe-area-inset-right, 0px));
+  }
+  .hist-sheet {
+    background: var(--surface); color: var(--fg);
+    width: 100%; max-width: 480px;
+    border-radius: 18px 18px 0 0;
+    padding: 0 0 calc(16px + env(safe-area-inset-bottom, 0px));
+    display: flex; flex-direction: column; max-height: 80vh;
+    animation: up .18s ease-out;
+  }
+  @media (min-width: 600px) { .hist-modal { align-items: center; } .hist-sheet { border-radius: 18px; padding-bottom: 20px; max-height: 70vh; } }
+  .hist-sheet-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 16px 12px; border-bottom: 1px solid var(--border); flex: none;
+  }
+  .hist-sheet-head h3 { margin: 0; font-family: var(--font-display); font-weight: 500; font-size: 1.1rem; }
+  .hist-list { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+  .hist-entry {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer;
+    gap: 10px;
+  }
+  .hist-entry:hover { background: var(--field); }
+  .hist-entry-left { display: grid; gap: 1px; min-width: 0; }
+  .hist-no-lbl { font-size: 0.8rem; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+  .hist-type-badge { font-size: 0.72rem; border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; color: var(--muted); }
+  .hist-name-lbl { font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hist-date-lbl { font-size: 0.78rem; color: var(--muted); }
+  .hist-amt-lbl { font-family: var(--font-display); font-size: 1rem; font-weight: 600; font-variant-numeric: tabular-nums; flex: none; }
+  .hist-empty { padding: 36px 16px; text-align: center; color: var(--muted); line-height: 1.8; }
+  .hist-btn-appbar {
+    font: inherit; font-family: var(--font-display); font-size: 0.82rem;
+    background: var(--field); border: 1px solid var(--border); border-radius: 10px;
+    padding: 6px 12px; cursor: pointer; color: var(--fg); display: inline-flex; align-items: center; gap: 5px;
+    min-height: 40px;
+  }
+  .hist-badge {
+    background: var(--ink); color: var(--ink-fg);
+    border-radius: 10px; font-size: 0.7rem; padding: 1px 6px;
+    font-family: var(--font-display); font-variant-numeric: tabular-nums;
+  }
+
   /* ================= A4 sheet (always light — this is what the PDF captures) ================= */
   .sheet {
     --s-ink: #1f1f1f;
@@ -415,7 +471,13 @@
 <div class="app">
   <header class="appbar">
     <div class="brand"><b>33</b><span>PHOTO</span><small>บิลเงินสด</small></div>
-    <button class="btn" id="newBill" type="button">บิลใหม่</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="hist-btn-appbar" id="histBtn" type="button">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        ประวัติ<span class="hist-badge" id="histCount" hidden>0</span>
+      </button>
+      <button class="btn" id="newBill" type="button">บิลใหม่</button>
+    </div>
   </header>
 
   <nav class="tabbar" role="tablist" aria-label="เมนูหลัก">
@@ -467,6 +529,10 @@
 
     <section class="card">
       <h2>ข้อมูลลูกค้า</h2>
+      <div id="custChipsWrap" hidden>
+        <div class="lbl">ลูกค้าที่ใช้บ่อย</div>
+        <div class="chips-row" id="custChips"></div>
+      </div>
       <div class="field"><label for="cName">ชื่อลูกค้า / บริษัท</label><input id="cName" type="text" autocomplete="off" placeholder="เช่น คุณสมชาย ใจดี"></div>
       <div class="field"><label for="cAddr">ที่อยู่</label><textarea id="cAddr" rows="2" placeholder="ที่อยู่ลูกค้า"></textarea></div>
       <div class="grid2">
@@ -528,6 +594,16 @@
 
 <div class="toast" id="toast" hidden></div>
 
+<div class="hist-modal" id="histModal" hidden>
+  <div class="hist-sheet" role="dialog" aria-modal="true" aria-labelledby="histTitle">
+    <div class="hist-sheet-head">
+      <h3 id="histTitle">ประวัติบิล</h3>
+      <button class="btn" id="histClose" type="button" style="padding:0 14px;min-height:36px;font-size:0.85rem">ปิด</button>
+    </div>
+    <div class="hist-list" id="histList"></div>
+  </div>
+</div>
+
 <script>
 (function () {
   var COMPANY = {
@@ -562,6 +638,98 @@
     return 'เงินสด';
   }
   var KEY = 'bill33photo.v2';
+  var HIST_KEY = 'bill33photo.history';
+  var CUST_KEY = 'bill33photo.customers';
+
+  function loadHistory() {
+    try { return JSON.parse(localStorage.getItem(HIST_KEY)) || []; } catch (e) { return []; }
+  }
+  function saveHistEntry(s, grand) {
+    var arr = loadHistory();
+    arr.unshift({ no: s.docType === 'quote' ? s.quoteNo : s.billNo, docType: s.docType, cName: s.cName, grand: grand, date: s.date, ts: Date.now(), fullState: JSON.parse(JSON.stringify(s)) });
+    if (arr.length > 30) arr = arr.slice(0, 30);
+    try { localStorage.setItem(HIST_KEY, JSON.stringify(arr)); } catch (e) {}
+    updateHistBadge();
+  }
+  function updateHistBadge() {
+    var arr = loadHistory();
+    var el = $('histCount');
+    if (arr.length) { el.textContent = arr.length; el.removeAttribute('hidden'); }
+    else el.setAttribute('hidden', '');
+  }
+  function loadCustomers() {
+    try { return JSON.parse(localStorage.getItem(CUST_KEY)) || []; } catch (e) { return []; }
+  }
+  function saveCustomer(s) {
+    if (!s.cName.trim()) return;
+    var arr = loadCustomers().filter(function (c) { return c.name !== s.cName.trim(); });
+    arr.unshift({ name: s.cName.trim(), addr: s.cAddr, phone: s.cPhone, tax: s.cTax });
+    if (arr.length > 10) arr = arr.slice(0, 10);
+    try { localStorage.setItem(CUST_KEY, JSON.stringify(arr)); } catch (e) {}
+  }
+  function renderCustomerChips() {
+    var arr = loadCustomers();
+    var wrap = $('custChipsWrap'), chips = $('custChips');
+    if (!arr.length) { wrap.setAttribute('hidden', ''); return; }
+    wrap.removeAttribute('hidden');
+    chips.innerHTML = arr.map(function (c, i) {
+      return '<button class="chip" type="button" data-ci="' + i + '">' + esc(c.name) + '</button>';
+    }).join('');
+    chips.querySelectorAll('.chip').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var c = arr[parseInt(btn.dataset.ci, 10)];
+        $('cName').value = c.name || ''; $('cAddr').value = c.addr || '';
+        $('cPhone').value = c.phone || ''; $('cTax').value = c.tax || '';
+        state.cName = c.name || ''; state.cAddr = c.addr || '';
+        state.cPhone = c.phone || ''; state.cTax = c.tax || '';
+        persist(); draw();
+      });
+    });
+  }
+  function thaiDateShort(iso) {
+    if (!iso) return '';
+    var p = iso.split('-'); if (p.length < 3) return iso;
+    var months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    return parseInt(p[2], 10) + ' ' + (months[parseInt(p[1], 10) - 1] || '') + ' ' + (parseInt(p[0], 10) + 543);
+  }
+  function openHistModal() {
+    var arr = loadHistory();
+    var list = $('histList');
+    if (!arr.length) {
+      list.innerHTML = '<div class="hist-empty">ยังไม่มีประวัติบิล<br><small>หลังบันทึก PDF ครั้งแรก จะปรากฏที่นี่</small></div>';
+    } else {
+      list.innerHTML = arr.map(function (h, i) {
+        var typeTh = h.docType === 'quote' ? 'ใบเสนอราคา' : 'บิลเงินสด';
+        return '<div class="hist-entry" data-hi="' + i + '">' +
+          '<div class="hist-entry-left">' +
+            '<div class="hist-no-lbl">' + esc(h.no || '') + '<span class="hist-type-badge">' + typeTh + '</span></div>' +
+            '<div class="hist-name-lbl">' + esc(h.cName || '(ไม่ระบุ)') + '</div>' +
+            '<div class="hist-date-lbl">' + thaiDateShort(h.date) + '</div>' +
+          '</div>' +
+          '<div class="hist-amt-lbl">฿' + money(h.grand || 0) + '</div>' +
+        '</div>';
+      }).join('');
+      list.querySelectorAll('.hist-entry').forEach(function (row) {
+        row.addEventListener('click', function () {
+          var h = arr[parseInt(row.dataset.hi, 10)];
+          if (h.fullState) {
+            state = h.fullState;
+            persist(); fillForm(); draw();
+            closeHistModal();
+            switchTab('form');
+          } else {
+            toast('บิลนี้โหลดกลับไม่ได้ (บันทึกก่อนอัปเดต)');
+          }
+        });
+      });
+    }
+    $('histModal').removeAttribute('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeHistModal() {
+    $('histModal').setAttribute('hidden', '');
+    document.body.style.overflow = '';
+  }
 
   function todayISO() {
     var d = new Date();
@@ -1089,16 +1257,35 @@
   window.__bill33 = { renderPdfCanvas: renderPdfCanvas };
 
   function afterSave(no) {
+    var t = totals();
+    saveHistEntry(state, t.grand);
+    var hasCust = state.cName.trim();
+    var custArr = loadCustomers();
+    var custKnown = hasCust && custArr.some(function (c) { return c.name === state.cName.trim(); });
     var next = nextNo(no);
     var kind = docInfo().th;
-    openModal('บันทึก PDF แล้ว', kind + 'เลขที่ ' + no + ' บันทึกแล้ว เริ่ม' + kind + 'ถัดไปเลขที่ ' + next + ' เลยไหม ข้อมูลลูกค้าและรายการจะถูกล้าง', false, '', 'เริ่ม ' + next, function (ok) {
-      if (!ok) return;
-      var key = noKey();
-      state = freshState(state);
-      state[key] = next;
-      persist(); fillForm(); draw();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 'อยู่ใบนี้');
+    if (hasCust && !custKnown) {
+      openModal('บันทึก PDF แล้ว', 'บันทึก "' + state.cName.trim() + '" เป็นลูกค้าที่ใช้บ่อยด้วยไหม?', false, '', 'บันทึกลูกค้า', function (ok) {
+        if (ok) { saveCustomer(state); renderCustomerChips(); }
+        openModal(kind + 'เลขที่ ' + no + ' บันทึกแล้ว', 'เริ่ม' + kind + 'ถัดไปเลขที่ ' + next + ' เลยไหม ข้อมูลลูกค้าและรายการจะถูกล้าง', false, '', 'เริ่ม ' + next, function (ok2) {
+          if (!ok2) return;
+          var key = noKey();
+          state = freshState(state);
+          state[key] = next;
+          persist(); fillForm(); draw();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 'อยู่ใบนี้');
+      }, 'ข้ามไป');
+    } else {
+      openModal('บันทึก PDF แล้ว', kind + 'เลขที่ ' + no + ' บันทึกแล้ว เริ่ม' + kind + 'ถัดไปเลขที่ ' + next + ' เลยไหม ข้อมูลลูกค้าและรายการจะถูกล้าง', false, '', 'เริ่ม ' + next, function (ok) {
+        if (!ok) return;
+        var key = noKey();
+        state = freshState(state);
+        state[key] = next;
+        persist(); fillForm(); draw();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 'อยู่ใบนี้');
+    }
   }
 
   $('savePdf').addEventListener('click', function () {
@@ -1128,8 +1315,14 @@
     });
   });
 
+  $('histBtn').addEventListener('click', openHistModal);
+  $('histClose').addEventListener('click', closeHistModal);
+  $('histModal').addEventListener('click', function (e) { if (e.target === this) closeHistModal(); });
+
   fillForm();
   draw();
+  renderCustomerChips();
+  updateHistBadge();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitPreview);
 })();
 </script>
