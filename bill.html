@@ -95,6 +95,12 @@
 
   .form-col, .preview-col { display: grid; gap: 12px; min-width: 0; }
 
+  /* mobile preview zoom */
+  @media (max-width: 959px) {
+    .preview-frame { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    #zoomToggle { display: inline-flex !important; }
+  }
+
   /* mobile tab switching */
   @media (max-width: 959px) {
     .form-col { display: none; }
@@ -488,7 +494,13 @@
   </div>
 
   <div class="preview-col" id="panel-preview" role="tabpanel" aria-labelledby="tab-preview">
-    <div class="preview-head"><h2>ตัวอย่างบิล</h2><span class="lbl">PDF จะออกมาตามนี้ทุกจุด</span></div>
+    <div class="preview-head">
+      <h2>ตัวอย่างบิล</h2>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="lbl">PDF จะออกมาตามนี้ทุกจุด</span>
+        <button class="btn" id="zoomToggle" type="button" style="display:none;padding:0 10px;min-height:36px;font-size:0.82rem">ขยาย</button>
+      </div>
+    </div>
     <div class="preview-frame" id="previewFrame"><div class="sheet" id="previewSheet"></div></div>
   </div>
 </div>
@@ -744,12 +756,10 @@
 
   function fitPreview() {
     var w = previewFrame.clientWidth;
-    var isMobile = window.innerWidth < 960;
-    var scale = isMobile ? Math.max(w / 794, 0.55) : w / 794;
+    var scale = w / 794;
     previewSheet.style.transform = 'scale(' + scale + ')';
     previewSheet.style.transformOrigin = 'top left';
     previewFrame.style.height = (previewSheet.offsetHeight * scale) + 'px';
-    previewFrame.style.overflowX = (scale > w / 794) ? 'auto' : 'hidden';
   }
 
   var drawQueued = false;
@@ -782,6 +792,21 @@
   }
   tabForm.addEventListener('click', function () { switchTab('form'); });
   tabPreview.addEventListener('click', function () { switchTab('preview'); });
+
+  // ---- zoom toggle ----
+  var zoomedIn = false;
+  var zoomBtn = document.getElementById('zoomToggle');
+  if (zoomBtn) {
+    zoomBtn.addEventListener('click', function () {
+      zoomedIn = !zoomedIn;
+      zoomBtn.textContent = zoomedIn ? 'ย่อ' : 'ขยาย';
+      var w = previewFrame.clientWidth;
+      var scale = zoomedIn ? Math.min(w / 794 * 1.6, 1) : w / 794;
+      previewSheet.style.transform = 'scale(' + scale + ')';
+      previewSheet.style.transformOrigin = 'top left';
+      previewFrame.style.height = (previewSheet.offsetHeight * scale) + 'px';
+    });
+  }
 
   // ---------- form ----------
   var $ = function (id) { return document.getElementById(id); };
