@@ -422,7 +422,9 @@
   .s-det { margin-top: 5px; font-size: 12px; line-height: 1.55; }
   .s-det-list { display: grid; grid-template-columns: auto auto; justify-content: start; gap: 0 18px; color: #4a90c4; }
   .s-det-list div { white-space: nowrap; }
-  .s-det-x { margin-top: 4px; padding-top: 4px; border-top: 1px dashed #dcd9d1; color: #3d3a35; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .s-det-x { color: #3d3a35; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .s-table tr.s-xrow td { border-bottom: 1px solid var(--s-line); }
+  .s-table tr.s-xrow td.s-xcell { padding-left: 22px; color: #3d3a35; }
   .s-table .c-qty { width: 124px; text-align: center; }
   .s-table .c-price { width: 118px; text-align: right; font-variant-numeric: tabular-nums; }
   .s-table th.c-price { text-align: right; }
@@ -903,16 +905,18 @@
       var det = it.service !== OTHER && SERVICE_DETAILS[it.service];
       var extra = String(it.extra || '').trim();
       var detHTML = '';
-      if (det || extra) {
-        detHTML = '<div class="s-det">' +
-          (det ? '<div class="s-det-list">' + det.map(function (d) { return '<div>• ' + tx(d) + '</div>'; }).join('') + '</div>' : '') +
-          (extra ? '<div class="s-det-x">' + tx(extra) + '</div>' : '') +
-        '</div>';
-        if (det) extraRows += 2;
+      if (det) {
+        detHTML = '<div class="s-det"><div class="s-det-list">' + det.map(function (d) { return '<div>• ' + tx(d) + '</div>'; }).join('') + '</div></div>';
+        extraRows += 2;
       }
       rows += '<tr><td class="c-no">' + (i + 1) + '</td><td>' + tx(itemName(it)) + detHTML + '</td>' +
         '<td class="c-qty">' + tx(h.ok ? h.text : it.hours) + '</td>' +
         '<td class="c-price">' + (String(it.price).trim() ? money(num(it.price)) : '') + '</td></tr>';
+      if (extra) {
+        rows += '<tr class="s-xrow"><td class="c-no"></td><td class="s-xcell"><div class="s-det-x">' + tx(extra) + '</div></td>' +
+          '<td class="c-qty"></td><td class="c-price"></td></tr>';
+        extraRows += 1;
+      }
     });
     for (var k = state.items.length + extraRows; k < 5; k++) rows += '<tr><td class="c-no"></td><td></td><td class="c-qty"></td><td class="c-price"></td></tr>';
 
