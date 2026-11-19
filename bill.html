@@ -448,9 +448,7 @@
   .s-bottom { margin: 28px 48px 0; display: grid; grid-template-columns: 1fr 260px; gap: 28px; align-items: start; }
   .s-notes-h { font-family: 'Kanit', sans-serif; font-weight: 600; font-size: 15px; margin-bottom: 4px; }
   .s-notes-v { overflow-wrap: anywhere; color: #3d3a35; }
-  .s-note { display: flex; gap: 6px; }
   .s-note + .s-note { margin-top: 2px; }
-  .s-note-n { flex: none; min-width: 16px; color: #8f8b84; font-variant-numeric: tabular-nums; }
   .s-sign {
     border: 1px solid #cfcbc3; border-radius: 14px;
     padding: 14px 18px 16px; text-align: center;
@@ -1118,8 +1116,8 @@
   function noteLinesHTML() {
     var lines = (state.notes || []).map(function (n) { return String(n == null ? '' : n).trim(); }).filter(Boolean);
     if (!lines.length) return '-';
-    return lines.map(function (n, i) {
-      return '<div class="s-note"><span class="s-note-n">' + (i + 1) + '.</span><span>' + tx(n) + '</span></div>';
+    return lines.map(function (n) {
+      return '<div class="s-note"><span>' + tx(n) + '</span></div>';
     }).join('');
   }
 
