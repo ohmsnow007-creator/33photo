@@ -422,9 +422,10 @@
   .s-det { margin-top: 5px; font-size: 12px; line-height: 1.55; }
   .s-det-list { display: grid; grid-template-columns: auto auto; justify-content: start; gap: 0 18px; color: #4a90c4; }
   .s-det-list div { white-space: nowrap; }
-  .s-det-x { color: #3d3a35; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .s-table tr.s-xrow td { border-bottom: 1px solid var(--s-line); }
-  .s-table tr.s-xrow td.s-xcell { padding-left: 22px; color: #3d3a35; }
+  .s-det-x { color: #4a90c4; font-size: 12px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .s-table tr.s-xrow td { background: #fff; border-bottom: 1px solid var(--s-line); height: auto; padding-top: 0; padding-bottom: 11px; vertical-align: top; }
+  .s-table tr.s-xrow td.s-xcell { padding: 7px 10px 11px; }
+  .s-table tr:has(+ tr.s-xrow) td { background: #fff; border-bottom: 0; height: auto; padding-bottom: 2px; }
   .s-table .c-qty { width: 124px; text-align: center; }
   .s-table .c-price { width: 118px; text-align: right; font-variant-numeric: tabular-nums; }
   .s-table th.c-price { text-align: right; }
