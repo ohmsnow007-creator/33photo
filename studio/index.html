@@ -944,6 +944,17 @@
   .nav-dot.soft { background: var(--muted); }
   .cal-ev.unseen { box-shadow: inset 0 0 0 1.5px #e5484d; }
 
+  /* ===== payments ===== */
+  .pay-acts { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pay-acts .btn { min-height: 42px; font-size: 0.9rem; }
+  .pay-acts .btn.ok { background: #2f9e44; border-color: #2f9e44; color: #fff; font-weight: 500; }
+  .pay-list { display: grid; gap: 6px; }
+  .pay-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: rgba(47,158,68,.1); font-size: 0.86rem; }
+  .pay-row .grow { flex: 1; min-width: 0; display: grid; }
+  .pay-row b { color: #2b8a3e; font-family: var(--font-display); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .pay-row small { color: var(--muted); font-size: 0.75rem; }
+  .paid-full { padding: 10px 12px; border-radius: 10px; background: rgba(47,158,68,.12); color: #2b8a3e; font-family: var(--font-display); font-weight: 500; }
+
   /* print */
   #printRoot { display: none; }
   @media print {
@@ -1294,7 +1305,7 @@
       </div>
       <div class="field"><label for="j_cAddr">ที่อยู่ลูกค้า</label><textarea id="j_cAddr" rows="2" placeholder="ถ้ามี"></textarea></div>
       <div class="field"><label for="j_note">โน้ตงาน</label><textarea id="j_note" rows="2" placeholder="เช่น ธีมสีขาวทอง, ต้องเข้าก่อน 1 ชม."></textarea></div>
-      <div class="job-sec">เอกสารและการเงิน</div>
+      <div class="job-sec">การเงินและเอกสาร</div>
       <div id="jDocs" style="display:grid;gap:10px"></div>
       <div class="err-msg" id="jErr" hidden></div>
     </div>
@@ -3174,8 +3185,9 @@
     return dep ? r2(g * dep / 100) : g;
   }
   function jobMoney(j) {
-    var bills = jobBills(j.id), paid = 0, top = 0;
+    var bills = j.id ? jobBills(j.id) : [], paid = 0, top = 0;
     bills.forEach(function (h) { paid += paidOf(h); top = Math.max(top, num(h.grand)); });
+    (j.payments || []).forEach(function (p) { paid += num(p.amt); });
     var total = num(j.price) || top;
     paid = r2(total ? Math.min(paid, total) : paid);
     return { total: total, paid: paid, due: Math.max(0, r2(total - paid)), bills: bills };
@@ -3264,6 +3276,7 @@
     });
     var got = 0;
     hist().forEach(function (h) { if (String(h.date).slice(0, 7) === ym) got += paidOf(h); });
+    all.forEach(function (j) { (j.payments || []).forEach(function (p) { if (String(p.date).slice(0, 7) === ym) got += num(p.amt); }); });
     var up = live.filter(function (j) { return j.evDate && j.evDate >= today && j.status !== 'done'; }).sort(byDate);
     var week = up.filter(function (j) { return dayDiff(j.evDate) <= 7; }).length;
     $('homeHello').textContent = 'สวัสดี ' + (S.company.name || '');
@@ -3272,7 +3285,7 @@
       '<div class="stat"><small>งานเดือนนี้</small><b>' + month + '</b><span class="sx">' + MONTHS[+ym.slice(5) - 1] + '</span></div>' +
       '<div class="stat"><small>งานใน 7 วันนี้</small><b>' + week + '</b><span class="sx">ทั้งหมดที่รออยู่ ' + up.length + ' งาน</span></div>' +
       '<div class="stat' + (due ? ' warn' : '') + '"><small>รอเก็บเงิน</small><b>฿' + money(due) + '</b><span class="sx">' + dueList.length + ' งาน</span></div>' +
-      '<div class="stat"><small>รับเงินเดือนนี้</small><b>฿' + money(got) + '</b><span class="sx">จากบิลเงินสด/ใบเสร็จ</span></div>';
+      '<div class="stat"><small>รับเงินเดือนนี้</small><b>฿' + money(got) + '</b><span class="sx">จากบิลและบันทึกรับเงิน</span></div>';
     $('homeUpcoming').innerHTML = up.length ? up.slice(0, 6).map(function (j) { return jobRow(j); }).join('') +
       (up.length > 6 ? '<button class="btn dashed" type="button" data-go="jobs">ดูอีก ' + (up.length - 6) + ' งาน</button>' : '')
       : '<div class="list-empty">ยังไม่มีงานที่กำลังจะถึง<br><button class="btn" type="button" data-newjob="1" style="margin-top:8px">+ เพิ่มงานแรก</button></div>';
@@ -3461,21 +3474,55 @@
     if (sv && String(sv.price).trim() && !$('j_price').value.trim()) $('j_price').value = money(num(sv.price));
   });
   function renderJDocs() {
-    var j = jEdit, m = j.id ? jobMoney(j) : { total: num($('j_price').value), paid: 0, due: num($('j_price').value), bills: [] };
-    var html = '';
-    if (m.bills.length || m.total) {
-      html += '<div class="money3"><div><small>ยอดงาน</small><b>฿' + money(m.total) + '</b></div><div><small>รับแล้ว</small><b>฿' + money(m.paid) + '</b></div><div><small>ค้างรับ</small><b' + (m.due ? ' style="color:#c27a00"' : '') + '>฿' + money(m.due) + '</b></div></div>';
+    var j = jEdit, live = clone(j);
+    live.price = $('j_price').value;
+    var m = jobMoney(live), html = '';
+    if (m.bills.length || m.total || m.paid) {
+      html += '<div class="money3"><div><small>ยอดงาน</small><b>฿' + money(m.total) + '</b></div><div><small>รับแล้ว</small><b' + (m.paid ? ' style="color:#2b8a3e"' : '') + '>฿' + money(m.paid) + '</b></div><div><small>ค้างรับ</small><b' + (m.due ? ' style="color:#c27a00"' : '') + '>฿' + money(m.due) + '</b></div></div>';
     }
+    if (m.total && !m.due) html += '<div class="paid-full">✓ ชำระครบแล้ว</div>';
+    else {
+      var depP = 50;
+      S.pays.forEach(function (p) { if (num(p.dep) && depP === 50) depP = num(p.dep); });
+      html += '<div class="pay-acts">' +
+        (m.due ? '<button type="button" class="btn ok" data-pay="full">✓ รับเงินครบ ฿' + money(m.due) + '</button>' : '') +
+        (m.total && !m.paid ? '<button type="button" class="btn" data-pay="dep">รับมัดจำ ' + depP + '% ฿' + money(r2(m.total * depP / 100)) + '</button>' : '') +
+        '<button type="button" class="btn" data-pay="other">+ รับเงินจำนวนอื่น</button></div>';
+      if (!m.total) html += '<div class="hint">ใส่ "ราคาที่ตกลง" ด้านบน ระบบจะคิดยอดค้างให้</div>';
+    }
+    var pays = (j.payments || []);
+    if (pays.length) html += '<div class="pay-list">' + pays.map(function (p) {
+      return '<div class="pay-row"><span class="grow"><span>รับเงิน <b>฿' + money(num(p.amt)) + '</b></span><small>' + esc([thaiShort(p.date), p.note, p.by ? 'บันทึกโดย ' + p.by : ''].filter(Boolean).join(' · ')) + '</small></span>' +
+        '<button type="button" class="mini danger" data-paydel="' + esc(p.id) + '">ลบ</button></div>';
+    }).join('') + '</div>';
     html += m.bills.map(function (h) {
       var d = docById(h.docType) || { th: h.docType }, pd = paidOf(h);
       return '<button type="button" class="jbill" data-hid="' + esc(h.id) + '"><span class="grow"><b style="font-weight:500">' + esc(d.th) + ' ' + esc(h.no) + '</b><small>ออกวันที่ ' + thaiShort(h.date) + (pd ? ' · รับเงิน ฿' + money(pd) : '') + '</small></span><b style="font-variant-numeric:tabular-nums">฿' + money(num(h.grand)) + '</b></button>';
     }).join('');
-    if (!m.bills.length) html += '<div class="hint">ยังไม่มีบิลของงานนี้ กดปุ่มด้านล่างเพื่อออกบิลโดยดึงข้อมูลงานไปใส่ให้</div>';
+    html += '<div class="hint">' + (m.bills.length ? 'ออกเอกสารเพิ่ม' : 'ออกเอกสารให้ลูกค้า (ดึงข้อมูลงานไปใส่ให้)') + '</div>';
     html += '<div class="jdoc-btns">' + docList().map(function (d) {
       return '<button type="button" class="btn" data-mk="' + esc(d.id) + '">+ ' + esc(d.th) + '</button>';
     }).join('') + '</div>';
     $('jDocs').innerHTML = html;
   }
+  function persistJob(j) {
+    var arr = jobs(), done = false;
+    for (var k = 0; k < arr.length; k++) if (arr[k].id === j.id) { arr[k] = clone(j); done = true; }
+    if (!done) arr.unshift(clone(j));
+    jobsSave(arr);
+  }
+  function addPayment(amt, note) {
+    var j = saveJob();
+    if (!j) return;
+    j.payments = (j.payments || []).concat([{ id: uid(), amt: r2(amt), date: todayISO(), note: note || '', by: meName() }]);
+    j.ts = Date.now(); j.by = meName(); j.byId = devId();
+    persistJob(j);
+    $('jDel').hidden = false; $('jobTitleH').textContent = 'รายละเอียดงาน';
+    renderJDocs(); refreshPages();
+    toast('บันทึกรับเงิน ฿' + money(amt) + ' แล้ว');
+  }
+  $('j_price').addEventListener('input', function () { if (jEdit) renderJDocs(); });
+
   function saveJob() {
     readJob();
     var j = jEdit;
@@ -3516,6 +3563,31 @@
     });
   });
   $('jDocs').addEventListener('click', function (e) {
+    var pb = e.target.closest('[data-pay]'), pd = e.target.closest('[data-paydel]');
+    if (pb) {
+      readJob();
+      var live = clone(jEdit), m = jobMoney(live), kind = pb.getAttribute('data-pay');
+      if (kind === 'full') { addPayment(m.due, m.paid ? 'ส่วนที่เหลือ' : 'ชำระเต็มจำนวน'); return; }
+      if (kind === 'dep') { var dp = 50; S.pays.forEach(function (p) { if (num(p.dep) && dp === 50) dp = num(p.dep); }); addPayment(r2(m.total * dp / 100), 'มัดจำ ' + dp + '%'); return; }
+      openModal('รับเงิน', 'ใส่จำนวนเงินที่ได้รับ (บาท)', true, m.due ? money(m.due) : '', 'บันทึก', function (v) {
+        if (v == null) return;
+        var a = num(v);
+        if (!(a > 0)) { toast('ใส่จำนวนเงินมากกว่า 0'); return; }
+        addPayment(a, '');
+      });
+      return;
+    }
+    if (pd) {
+      var pid = pd.getAttribute('data-paydel'), p = (jEdit.payments || []).filter(function (x) { return x.id === pid; })[0];
+      if (!p) return;
+      confirmBox('ลบรายการรับเงิน?', 'ลบรายการรับเงิน ฿' + money(num(p.amt)) + ' วันที่ ' + thaiShort(p.date), 'ลบ', function () {
+        readJob();
+        jEdit.payments = jEdit.payments.filter(function (x) { return x.id !== pid; });
+        jEdit.ts = Date.now(); jEdit.by = meName(); jEdit.byId = devId();
+        persistJob(jEdit); renderJDocs(); refreshPages(); toast('ลบรายการรับเงินแล้ว');
+      });
+      return;
+    }
     var hb = e.target.closest('[data-hid]'), mk = e.target.closest('[data-mk]');
     if (hb) {
       var id = hb.getAttribute('data-hid'), h = hist().filter(function (x) { return x.id === id; })[0];
@@ -3653,19 +3725,31 @@
   }
   function ghPath(name) { return '/contents/data/' + name + '.json'; }
   function ghGet(name) {
-    return ghReq('GET', ghPath(name)).then(function (j) {
-      if (j && j.encoding === 'base64' && j.content) return { sha: j.sha, data: JSON.parse(b64dec(j.content)) };
-      return ghReq('GET', ghPath(name), null, true).then(function (tx) { return { sha: j.sha, data: JSON.parse(tx) }; });
-    }, function (e) { if (e.status === 404) return null; throw e; });
+    var c = SY.cfg, h = { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + c.token, 'X-GitHub-Api-Version': '2022-11-28' };
+    SY.etag = SY.etag || {};
+    if (SY.sha[name] && SY.etag[name]) h['If-None-Match'] = SY.etag[name];
+    return fetch('https://api.github.com/repos/' + encodeURIComponent(c.owner) + '/' + encodeURIComponent(c.repo) + ghPath(name), { cache: 'no-store', headers: h }).then(function (r) {
+      if (r.status === 304) return { same: true };
+      if (r.status === 404) return null;
+      return r.text().then(function (tx) {
+        if (!r.ok) { var ej = null; try { ej = JSON.parse(tx); } catch (e) {} var er = new Error((ej && ej.message) || ('HTTP ' + r.status)); er.status = r.status; throw er; }
+        var j = JSON.parse(tx), tag = r.headers && r.headers.get ? r.headers.get('ETag') : null;
+        var done = function (data) { if (tag) SY.etag[name] = tag; else delete SY.etag[name]; return { sha: j.sha, data: data }; };
+        if (j.encoding === 'base64' && j.content) return done(JSON.parse(b64dec(j.content)));
+        return ghReq('GET', ghPath(name), null, true).then(function (t2) { return done(JSON.parse(t2)); });
+      });
+    });
   }
+
   function device() { return /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || '') ? 'มือถือ' : 'คอมพิวเตอร์'; }
   function syncVal(name) { return name === 'settings' ? S : lsGet(SYNC_KEYS[name], []); }
   function hasLocal(name) { var v = lsGet(SYNC_KEYS[name], null); return name === 'settings' ? true : Array.isArray(v) && v.length > 0; }
   function pullKey(name, first) {
     return ghGet(name).then(function (r) {
+      if (r && r.same) return false;
       if (!r) {
         SY.sha[name] = ''; SY.base[name] = {};
-        if (hasLocal(name)) SY.dirty[name] = (SY.dirty[name] || 0) + 1;
+        SY.dirty[name] = (SY.dirty[name] || 0) + 1;
         return false;
       }
       if (!first && r.sha === SY.sha[name]) return false;
@@ -3761,7 +3845,7 @@
       : syncState === 'offline' ? 'ไม่มีอินเทอร์เน็ต · จะบันทึกขึ้นเองเมื่อกลับมาออนไลน์'
       : syncState === 'error' ? 'ซิงก์ไม่สำเร็จ · ' + syncErr : SYNC_TX[syncState];
     return '<div class="sy-on' + (bad ? ' bad' : '') + '"><b>' + esc(t) + '</b><span>repo <code>' + esc(SY.cfg.owner + '/' + SY.cfg.repo) + '</code> · รหัสลงท้าย <code>…' + esc(String(SY.cfg.token).slice(-4)) + '</code></span>' +
-      '<span>บันทึกอัตโนมัติทุกครั้งที่แก้ และดึงของใหม่จากเครื่องอื่นทุก 1–2 นาที · <a href="https://github.com/' + esc(SY.cfg.owner) + '/' + esc(SY.cfg.repo) + '/commits" target="_blank" rel="noopener">ประวัติการแก้ไข</a></span></div>';
+      '<span>บันทึกอัตโนมัติทุกครั้งที่แก้ และดึงของใหม่จากเครื่องอื่นทุก 30 วินาที · <a href="https://github.com/' + esc(SY.cfg.owner) + '/' + esc(SY.cfg.repo) + '/commits" target="_blank" rel="noopener">ประวัติการแก้ไข</a></span></div>';
   }
   function syncSectionHTML() {
     if (syncOn()) {
@@ -3792,7 +3876,7 @@
   function connectCfg(cfg) {
     return ghReq('GET', '', null, false, cfg).then(function (repo) {
       if (!repo || repo.private !== true) return 'repo นี้เป็น Public ใครก็เห็นข้อมูลลูกค้าได้ ไปที่ Settings ของ repo แล้วเปลี่ยนเป็น Private ก่อน';
-      SY.cfg = cfg; SY.sha = {}; SY.base = {}; SY.dirty = {}; SY.last = 0;
+      SY.cfg = cfg; SY.sha = {}; SY.base = {}; SY.dirty = {}; SY.etag = {}; SY.last = 0;
       Object.keys(SYNC_KEYS).forEach(function (n) { if (n !== 'settings' && hasLocal(n)) SY.dirty[n] = 1; });
       sySave();
       return syncNow({ first: true }).then(function () {
@@ -3924,13 +4008,13 @@
   $('homeSyncBtn').addEventListener('click', openSyncSettings);
   document.addEventListener('visibilitychange', function () { if (!document.hidden && syncOn()) syncNow({ pull: true }); });
   window.addEventListener('online', function () { if (syncOn()) syncNow({ pull: true }); });
-  setInterval(function () { if (syncOn() && !document.hidden) syncNow({ pull: true }); }, 90000);
+  setInterval(function () { if (syncOn() && !document.hidden && !anyDirty()) syncNow({ pull: true }); }, 30000);
   window.addEventListener('beforeunload', function (e) { if (syncOn() && anyDirty()) { e.preventDefault(); e.returnValue = ''; } });
 
   // ================= in-app notifications =================
   var UKEY = 'bill33suite.unseen', DKEY = 'bill33suite.dev';
-  var KIND_TX = { 'new': 'งานใหม่', edit: 'แก้ไขงาน', cancel: 'ยกเลิกงาน', del: 'ลบงาน' };
-  var KIND_CHIP = { 'new': ['ใหม่', 'bad'], edit: ['แก้ไข', 'wait'], cancel: ['ยกเลิก', 'warn'], del: ['ลบแล้ว', ''] };
+  var KIND_TX = { 'new': 'งานใหม่', paid: 'รับเงิน', edit: 'แก้ไขงาน', cancel: 'ยกเลิกงาน', del: 'ลบงาน' };
+  var KIND_CHIP = { 'new': ['ใหม่', 'bad'], paid: ['รับเงิน', 'ok'], edit: ['แก้ไข', 'wait'], cancel: ['ยกเลิก', 'warn'], del: ['ลบแล้ว', ''] };
   function devInfo() {
     var d = lsGet(DKEY, null);
     if (!d || !d.id) { d = { id: uid() + uid(), name: '' }; rawSet(DKEY, d); }
@@ -3957,7 +4041,7 @@
       if (j.byId && j.byId === me) return;
       var o = O[j.id], kind = null;
       if (!o) kind = 'new';
-      else if ((j.ts || 0) > (o.ts || 0)) kind = j.status === 'cancel' && o.status !== 'cancel' ? 'cancel' : 'edit';
+      else if ((j.ts || 0) > (o.ts || 0)) kind = j.status === 'cancel' && o.status !== 'cancel' ? 'cancel' : (j.payments || []).some(function (x) { return !(o.payments || []).some(function (y) { return y.id === x.id; }); }) ? 'paid' : 'edit';
       if (!kind) return;
       var prev = null;
       list = list.filter(function (x) { if (x.id === j.id) { prev = x; return false; } return true; });
@@ -3982,7 +4066,7 @@
     if (u.length) {
       var cnt = {};
       u.forEach(function (x) { cnt[x.kind] = (cnt[x.kind] || 0) + 1; });
-      var sum = ['new', 'edit', 'cancel', 'del'].filter(function (k) { return cnt[k]; }).map(function (k) { return KIND_TX[k] + ' ' + cnt[k]; }).join(' · ');
+      var sum = ['new', 'paid', 'edit', 'cancel', 'del'].filter(function (k) { return cnt[k]; }).map(function (k) { return KIND_TX[k] + ' ' + cnt[k]; }).join(' · ');
       html = '<section class="card noti-card" aria-live="polite"><div class="card-h"><h2>' + BELL + 'อัปเดตจากเครื่องอื่น</h2>' +
         '<button class="mini" type="button" data-noti-clear="1">รับทราบทั้งหมด</button></div><div class="noti-sum">' + esc(sum) + '</div><div class="noti-list">' +
         u.slice(0, 6).map(function (x) {
