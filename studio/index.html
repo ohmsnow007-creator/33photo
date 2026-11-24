@@ -862,6 +862,7 @@
   .sync-pill.error .sdot, .sync-pill.auth .sdot { background: #e5484d; }
   .sync-pill.error, .sync-pill.auth { color: #e5484d; border-color: rgba(229,72,77,.4); }
   @keyframes pulse { 50% { opacity: .35; } }
+  @media (max-width: 379px) { .sync-pill span { display: none; } .sync-pill { padding: 0 12px; min-height: 38px; } }
   @media (max-width: 640px) { .sync-pill { padding: 0 10px; } .sync-pill span { max-width: 92px; overflow: hidden; text-overflow: ellipsis; } }
   .sync-card { border-color: rgba(47,123,246,.45); background: rgba(47,123,246,.06); }
   .sync-card p { margin: 0; color: var(--muted); font-size: 0.9rem; }
