@@ -925,6 +925,25 @@
   .center { text-align: center; }
   .dev-link { font-family: ui-monospace, Consolas, monospace; font-size: 0.78rem; }
 
+  /* ===== in-app notifications ===== */
+  .noti-card { border-color: rgba(229,72,77,.5); }
+  .noti-card h2 { display: flex; align-items: center; gap: 8px; }
+  .noti-card h2 small { font-family: var(--font-body); font-weight: 400; font-size: 0.82rem; color: var(--muted); }
+  .noti-bell { color: #e5484d; flex: none; }
+  .noti-card h2, .noti-card .mini { white-space: nowrap; }
+  .noti-sum { font-size: 0.82rem; color: var(--muted); margin-top: -6px; }
+  .noti-row .jc { flex: none; }
+  .noti-list { display: grid; gap: 6px; }
+  .noti-row { font: inherit; color: inherit; display: flex; gap: 10px; align-items: center; width: 100%; text-align: left; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--field); cursor: pointer; }
+  .noti-row:hover { border-color: var(--muted); }
+  .noti-row .grow { flex: 1; min-width: 0; display: grid; }
+  .noti-row b { font-family: var(--font-display); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .noti-row small { color: var(--muted); font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .noti-row.del b { text-decoration: line-through; }
+  .noti-row .go { color: var(--muted); flex: none; }
+  .nav-dot.soft { background: var(--muted); }
+  .cal-ev.unseen { box-shadow: inset 0 0 0 1.5px #e5484d; }
+
   /* print */
   #printRoot { display: none; }
   @media print {
@@ -968,6 +987,7 @@
       <button class="btn primary" type="button" id="homeNewJob">+ งานใหม่</button>
     </div>
   </div>
+  <div id="notiHome"></div>
   <div class="stats" id="homeStats"></div>
   <section class="card sync-card" id="homeSync" hidden>
     <h2>เก็บข้อมูลออนไลน์บน GitHub</h2>
@@ -1002,6 +1022,7 @@
       <button class="btn primary" type="button" id="jobsNew">+ งานใหม่</button>
     </div>
   </div>
+  <div id="notiJobs"></div>
   <div class="cal-wrap" id="jobsCal" hidden></div>
   <div class="jobs-tools" id="jobsTools">
     <input id="jobsQ" type="search" placeholder="ค้นหาชื่องาน ลูกค้า เบอร์โทร หรือสถานที่" autocomplete="off" aria-label="ค้นหางาน">
@@ -1298,6 +1319,7 @@
     <div class="hist-sheet-head"><h3 id="joinTitle">เชื่อมเครื่องนี้กับข้อมูลร้าน</h3><button class="mini" id="joinClose" type="button">ปิด</button></div>
     <div class="job-body" style="padding-bottom:16px">
       <p class="set-note">พิมพ์รหัสผ่านร้านที่ตั้งไว้ตอนสร้างลิงก์ ทำครั้งเดียวต่อเครื่อง หลังจากนั้นเปิดเว็บใช้ได้เลย</p>
+      <div class="field"><label for="joinName">ชื่อของคุณ</label><input id="joinName" type="text" autocomplete="off" placeholder="เช่น พี่โอ, น้องเบล"><div class="hint">ให้คนอื่นเห็นว่าใครเพิ่มหรือแก้งาน</div></div>
       <div class="field"><label for="joinPass">รหัสผ่านร้าน</label><input id="joinPass" type="password" autocomplete="off"></div>
       <div class="err-msg" id="joinErr" hidden></div>
       <button class="btn primary" id="joinGo" type="button">เชื่อมต่อ</button>
@@ -3052,7 +3074,7 @@
         break;
       case 'bkWipe':
         confirmBox('ลบข้อมูลทั้งหมด?', syncOn() ? 'ลบข้อมูลทั้งหมดในเครื่องนี้และยกเลิกการเชื่อม GitHub ข้อมูลบน GitHub ยังอยู่ เชื่อมใหม่เมื่อไหร่ก็ดึงกลับมาได้' : 'ตั้งค่า บิลปัจจุบัน ประวัติ และลูกค้าจะหายทั้งหมด กู้คืนไม่ได้ถ้าไม่ได้สำรองไว้', 'ลบทั้งหมด', function () {
-          [SKEY, KEY, HKEY, CKEY, BKEY, JKEY, PKEY, YKEY].forEach(function (k) { localStorage.removeItem(k); });
+          [SKEY, KEY, HKEY, CKEY, BKEY, JKEY, PKEY, YKEY, UKEY].forEach(function (k) { localStorage.removeItem(k); });
           location.reload();
         });
         break;
@@ -3192,7 +3214,7 @@
       '<div class="job-date' + (d === 0 ? ' today' : '') + '">' + (p ? '<small>' + ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'][dt.getDay()] + '.</small><b>' + p.d + '</b><small>' + MSHORT[p.m - 1] + '</small>' : '<b>–</b><small>ไม่มีวัน</small>') + '</div>' +
       '<div class="job-main"><div class="job-t">' + esc(jobName(j)) + (j.title && j.cName ? ' · ' + esc(j.cName) : '') + '</div>' +
         (sub ? '<div class="job-sub">' + esc(sub) + '</div>' : '') +
-        '<div class="job-chips">' + jobChips(j, m) + '</div></div>' +
+        '<div class="job-chips">' + unseenChip(j.id) + jobChips(j, m) + '</div></div>' +
       '<div class="job-amt">' + (amt ? '฿' + money(amt) : '<span class="muted">–</span>') +
         '<small class="' + (d != null && d >= 0 && d <= 7 && j.status !== 'cancel' && j.status !== 'done' ? 'soon' : '') + '">' + (opt && opt.due ? 'ค้างรับ' : whenText(d)) + '</small></div>' +
     '</button>';
@@ -3222,12 +3244,16 @@
     if (r && !e.target.closest('#jobModal')) openJob(r.getAttribute('data-job'));
   });
   function updateNavDot() {
-    var n = jobs().filter(function (j) { var d = dayDiff(j.evDate); return j.status !== 'cancel' && j.status !== 'done' && d != null && d >= 0 && d <= 7; }).length;
+    var u = unseen().length;
+    var n = u || jobs().filter(function (j) { var d = dayDiff(j.evDate); return j.status !== 'cancel' && j.status !== 'done' && d != null && d >= 0 && d <= 7; }).length;
     var el = $('navJobsDot'); el.textContent = n; el.hidden = !n;
+    el.classList.toggle('soft', !u);
+    el.title = u ? 'อัปเดตจากเครื่องอื่น ' + u + ' รายการ' : 'งานใน 7 วันนี้';
   }
 
   // ---------- home ----------
   function renderHome() {
+    renderNoti();
     var all = jobs(), today = todayISO(), ym = today.slice(0, 7);
     var live = all.filter(function (j) { return j.status !== 'cancel'; });
     var month = live.filter(function (j) { return String(j.evDate || '').slice(0, 7) === ym; }).length;
@@ -3264,7 +3290,7 @@
     var it = s.items && s.items[0], title = '';
     if (it) title = it.service === OTHER ? String(it.custom || '').split('\n')[0] : it.service;
     return { id: uid(), title: title || '', status: status, cName: s.cName || '', cAddr: s.cAddr || '', cPhone: s.cPhone || '', cTax: s.cTax || '',
-      evDate: s.evDate || '', evStart: s.evStart || '', evEnd: s.evEnd || '', evVenue: s.evVenue || '', price: '', note: '', created: Date.now(), ts: Date.now() };
+      evDate: s.evDate || '', evStart: s.evStart || '', evEnd: s.evEnd || '', evVenue: s.evVenue || '', price: '', note: '', created: Date.now(), ts: Date.now(), by: meName(), byId: devId() };
   }
   function findJobFor(arr, s) {
     var me = String(s.cName || '').trim();
@@ -3302,6 +3328,7 @@
   // ---------- jobs page ----------
   var jobsF = 'up', jobsV = lsGet('bill33suite.jview', 'list') === 'cal' ? 'cal' : 'list', calM = todayISO().slice(0, 7), calSel = todayISO();
   function renderJobs() {
+    renderNoti();
     Array.prototype.forEach.call($('jobsView').children, function (x) { x.setAttribute('aria-pressed', String(x.getAttribute('data-v') === jobsV)); });
     $('jobsCal').hidden = jobsV !== 'cal';
     $('jobsTools').hidden = $('jobsList').hidden = jobsV === 'cal';
@@ -3350,7 +3377,7 @@
       var list = byDay[iso] || [], live = list.filter(function (j) { return j.status !== 'cancel'; });
       var cls = 'cal-day' + (dt.getMonth() !== m - 1 ? ' out' : '') + (dt.getDay() === 0 ? ' sun' : '') + (iso === today ? ' today' : '') + (iso === calSel ? ' sel' : '') + (live.length > 1 ? ' clash' : '');
       cells += '<button type="button" class="' + cls + '" data-day="' + iso + '" aria-label="' + esc(eventDate(iso, false) + (list.length ? ' มี ' + list.length + ' งาน' : '')) + '"><span class="cal-n">' + dt.getDate() + '</span>' +
-        list.slice(0, 3).map(function (j) { return '<span class="cal-ev ' + esc(j.status || 'booked') + '" data-job="' + esc(j.id) + '">' + esc((j.evStart ? j.evStart + ' ' : '') + jobName(j)) + '</span>'; }).join('') +
+        list.slice(0, 3).map(function (j) { return '<span class="cal-ev ' + esc(j.status || 'booked') + (unseenOf(j.id) ? ' unseen' : '') + '" data-job="' + esc(j.id) + '">' + esc((j.evStart ? j.evStart + ' ' : '') + jobName(j)) + '</span>'; }).join('') +
         (list.length > 3 ? '<span class="cal-more">+' + (list.length - 3) + ' งาน</span>' : '') +
         (live.length ? '<span class="cal-dots">' + live.slice(0, 4).map(function (j) { return '<i class="' + esc(j.status || 'booked') + '"></i>'; }).join('') + '</span>' : '') + '</button>';
     }
@@ -3393,6 +3420,7 @@
     j = j ? clone(j) : { id: '', title: '', status: 'booked', cName: '', cAddr: '', cPhone: '', cTax: '', evDate: '', evStart: '', evEnd: '', evVenue: '', price: '', note: '' };
     if (preset) Object.keys(preset).forEach(function (k) { j[k] = preset[k]; });
     jEdit = j;
+    if (j.id && unseenOf(j.id)) markSeen(j.id);
     $('jobTitleH').textContent = j.id ? 'รายละเอียดงาน' : 'งานใหม่';
     JF.forEach(function (k) { $('j_' + k).value = j[k] || ''; });
     $('svcList').innerHTML = S.services.map(function (s) { return '<option value="' + esc(s.name) + '">'; }).join('');
@@ -3459,7 +3487,7 @@
     if (String(j.price).trim()) j.price = money(num(j.price));
     var arr = jobs(), isNew = !j.id;
     if (isNew) { j.id = uid(); j.created = Date.now(); }
-    j.ts = Date.now();
+    j.ts = Date.now(); j.by = meName(); j.byId = devId();
     var i = -1;
     for (var k = 0; k < arr.length; k++) if (arr[k].id === j.id) { i = k; break; }
     if (i >= 0) arr[i] = clone(j); else arr.unshift(clone(j));
@@ -3568,7 +3596,7 @@
     }
     ['cName', 'cAddr', 'cPhone', 'cTax', 'evDate', 'evStart', 'evEnd', 'evVenue'].forEach(function (k) { if (!String(j[k] || '').trim() && state[k]) j[k] = state[k]; });
     if (state.docType !== 'quote' && j.status === 'tentative') j.status = 'booked';
-    j.ts = Date.now();
+    j.ts = Date.now(); j.by = meName(); j.byId = devId();
     jobsSave(arr);
     return made;
   }
@@ -3650,6 +3678,7 @@
       SY.sha[name] = r.sha; SY.base[name] = baseOf(name, r.data);
       SY.dirty[name] = JSON.stringify(val) === JSON.stringify(r.data) ? 0 : Math.max(1, SY.dirty[name] || 0);
       var changed = JSON.stringify(val) !== JSON.stringify(local);
+      if (changed && name === 'jobs' && !first) noteJobChanges(Array.isArray(local) ? local : [], val);
       if (changed) rawSet(SYNC_KEYS[name], val);
       sySave();
       return changed;
@@ -3737,6 +3766,7 @@
   function syncSectionHTML() {
     if (syncOn()) {
       return '<div id="syLive">' + syncLiveHTML() + '</div>' +
+        '<div class="field"><label for="syMe">ชื่อของคุณในเครื่องนี้</label><input id="syMe" type="text" autocomplete="off" placeholder="เช่น พี่โอ, น้องเบล" value="' + esc(meRaw()) + '"><div class="hint">เครื่องอื่นจะเห็นว่าใครเพิ่มหรือแก้งาน ถ้าเว้นว่างจะขึ้นเป็น "' + esc(device()) + '"</div></div>' +
         '<div class="btnrow"><button class="btn primary" type="button" id="syDevice">เพิ่มเครื่องอื่น (QR / ลิงก์)</button></div>' +
         '<div class="btnrow"><button class="btn" type="button" id="syNow">ซิงก์ตอนนี้</button><button class="btn" type="button" id="syOff">ยกเลิกการเชื่อม</button></div>' +
         '<div class="btnrow"><button class="btn danger" type="button" id="syOffWipe">ออกจากระบบและล้างข้อมูลในเครื่องนี้</button></div>' +
@@ -3870,6 +3900,7 @@
     openCfg(joinBlob, p).then(function (cfg) {
       return connectCfg(cfg).then(function (msg) {
         if (msg) { fail(msg); return; }
+        if ($('joinName').value.trim()) setMe($('joinName').value);
         joinBlob = null; closeJoin(); goPage('home');
         btn.disabled = false; btn.textContent = 'เชื่อมต่อ';
         toast('เครื่องนี้เชื่อมกับข้อมูลร้านแล้ว');
@@ -3882,7 +3913,7 @@
 
   function syncDisconnect(wipe) {
     SY = { sha: {}, base: {}, dirty: {} };
-    if (wipe) { [SKEY, KEY, HKEY, CKEY, BKEY, JKEY, PKEY, YKEY].forEach(function (k) { localStorage.removeItem(k); }); location.reload(); return; }
+    if (wipe) { [SKEY, KEY, HKEY, CKEY, BKEY, JKEY, PKEY, YKEY, UKEY].forEach(function (k) { localStorage.removeItem(k); }); location.reload(); return; }
     sySave(); setSync('off'); renderSettings(); toast('ยกเลิกการเชื่อมแล้ว');
   }
   function openSyncSettings() {
@@ -3895,6 +3926,84 @@
   window.addEventListener('online', function () { if (syncOn()) syncNow({ pull: true }); });
   setInterval(function () { if (syncOn() && !document.hidden) syncNow({ pull: true }); }, 90000);
   window.addEventListener('beforeunload', function (e) { if (syncOn() && anyDirty()) { e.preventDefault(); e.returnValue = ''; } });
+
+  // ================= in-app notifications =================
+  var UKEY = 'bill33suite.unseen', DKEY = 'bill33suite.dev';
+  var KIND_TX = { 'new': 'งานใหม่', edit: 'แก้ไขงาน', cancel: 'ยกเลิกงาน', del: 'ลบงาน' };
+  var KIND_CHIP = { 'new': ['ใหม่', 'bad'], edit: ['แก้ไข', 'wait'], cancel: ['ยกเลิก', 'warn'], del: ['ลบแล้ว', ''] };
+  function devInfo() {
+    var d = lsGet(DKEY, null);
+    if (!d || !d.id) { d = { id: uid() + uid(), name: '' }; rawSet(DKEY, d); }
+    return d;
+  }
+  function devId() { return devInfo().id; }
+  function meRaw() { return devInfo().name || ''; }
+  function meName() { return meRaw() || device(); }
+  function setMe(v) { var d = devInfo(); d.name = String(v || '').trim().slice(0, 30); rawSet(DKEY, d); }
+  function unseen() { var a = lsGet(UKEY, []); return Array.isArray(a) ? a : []; }
+  function unseenOf(id) { var a = unseen(); for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i]; return null; }
+  function unseenChip(id) { var u = unseenOf(id); if (!u) return ''; var c = KIND_CHIP[u.kind] || KIND_CHIP.edit; return jc(c[0], c[1]); }
+  function markSeen(id) { rawSet(UKEY, unseen().filter(function (x) { return x.id !== id; })); refreshPages(); }
+  function ago(ts) {
+    var m = Math.floor((Date.now() - ts) / 60000);
+    return m < 1 ? 'เมื่อสักครู่' : m < 60 ? m + ' นาทีที่แล้ว' : m < 1440 ? Math.floor(m / 60) + ' ชม.ที่แล้ว' : thaiShort(new Date(ts).toISOString().slice(0, 10));
+  }
+  function noteJobChanges(oldArr, newArr) {
+    var O = {}, N = {}, me = devId(), list = unseen(), added = [];
+    oldArr.forEach(function (j) { if (j && j.id) O[j.id] = j; });
+    newArr.forEach(function (j) {
+      if (!j || !j.id) return;
+      N[j.id] = 1;
+      if (j.byId && j.byId === me) return;
+      var o = O[j.id], kind = null;
+      if (!o) kind = 'new';
+      else if ((j.ts || 0) > (o.ts || 0)) kind = j.status === 'cancel' && o.status !== 'cancel' ? 'cancel' : 'edit';
+      if (!kind) return;
+      var prev = null;
+      list = list.filter(function (x) { if (x.id === j.id) { prev = x; return false; } return true; });
+      if (prev && prev.kind === 'new' && kind === 'edit') kind = 'new';
+      var e = { id: j.id, kind: kind, title: jobName(j), cName: j.title ? j.cName || '' : '', evDate: j.evDate || '', by: j.by || 'อีกเครื่อง', at: Date.now() };
+      list.unshift(e); added.push(e);
+    });
+    oldArr.forEach(function (o) {
+      if (!o || !o.id || N[o.id]) return;
+      list = list.filter(function (x) { return x.id !== o.id; });
+      var e = { id: o.id, kind: 'del', title: jobName(o), cName: o.title ? o.cName || '' : '', evDate: o.evDate || '', by: '', at: Date.now() };
+      list.unshift(e); added.push(e);
+    });
+    if (list.length > 50) list.length = 50;
+    rawSet(UKEY, list);
+    if (added.length === 1) { var a = added[0]; toast(KIND_TX[a.kind] + ': ' + a.title + (a.by ? ' (โดย ' + a.by + ')' : '')); }
+    else if (added.length > 1) toast('มีอัปเดตงาน ' + added.length + ' รายการจากเครื่องอื่น');
+  }
+  var BELL = '<svg class="noti-bell" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
+  function renderNoti() {
+    var u = unseen(), html = '';
+    if (u.length) {
+      var cnt = {};
+      u.forEach(function (x) { cnt[x.kind] = (cnt[x.kind] || 0) + 1; });
+      var sum = ['new', 'edit', 'cancel', 'del'].filter(function (k) { return cnt[k]; }).map(function (k) { return KIND_TX[k] + ' ' + cnt[k]; }).join(' · ');
+      html = '<section class="card noti-card" aria-live="polite"><div class="card-h"><h2>' + BELL + 'อัปเดตจากเครื่องอื่น</h2>' +
+        '<button class="mini" type="button" data-noti-clear="1">รับทราบทั้งหมด</button></div><div class="noti-sum">' + esc(sum) + '</div><div class="noti-list">' +
+        u.slice(0, 6).map(function (x) {
+          var c = KIND_CHIP[x.kind] || KIND_CHIP.edit;
+          var meta = [x.evDate ? thaiShort(x.evDate) : '', x.cName, x.by ? 'โดย ' + x.by : '', ago(x.at)].filter(Boolean).join(' · ');
+          return '<button type="button" class="noti-row' + (x.kind === 'del' ? ' del' : '') + '" data-nid="' + esc(x.id) + '" data-nkind="' + x.kind + '">' + jc(c[0], c[1]) +
+            '<span class="grow"><b>' + esc(x.title) + '</b><small>' + esc(meta) + '</small></span><span class="go">' + (x.kind === 'del' ? '✕' : '›') + '</span></button>';
+        }).join('') +
+        (u.length > 6 ? '<div class="hint">และอีก ' + (u.length - 6) + ' รายการ</div>' : '') + '</div></section>';
+    }
+    $('notiHome').innerHTML = html; $('notiJobs').innerHTML = html;
+  }
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('[data-noti-clear]')) { rawSet(UKEY, []); renderNoti(); updateNavDot(); refreshPages(); return; }
+    var r = e.target.closest('[data-nid]');
+    if (!r) return;
+    var id = r.getAttribute('data-nid');
+    if (r.getAttribute('data-nkind') === 'del' || !jobById(id)) { markSeen(id); return; }
+    openJob(id);
+  });
+  setBody.addEventListener('input', function (e) { if (e.target.id === 'syMe') setMe(e.target.value); });
 
   // ================= init =================
   applyChrome();
