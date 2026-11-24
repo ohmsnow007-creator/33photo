@@ -905,13 +905,13 @@
   .cal-ev { font-size: 0.72rem; line-height: 1.3; padding: 2px 5px; border-radius: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: rgba(47,158,68,.15); color: #2b8a3e; }
   .cal-ev:hover { filter: brightness(.95); text-decoration: underline; }
   .cal-ev.tentative { background: rgba(47,123,246,.13); color: #1c64d6; }
-  .cal-ev.done { background: var(--field); color: var(--muted); }
+  .cal-ev.done { background: rgba(124,92,214,.14); color: #6a4cc4; }
   .cal-ev.cancel { background: none; color: var(--muted); text-decoration: line-through; }
   .cal-more { font-size: 0.7rem; color: var(--muted); padding-left: 4px; }
   .cal-dots { display: none; gap: 3px; flex-wrap: wrap; justify-content: center; }
   .cal-dots i { width: 6px; height: 6px; border-radius: 50%; background: #2f9e44; }
   .cal-dots i.tentative { background: #2f7bf6; }
-  .cal-dots i.done { background: var(--muted); }
+  .cal-dots i.done { background: #7c5cd6; }
   @media (max-width: 640px) {
     .cal-grid { gap: 3px; }
     .cal-day { min-height: 52px; padding: 4px 2px; align-items: center; border-radius: 8px; }
@@ -1090,7 +1090,15 @@
   .dv-card { border-color: rgba(139,92,246,.45); }
   .dv-card h2 small { font-family: var(--font-body); font-weight: 400; font-size: 0.85rem; color: var(--muted); margin-left: 6px; }
   .dv-card h2 small.late { color: #c92a2a; font-weight: 500; }
-  #jDeliv button[aria-pressed="true"][data-dv="sent"] { background: #2f9e44; border-color: #2f9e44; color: #fff; }
+  .jc.done { background: rgba(124,92,214,.12); border-color: rgba(124,92,214,.38); color: #6a4cc4; }
+  #jStatus button[aria-pressed="true"], #jDeliv button[aria-pressed="true"] { color: #fff; font-weight: 600; }
+  #jStatus button[data-st="tentative"][aria-pressed="true"], #jDeliv button[data-dv="edit"][aria-pressed="true"] { background: #2f7bf6; }
+  #jStatus button[data-st="booked"][aria-pressed="true"], #jDeliv button[data-dv="sent"][aria-pressed="true"] { background: #2f9e44; }
+  #jStatus button[data-st="done"][aria-pressed="true"] { background: #7c5cd6; }
+  #jStatus button[data-st="cancel"][aria-pressed="true"] { background: #e5484d; }
+  #jDeliv button[data-dv="shot"][aria-pressed="true"] { background: #e08a16; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .jc.done, :root:not([data-theme="light"]) .cal-ev.done { color: #a98bf0; } }
+  :root[data-theme="dark"] .jc.done, :root[data-theme="dark"] .cal-ev.done { color: #a98bf0; }
   .dv-link { color: #2f7bf6; word-break: break-all; }
 
   /* print */
@@ -3442,7 +3450,7 @@
   }
 
   // ================= jobs =================
-  var JSTAT = [['tentative', 'รอยืนยัน', 'wait'], ['booked', 'จองแล้ว', 'ok'], ['done', 'เสร็จแล้ว', ''], ['cancel', 'ยกเลิก', 'bad']];
+  var JSTAT = [['tentative', 'รอยืนยัน', 'wait'], ['booked', 'จองแล้ว', 'ok'], ['done', 'เสร็จแล้ว', 'done'], ['cancel', 'ยกเลิก', 'bad']];
   function jstat(id) { for (var i = 0; i < JSTAT.length; i++) if (JSTAT[i][0] === id) return JSTAT[i]; return JSTAT[1]; }
   function jobs() { return lsGet(JKEY, []); }
   function jobsSave(a) { lsSet(JKEY, a); }
@@ -3689,7 +3697,7 @@
       '<div class="cal-head"><h2>' + MONTHS[m - 1] + ' ' + (y + 543) + '<small>' + n + ' งาน</small></h2>' +
         '<button class="btn" type="button" data-cal="prev" aria-label="เดือนก่อน">‹</button><button class="btn" type="button" data-cal="today">วันนี้</button><button class="btn" type="button" data-cal="next" aria-label="เดือนถัดไป">›</button></div>' +
       '<div class="cal-grid">' + ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'].map(function (d) { return '<div class="cal-dow">' + d + '</div>'; }).join('') + cells + '</div>' +
-      '<div class="cal-legend"><span><i style="background:rgba(47,158,68,.5)"></i>จองแล้ว</span><span><i style="background:rgba(47,123,246,.5)"></i>รอยืนยัน</span><span><i style="background:var(--muted)"></i>เสร็จแล้ว</span><span><i style="background:rgba(229,160,26,.6)"></i>กรอบส้ม = วันที่มีมากกว่า 1 งาน</span></div>' +
+      '<div class="cal-legend"><span><i style="background:rgba(47,158,68,.5)"></i>จองแล้ว</span><span><i style="background:rgba(47,123,246,.5)"></i>รอยืนยัน</span><span><i style="background:rgba(124,92,214,.55)"></i>เสร็จแล้ว</span><span><i style="background:rgba(229,160,26,.6)"></i>กรอบส้ม = วันที่มีมากกว่า 1 งาน</span></div>' +
       '<section class="card cal-daybox"><div class="card-h"><h2>' + esc(eventDate(calSel, false)) + '</h2><button class="btn" type="button" data-newday="' + calSel + '">+ เพิ่มงาน</button></div>' +
         (sel.length ? '<div class="job-list">' + sel.map(function (j) { return jobRow(j); }).join('') + '</div>' : '<div class="list-empty">วันนี้ยังว่าง ไม่มีงาน</div>') + '</section>';
   }
