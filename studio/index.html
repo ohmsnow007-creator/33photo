@@ -1006,6 +1006,9 @@
   .money-link small { color: var(--muted); font-size: 0.78rem; }
   .money-link .st { font-family: var(--font-display); font-weight: 600; font-variant-numeric: tabular-nums; }
 
+  .nudge { animation: nudge .32s ease; }
+  @keyframes nudge { 20% { transform: translateX(-7px); } 45% { transform: translateX(6px); } 70% { transform: translateX(-3px); } 100% { transform: none; } }
+
   /* print */
   #printRoot { display: none; }
   @media print {
@@ -3521,6 +3524,7 @@
     $('jErr').hidden = true;
     $('jDel').hidden = !j.id;
     renderJStatus(); updJobHint(); renderJDocs();
+    jSnap = jobSnap();
     $('jobModal').hidden = false; document.body.style.overflow = 'hidden';
     $('jobBody').scrollTop = 0;
     if (!j.id) setTimeout(function () { $('j_title').focus(); }, 50);
@@ -3695,9 +3699,20 @@
     closeJob(); refreshPages();
     toast(isNew ? 'เพิ่มงานแล้ว' : 'บันทึกงานแล้ว');
   });
-  $('jCancel').addEventListener('click', closeJob);
-  $('jobClose').addEventListener('click', closeJob);
-  $('jobModal').addEventListener('click', function (e) { if (e.target === this) closeJob(); });
+  var jSnap = '';
+  function jobSnap() { return JSON.stringify(JF.map(function (k) { return $('j_' + k).value; }).concat([jEdit ? jEdit.status : ''])); }
+  function jobDirty() { return !!jEdit && jobSnap() !== jSnap; }
+  function askCloseJob() {
+    if (!jobDirty()) { closeJob(); return; }
+    confirmBox('ทิ้งข้อมูลที่กรอก?', 'ข้อมูลที่กรอกหรือแก้ไว้ยังไม่ได้บันทึก ถ้าปิดตอนนี้จะหายไป', 'ทิ้งข้อมูล', closeJob);
+  }
+  function nudge(el) { el.classList.remove('nudge'); void el.offsetWidth; el.classList.add('nudge'); }
+  $('jCancel').addEventListener('click', askCloseJob);
+  $('jobClose').addEventListener('click', askCloseJob);
+  $('jobModal').addEventListener('click', function (e) {
+    if (e.target !== this) return;
+    if (jobDirty()) nudge(this.querySelector('.hist-sheet')); else closeJob();
+  });
   $('jDel').addEventListener('click', function () {
     var j = jEdit, n = jobBills(j.id).length;
     confirmBox('ลบงานนี้?', 'ลบ "' + jobName(j) + '" ออกจากหน้างาน' + (n ? ' บิล ' + n + ' ใบของงานนี้ยังอยู่ในประวัติบิล' : ''), 'ลบงาน', function () {
@@ -4095,7 +4110,7 @@
   });
   $('devBody').addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.target.id === 'devPass' || e.target.id === 'devPass2')) { e.preventDefault(); makeDevice(); } });
   $('devClose').addEventListener('click', closeDevice);
-  $('devModal').addEventListener('click', function (e) { if (e.target === this) closeDevice(); });
+  $('devModal').addEventListener('click', function (e) { if (e.target === this) nudge(this.querySelector('.hist-sheet')); });
 
   var joinBlob = null;
   function openJoin() {
