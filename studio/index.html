@@ -1988,7 +1988,11 @@
   }
   function lsGet(k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } }
   function lsSet(k, v) {
-    try { localStorage.setItem(k, JSON.stringify(v)); if (SYNC_OF[k]) markDirty(SYNC_OF[k]); return true; }
+    try {
+      var nv = JSON.stringify(v);
+      if (SYNC_OF[k] && localStorage.getItem(k) === nv) return true;
+      localStorage.setItem(k, nv); if (SYNC_OF[k]) markDirty(SYNC_OF[k]); return true;
+    }
     catch (e) { toast('พื้นที่เก็บข้อมูลเต็ม ลองสำรองข้อมูลแล้วล้างประวัติเก่า'); return false; }
   }
 
@@ -2225,16 +2229,35 @@
     while (guard++ < 5000 && arr.some(function (h) { return h.docType === doc && h.no === n; })) n = nextNo(n);
     return n;
   }
+  // The draft remembers which history entry it belongs to (state.hid). A same-numbered bill made on
+  // another device is never overwritten: this one is kept as its own entry and the clash is reported.
   function recordHistory() {
-    var arr = hist(), no = curNo(), i = -1;
-    for (var k = 0; k < arr.length; k++) if (arr[k].docType === state.docType && arr[k].no === no) { i = k; break; }
-    var e = { id: i >= 0 ? arr[i].id : uid(), docType: state.docType, no: no, cName: state.cName, cPhone: state.cPhone,
+    var arr = hist(), no = curNo(), i = -1, me = devId(), clash = null;
+    if (state.hid) for (var q = 0; q < arr.length; q++) if (arr[q].id === state.hid) { i = q; break; }
+    if (i < 0) for (var k = 0; k < arr.length; k++) {
+      var h0 = arr[k];
+      if (h0.docType !== state.docType || h0.no !== no) continue;
+      if (!h0.byId || h0.byId === me) { i = k; break; }
+      clash = h0;
+    }
+    var id = i >= 0 ? arr[i].id : uid() + uid();
+    state.hid = id;
+    var e = { id: id, docType: state.docType, no: no, cName: state.cName, cPhone: state.cPhone,
       evDate: state.evDate, evVenue: state.evVenue, lang: state.lang, jobId: state.jobId || '',
-      grand: totals().grand, date: state.date, ts: Date.now(), by: meName(), byId: devId(), state: clone(state) };
+      grand: totals().grand, date: state.date, ts: Date.now(), by: meName(), byId: me, state: clone(state) };
     if (i >= 0) arr.splice(i, 1);
     arr.unshift(e);
-    if (arr.length > 500) arr.length = 500;
-    histSave(arr);
+    if (arr.length > 3000) { arr.length = 3000; toast('ประวัติบิลเกิน 3,000 ใบ: บิลเก่าสุดถูกตัดออก แนะนำสำรองข้อมูลเป็นไฟล์เก็บไว้'); }
+    histSave(arr); persist();
+    if (clash) toast('เลขที่ ' + no + ' ซ้ำกับบิลของ ' + (clash.by || 'อีกเครื่อง') + ': เก็บไว้ทั้ง 2 ใบ ตรวจในประวัติบิล');
+  }
+  // before a file is made: if another device already used this number, move to the next free one
+  function ensureFreeNo() {
+    var no = curNo(), me = devId(), c = hist().filter(function (h) { return h.docType === state.docType && h.no === no && h.id !== state.hid && h.byId && h.byId !== me; })[0];
+    if (!c) return;
+    state.nos[state.docType] = nextFree(state.docType, nextNo(no));
+    persist(); fillForm(); draw();
+    toast('เลขที่ ' + no + ' ถูกใช้แล้วโดย ' + (c.by || 'อีกเครื่อง') + ': เปลี่ยนบิลนี้เป็นเลขที่ ' + curNo() + ' ให้แล้ว');
   }
   function updateHistBadge() {
     var n = hist().length, el = $('histCount');
@@ -2729,6 +2752,7 @@
   function savePdf() {
     var btn = $('savePdf');
     if (btn.disabled || !libsReady()) return;
+    ensureFreeNo();
     busy(btn, true);
     renderCanvas(2.5).then(function (canvas) {
       pdfFromCanvas(canvas).save(fileBase() + '.pdf');
@@ -2738,6 +2762,7 @@
   }
   function savePng(btn, label) {
     if (btn.disabled || !window.html2canvas) { if (!window.html2canvas) toast('ระบบสร้างไฟล์ยังโหลดไม่เสร็จ'); return; }
+    ensureFreeNo();
     busy(btn, true);
     renderCanvas(2).then(function (canvas) {
       return new Promise(function (res) { canvas.toBlob(res, 'image/png'); });
@@ -2810,6 +2835,7 @@
   }
   function openShare() {
     if (!libsReady()) return;
+    ensureFreeNo();
     $('shareMsg').value = shareMessage();
     $('shareModal').hidden = false;
     document.body.style.overflow = 'hidden';
@@ -2951,12 +2977,14 @@
     if (kept) { toast('เก็บ' + kept + ' ไว้ในประวัติบิลแล้ว'); arr = hist(); for (var q = 0; q < arr.length; q++) if (arr[q].id === id) h = arr[q]; }
     var counters = clone(state.nos), s = sane(clone(h.state));
     if (a === 'open') {
+      s.hid = h.id;
       state = s;
       toast('เปิด ' + h.no + ' แล้ว บันทึกใหม่จะอัปเดตรายการเดิม');
     } else {
       var to = a === 'conv' ? b.getAttribute('data-to') : h.docType;
       s.docType = to; s.date = todayISO(); s.nos = counters;
       if (a === 'dup') s.jobId = '';
+      delete s.hid;
       ensureNos(s);
       s.nos[to] = nextFree(to, s.nos[to]);
       if (a === 'conv') {
@@ -4244,7 +4272,7 @@
     if (hb) {
       var id = hb.getAttribute('data-hid'), h = hist().filter(function (x) { return x.id === id; })[0];
       if (!h) return;
-      var go = function () { state = sane(clone(h.state)); state.jobId = jobIdOf(h); persist(); fillForm(); draw(); closeJob(); goPage('bill'); switchTab('form'); toast('เปิด ' + h.no + ' แล้ว'); };
+      var go = function () { state = sane(clone(h.state)); state.jobId = jobIdOf(h); state.hid = h.id; persist(); fillForm(); draw(); closeJob(); goPage('bill'); switchTab('form'); toast('เปิด ' + h.no + ' แล้ว'); };
       var kept = keepDraft();
       if (kept) { toast('เก็บ' + kept + ' ไว้ในประวัติบิลแล้ว'); h = hist().filter(function (x) { return x.id === id; })[0] || h; }
       go();
@@ -4259,7 +4287,8 @@
   function keepDraft() {
     if (!(String(state.cName).trim() || state.items.some(function (it) { return String(it.price).trim() && num(it.price) || (it.service === OTHER && String(it.custom).trim()); }))) return '';
     var no = curNo(), arr = hist();
-    for (var k = 0; k < arr.length; k++) if (arr[k].docType === state.docType && arr[k].no === no && JSON.stringify(sane(clone(arr[k].state))) === JSON.stringify(state)) return '';
+    var cur = clone(state); delete cur.hid;
+    for (var k = 0; k < arr.length; k++) if (arr[k].docType === state.docType && arr[k].no === no) { var hs0 = sane(clone(arr[k].state)); delete hs0.hid; if (JSON.stringify(hs0) === JSON.stringify(cur)) return ''; }
     var label = curDoc().th + ' ' + no;
     syncJob(); recordHistory(); updateHistBadge(); updateNavDot();
     return label;
@@ -4349,8 +4378,25 @@
   }
   function anyDirty() { return Object.keys(SY.dirty).some(function (k) { return SY.dirty[k] > 0; }); }
   function idOf(name, x) { return x == null ? null : name === 'customers' ? x.name : x.id; }
+  function hstr(s) { var h = 5381; for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36) + ':' + s.length; }
+  function mergeSettings(local, remote, base) {
+    var out = {}, keys = {};
+    Object.keys(local).concat(Object.keys(remote)).forEach(function (k) { keys[k] = 1; });
+    Object.keys(keys).forEach(function (k) {
+      var l = local[k], r = remote[k], lh = hstr(JSON.stringify(l === undefined ? null : l)), rh = hstr(JSON.stringify(r === undefined ? null : r)), bh = base[k];
+      var v;
+      if (lh === rh) v = l;
+      else if (bh && bh === lh) v = r;
+      else if (bh && bh === rh) v = l;
+      else if (k === 'staff' && Array.isArray(l) && Array.isArray(r)) { v = l.slice(); r.forEach(function (n) { if (v.indexOf(n) < 0) v.push(n); }); }
+      else v = l === undefined ? r : l;
+      if (v !== undefined) out[k] = v;
+    });
+    return out;
+  }
   function baseOf(name, val) {
     var b = {};
+    if (name === 'settings' && val && typeof val === 'object') { Object.keys(val).forEach(function (k) { b[k] = hstr(JSON.stringify(val[k] === undefined ? null : val[k])); }); return b; }
     if (name !== 'settings' && Array.isArray(val)) val.forEach(function (x) { var k = idOf(name, x); if (k != null) b[k] = x.ts || 0; });
     return b;
   }
@@ -4435,12 +4481,8 @@
       if (!first && r.sha === SY.sha[name]) return false;
       var local = lsGet(SYNC_KEYS[name], null), dirty = SY.dirty[name] > 0, val;
       if (name === 'settings') {
-        val = dirty && !first && local ? local : (r.data && typeof r.data === 'object' ? r.data : {});
-        if (dirty && !first && local && r.data && Array.isArray(r.data.staff)) {
-          var stU = (local.staff || []).slice();
-          r.data.staff.forEach(function (n) { if (stU.indexOf(n) < 0) stU.push(n); });
-          val = clone(val); val.staff = stU;
-        }
+        var remS = r.data && typeof r.data === 'object' ? r.data : {};
+        val = dirty && !first && local ? mergeSettings(local, remS, SY.base.settings || {}) : remS;
       }
       else {
         var rem = Array.isArray(r.data) ? r.data : [];
@@ -5548,6 +5590,7 @@
     newArr.forEach(function (h) {
       if (!h || !h.id || O[h.id] || !h.byId || h.byId === me) return;
       var d = docById(h.docType) || { th: 'บิล' };
+      if (newArr.some(function (x) { return x && x.id !== h.id && x.docType === h.docType && x.no === h.no; })) setTimeout(function () { toast('เลขที่ ' + h.no + ' ซ้ำ: ' + (h.by || 'อีกเครื่อง') + ' ออก' + d.th + 'เลขเดียวกัน ตรวจในประวัติบิล'); }, 600);
       var e = { id: h.id, kind: 'bill', title: d.th + ' ' + h.no + ' · ฿' + money(num(h.grand)), cName: h.cName || '', evDate: h.evDate || '', by: h.by || 'อีกเครื่อง', at: Date.now() };
       list = list.filter(function (x) { return x.id !== h.id; });
       list.unshift(e); added.push(e);
@@ -5562,7 +5605,7 @@
     var kept = keepDraft();
     var h = hist().filter(function (x) { return x.id === id; })[0];
     if (!h) { toast('ไม่พบบิลนี้ในประวัติ'); return; }
-    state = sane(clone(h.state)); state.jobId = jobIdOf(h); persist();
+    state = sane(clone(h.state)); state.jobId = jobIdOf(h); state.hid = h.id; persist();
     goPage('bill'); fillForm(); draw(); switchTab('form');
     toast((kept ? 'เก็บ' + kept + ' ไว้ในประวัติแล้ว: ' : '') + 'เปิด ' + h.no + ' แล้ว');
   }
@@ -5795,7 +5838,7 @@
   window.__billPro = { renderCanvas: renderCanvas, S: function () { return S; }, state: function () { return state; },
     sheetHTML: sheetHTML, applySheetVars: applySheetVars, fitA4: fitA4,
     goPage: goPage, jobs: jobs, jobMoney: jobMoney, openJob: openJob, openPay: openPay,
-    syncNow: syncNow, sync: function () { return { state: syncState, err: syncErr, SY: SY }; },
+    mergeSettings: mergeSettings, syncNow: syncNow, sync: function () { return { state: syncState, err: syncErr, SY: SY }; },
     delivOf: delivOf, openMsg: openMsg, confetti: confetti, quickISO: quickISO, openCust: openCust, viewOnly: viewOnly, yearReport: yearReport, reportCSV: reportCSV, openSearch: openSearch, openSettings: openSettings, setMe: setMe, merge3: merge3 };
 })();
 </script>
