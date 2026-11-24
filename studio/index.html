@@ -1749,7 +1749,7 @@
     <div class="hist-sheet-head"><h3 id="joinTitle">เชื่อมเครื่องนี้กับข้อมูลร้าน</h3><button class="mini" id="joinClose" type="button">ปิด</button></div>
     <div class="job-body" style="padding-bottom:16px">
       <p class="set-note">พิมพ์รหัสผ่านร้านที่ตั้งไว้ตอนสร้างลิงก์ ทำครั้งเดียวต่อเครื่อง หลังจากนั้นเปิดเว็บใช้ได้เลย</p>
-      <div class="field"><label for="joinName">ชื่อของคุณ</label><input id="joinName" type="text" autocomplete="off" placeholder="เช่น พี่โอ, น้องเบล"><div class="hint">ให้คนอื่นเห็นว่าใครเพิ่มหรือแก้งาน</div></div>
+      <div class="field"><label for="joinName">ชื่อของคุณ <span style="color:var(--danger)">*</span></label><input id="joinName" type="text" autocomplete="off" maxlength="30" placeholder="เช่น พี่โอ, น้องเบล"><div class="hint">👥 ชื่อนี้จะเข้าไปอยู่ในรายชื่อทีมงานของร้านทันที เวลามีคนเลือกคุณในงาน งานนั้นจะขึ้นใน "งานของฉัน" และคุณจะได้แจ้งเตือน</div></div>
       <div class="field"><label for="joinPass">รหัสผ่านร้าน</label><input id="joinPass" type="password" autocomplete="off"></div>
       <div class="err-msg" id="joinErr" hidden></div>
       <button class="btn primary" id="joinGo" type="button">เชื่อมต่อ</button>
@@ -4434,7 +4434,14 @@
       }
       if (!first && r.sha === SY.sha[name]) return false;
       var local = lsGet(SYNC_KEYS[name], null), dirty = SY.dirty[name] > 0, val;
-      if (name === 'settings') val = dirty && !first && local ? local : (r.data && typeof r.data === 'object' ? r.data : {});
+      if (name === 'settings') {
+        val = dirty && !first && local ? local : (r.data && typeof r.data === 'object' ? r.data : {});
+        if (dirty && !first && local && r.data && Array.isArray(r.data.staff)) {
+          var stU = (local.staff || []).slice();
+          r.data.staff.forEach(function (n) { if (stU.indexOf(n) < 0) stU.push(n); });
+          val = clone(val); val.staff = stU;
+        }
+      }
       else {
         var rem = Array.isArray(r.data) ? r.data : [];
         val = (dirty || first) && Array.isArray(local) && local.length ? merge3(name, local, rem, first ? {} : (SY.base[name] || {})) : rem;
@@ -4685,6 +4692,7 @@
   function doJoin() {
     var p = $('joinPass').value, err = $('joinErr'), btn = $('joinGo');
     function fail(m) { err.textContent = m; err.hidden = false; btn.disabled = false; btn.textContent = 'เชื่อมต่อ'; }
+    if (!$('joinName').value.trim()) { fail('ใส่ชื่อของคุณก่อน เพื่อให้ทีมเลือกคุณในงานได้'); $('joinName').focus(); return; }
     if (!p) { fail('พิมพ์รหัสผ่านร้านก่อน'); return; }
     if (!canCrypto()) { fail('เบราว์เซอร์นี้เปิดลิงก์ไม่ได้ ลองเปิดด้วย Chrome หรือ Safari'); return; }
     err.hidden = true; btn.disabled = true; btn.textContent = 'กำลังเชื่อม…';
@@ -4692,7 +4700,7 @@
       var role = cfg.role; delete cfg.role;
       return connectCfg(cfg).then(function (msg) {
         if (msg) { fail(msg); return; }
-        if ($('joinName').value.trim()) setMe($('joinName').value);
+        if ($('joinName').value.trim()) { setMe($('joinName').value); ensureStaff(meRaw()); }
         var dv = devInfo(); dv.join = joinBlob; dv.role = role === 'view' ? 'view' : 'full'; rawSet(DKEY, dv); applyRole();
         if (!$('settings').hidden) { $('settings').hidden = true; }
         joinBlob = null; closeJoin(); goPage('home');
@@ -4836,6 +4844,7 @@
     openJob(id);
   });
   setBody.addEventListener('input', function (e) { if (e.target.id === 'syMe' || e.target.id === 'stMe') setMe(e.target.value); });
+  setBody.addEventListener('change', function (e) { if ((e.target.id === 'syMe' || e.target.id === 'stMe') && ensureStaff(meRaw())) { openSecs = {}; openSecs[curSec] = true; renderSettings(); } });
 
   // ================= owner PIN lock for settings =================
   var unlockUntil = 0, lockCb = null, lockFails = 0, lockWait = 0;
@@ -4896,6 +4905,7 @@
   $('lockClose').addEventListener('click', closeLock);
   $('lockModal').addEventListener('click', function (e) { if (e.target === this) closeLock(); });
   $('lockMe').addEventListener('input', function () { setMe(this.value); });
+  $('lockMe').addEventListener('change', function () { ensureStaff(meRaw()); });
 
   // ================= token expiry, replacing the token, joining by pasted link =================
   function expDays() { return syncOn() && S.tokenExp ? dayDiff(S.tokenExp) : null; }
@@ -5314,6 +5324,27 @@
     box.innerHTML = html; document.body.appendChild(box);
     setTimeout(function () { if (box.parentNode) box.parentNode.removeChild(box); }, 2800);
   }
+
+  // ================= every connected person is in the team list =================
+  function ensureStaff(n) {
+    n = String(n || '').trim().slice(0, 30);
+    if (!n || (S.staff || []).indexOf(n) >= 0) return false;
+    S.staff = (S.staff || []).concat([n]); lsSet(SKEY, S);
+    return true;
+  }
+  function askMyName() {
+    openModal('👋 คุณชื่ออะไร', 'ใส่ชื่อของคุณ ชื่อนี้จะเข้าไปอยู่ในรายชื่อทีมงานของร้านทันที เวลามีคนเลือกคุณในงาน งานนั้นจะขึ้นใน "งานของฉัน"', true, '', 'บันทึกชื่อ', function (v) {
+      v = String(v || '').trim();
+      if (!v) { toast('ยังไม่ได้ใส่ชื่อ: ตั้งได้ภายหลังที่ ตั้งค่า → ทีมงาน'); return; }
+      setMe(v); refreshPages();
+      syncNow({ pull: true }).then(function () { ensureStaff(meRaw()); refreshPages(); });
+      toast('บันทึกชื่อแล้ว: ' + meRaw() + ' อยู่ในรายชื่อทีมงานแล้ว 👥');
+    }, 'ภายหลัง');
+  }
+  setTimeout(function () {
+    if (syncOn() && !meRaw() && $('joinModal').hidden && $('modal').hidden) askMyName();
+    else if (syncOn() && meRaw()) syncNow({ pull: true }).then(function () { if (syncState === 'ok' || syncState === 'pending') ensureStaff(meRaw()); });
+  }, 2500);
 
   // ================= device type (full / view-only) =================
   function viewOnly() { var d = lsGet(DKEY, null); return !!(d && d.role === 'view'); }
