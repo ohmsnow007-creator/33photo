@@ -4011,7 +4011,7 @@
     if (!syncOn()) return;
     SY.dirty[name] = (SY.dirty[name] || 0) + 1; sySave();
     if (!syncing) setSync('pending');
-    clearTimeout(pushT); pushT = setTimeout(function () { syncNow(); }, 1500);
+    clearTimeout(pushT); pushT = setTimeout(function () { syncNow(); }, 600);
   }
   function anyDirty() { return Object.keys(SY.dirty).some(function (k) { return SY.dirty[k] > 0; }); }
   function idOf(name, x) { return x == null ? null : name === 'customers' ? x.name : x.id; }
@@ -4123,6 +4123,9 @@
       sha: SY.sha[name] || undefined
     }).then(function (j) {
       SY.sha[name] = j.content.sha; SY.base[name] = baseOf(name, val);
+      // our own commit sits right on top of what we already had: no need to re-download it
+      var cm = j.commit, par = cm && cm.parents && cm.parents[0] && cm.parents[0].sha;
+      if (cm && cm.sha && headSha && par === headSha && !pendingHead) headSha = cm.sha;
       if (SY.dirty[name] === ver) SY.dirty[name] = 0;
       sySave();
     }, function (e) {
@@ -4143,6 +4146,7 @@
       chain = chain.then(function () { return pullKey(n, opt.first).then(function (c) { if (c) changed.push(n); }); });
     });
     syncP = chain.then(function () {
+      lastPullChanged = changed.length > 0;
       if (changed.length) reloadFromStore(changed);
       var p = Promise.resolve();
       Object.keys(SYNC_KEYS).forEach(function (n) { p = p.then(function () { return SY.dirty[n] > 0 ? pushKey(n) : null; }); });
@@ -4193,7 +4197,7 @@
       : syncState === 'offline' ? 'ไม่มีอินเทอร์เน็ต · จะบันทึกขึ้นเองเมื่อกลับมาออนไลน์'
       : syncState === 'error' ? 'ซิงก์ไม่สำเร็จ · ' + syncErr : SYNC_TX[syncState];
     return '<div class="sy-on' + (bad ? ' bad' : '') + '"><b>' + esc(t) + '</b><span>repo <code>' + esc(SY.cfg.owner + '/' + SY.cfg.repo) + '</code> · รหัสลงท้าย <code>…' + esc(String(SY.cfg.token).slice(-4)) + '</code></span>' +
-      '<span>บันทึกอัตโนมัติทุกครั้งที่แก้ และดึงของใหม่จากเครื่องอื่นทุก 30 วินาที · <a href="https://github.com/' + esc(SY.cfg.owner) + '/' + esc(SY.cfg.repo) + '/commits" target="_blank" rel="noopener">ประวัติการแก้ไข</a></span></div>';
+      '<span>บันทึกอัตโนมัติทุกครั้งที่แก้ และเช็กของใหม่จากเครื่องอื่นทุก 8 วินาที · <a href="https://github.com/' + esc(SY.cfg.owner) + '/' + esc(SY.cfg.repo) + '/commits" target="_blank" rel="noopener">ประวัติการแก้ไข</a></span></div>';
   }
   function syncSectionHTML() {
     if (syncOn()) {
@@ -4232,6 +4236,7 @@
     return ghReq('GET', '', null, false, cfg).then(function (repo) {
       if (!repo || repo.private !== true) return 'repo นี้เป็น Public ใครก็เห็นข้อมูลลูกค้าได้ ไปที่ Settings ของ repo แล้วเปลี่ยนเป็น Private ก่อน';
       SY.cfg = cfg; SY.sha = {}; SY.base = {}; SY.dirty = {}; SY.etag = {}; SY.last = 0;
+      headSha = ''; headTag = ''; pendingHead = ''; headTries = 0; headOk = true;
       Object.keys(SYNC_KEYS).forEach(function (n) { if (n !== 'settings' && hasLocal(n)) SY.dirty[n] = 1; });
       sySave();
       return syncNow({ first: true }).then(function () {
@@ -4367,7 +4372,40 @@
   $('homeSyncBtn').addEventListener('click', openSyncSettings);
   document.addEventListener('visibilitychange', function () { if (!document.hidden && syncOn()) syncNow({ pull: true }); });
   window.addEventListener('online', function () { if (syncOn()) syncNow({ pull: true }); });
-  setInterval(function () { if (syncOn() && !document.hidden && !anyDirty()) syncNow({ pull: true }); }, 30000);
+  // Fast updates: every 8 s ask GitHub only for the latest commit id (one tiny request; an unchanged
+  // answer is a 304, which does not count against the hourly limit). Files are downloaded only when
+  // something changed. If the contents API is still serving the old file, retry on the next ticks.
+  var headSha = '', headTag = '', pendingHead = '', headTries = 0, headOk = true, pollN = 0, lastPullChanged = false, slowUntil = 0;
+  function checkHead() {
+    var c = SY.cfg, h = { Accept: 'application/vnd.github.sha', Authorization: 'Bearer ' + c.token, 'X-GitHub-Api-Version': '2022-11-28' };
+    if (headTag && !pendingHead) h['If-None-Match'] = headTag;
+    return fetch('https://api.github.com/repos/' + encodeURIComponent(c.owner) + '/' + encodeURIComponent(c.repo) + '/commits/HEAD', { cache: 'no-store', headers: h }).then(function (r) {
+      var lh = r.headers && r.headers.get ? r.headers.get('X-RateLimit-Remaining') : null, left = lh == null || lh === '' ? NaN : +lh;
+      if (left >= 0 && left < 1500) slowUntil = Date.now() + 10 * 60000;
+      if (r.status === 304) return pendingHead || null;
+      if (!r.ok) { if (r.status === 404 || r.status === 409 || r.status === 422) headOk = false; return null; }
+      var tag = r.headers && r.headers.get ? r.headers.get('ETag') : null;
+      return r.text().then(function (sha) {
+        sha = String(sha || '').trim();
+        if (tag) headTag = tag;
+        return /^[0-9a-f]{7,64}$/i.test(sha) && sha !== headSha ? sha : null;
+      });
+    });
+  }
+  function pollTick() {
+    if (!syncOn() || document.hidden || syncing || anyDirty()) return;
+    pollN++;
+    if (Date.now() < slowUntil && pollN % 4) return;
+    if (!headOk || pollN % 15 === 0) { syncNow({ pull: true }); return; }
+    checkHead().then(function (sha) {
+      if (!sha) return;
+      pendingHead = sha;
+      return syncNow({ pull: true }).then(function () {
+        if (lastPullChanged || ++headTries >= 2) { headSha = sha; pendingHead = ''; headTries = 0; }
+      });
+    }).catch(function () {});
+  }
+  setInterval(pollTick, 8000);
   window.addEventListener('beforeunload', function (e) { if (syncOn() && anyDirty()) { e.preventDefault(); e.returnValue = ''; } });
 
   // ================= in-app notifications =================
