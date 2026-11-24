@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&family=Sarabun:wght@400;500;600;700&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style>
   /* Layout: mobile-first app — form cards on top, live A4 sheet preview below, sticky save bar */
   :root {
@@ -918,6 +919,12 @@
   .cal-legend i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
   .cal-daybox { display: grid; gap: 8px; }
 
+  /* ===== device link ===== */
+  .dev-qr { background: #fff; border-radius: 14px; padding: 12px; width: 236px; max-width: 100%; margin: 0 auto; }
+  .dev-qr svg { display: block; width: 100%; height: auto; }
+  .center { text-align: center; }
+  .dev-link { font-family: ui-monospace, Consolas, monospace; font-size: 0.78rem; }
+
   /* print */
   #printRoot { display: none; }
   @media print {
@@ -1275,6 +1282,25 @@
       <span style="flex:1"></span>
       <button class="btn" id="jCancel" type="button">ยกเลิก</button>
       <button class="btn primary" id="jSave" type="button">บันทึกงาน</button>
+    </div>
+  </div>
+</div>
+
+<div class="hist-modal" id="devModal" hidden>
+  <div class="hist-sheet job-sheet" role="dialog" aria-modal="true" aria-labelledby="devTitle">
+    <div class="hist-sheet-head"><h3 id="devTitle">เพิ่มเครื่องอื่น</h3><button class="mini" id="devClose" type="button">ปิด</button></div>
+    <div class="job-body" id="devBody" style="padding-bottom:16px"></div>
+  </div>
+</div>
+
+<div class="hist-modal" id="joinModal" hidden>
+  <div class="hist-sheet" role="dialog" aria-modal="true" aria-labelledby="joinTitle">
+    <div class="hist-sheet-head"><h3 id="joinTitle">เชื่อมเครื่องนี้กับข้อมูลร้าน</h3><button class="mini" id="joinClose" type="button">ปิด</button></div>
+    <div class="job-body" style="padding-bottom:16px">
+      <p class="set-note">พิมพ์รหัสผ่านร้านที่ตั้งไว้ตอนสร้างลิงก์ ทำครั้งเดียวต่อเครื่อง หลังจากนั้นเปิดเว็บใช้ได้เลย</p>
+      <div class="field"><label for="joinPass">รหัสผ่านร้าน</label><input id="joinPass" type="password" autocomplete="off"></div>
+      <div class="err-msg" id="joinErr" hidden></div>
+      <button class="btn primary" id="joinGo" type="button">เชื่อมต่อ</button>
     </div>
   </div>
 </div>
@@ -3007,6 +3033,7 @@
     }
     switch (b.id) {
       case 'syConnect': syncConnect(); break;
+      case 'syDevice': openDevice(); break;
       case 'syNow': syncNow({ pull: true }).then(function () { renderSettings(); toast(syncState === 'ok' ? 'ซิงก์แล้ว' : 'ซิงก์ไม่สำเร็จ'); }); break;
       case 'syOff':
         confirmBox('ยกเลิกการเชื่อม GitHub?', 'ข้อมูลในเครื่องนี้ยังอยู่ ข้อมูลบน GitHub ก็ยังอยู่ แค่หยุดบันทึกขึ้นออนไลน์จากเครื่องนี้', 'ยกเลิกการเชื่อม', function () { syncDisconnect(false); });
@@ -3710,12 +3737,14 @@
   function syncSectionHTML() {
     if (syncOn()) {
       return '<div id="syLive">' + syncLiveHTML() + '</div>' +
-        '<div class="btnrow"><button class="btn primary" type="button" id="syNow">ซิงก์ตอนนี้</button><button class="btn" type="button" id="syOff">ยกเลิกการเชื่อม</button></div>' +
+        '<div class="btnrow"><button class="btn primary" type="button" id="syDevice">เพิ่มเครื่องอื่น (QR / ลิงก์)</button></div>' +
+        '<div class="btnrow"><button class="btn" type="button" id="syNow">ซิงก์ตอนนี้</button><button class="btn" type="button" id="syOff">ยกเลิกการเชื่อม</button></div>' +
         '<div class="btnrow"><button class="btn danger" type="button" id="syOffWipe">ออกจากระบบและล้างข้อมูลในเครื่องนี้</button></div>' +
         '<p class="set-note">ใช้ปุ่มนี้เมื่อเปิดจากเครื่องคนอื่น ข้อมูลทั้งหมดยังอยู่บน GitHub</p>';
     }
     var c = SY.cfg || {};
     return '<p class="set-note">ข้อมูลงาน บิล ลูกค้า และการตั้งค่า จะบันทึกเป็นไฟล์ใน repo ส่วนตัวของคุณบน GitHub เปิดจากเครื่องไหนก็เห็นข้อมูลเดียวกัน</p>' +
+      '<div class="sy-on"><b style="color:inherit">เคยเชื่อมในเครื่องอื่นแล้ว?</b><span>ไม่ต้องกรอกด้านล่าง ที่เครื่องเดิมไปที่ตั้งค่า → เก็บข้อมูลออนไลน์ → "เพิ่มเครื่องอื่น" แล้วสแกน QR หรือเปิดลิงก์ในเครื่องนี้</span></div>' +
       '<ol class="sy-steps">' +
         '<li>สร้าง repo แบบ <b>Private</b> ชื่อ <code>33photo-data</code> <a href="https://github.com/new" target="_blank" rel="noopener">สร้าง repo</a> (ข้ามได้ถ้ามีแล้ว)</li>' +
         '<li>สร้างรหัสเข้าถึง <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">เปิดหน้าสร้างรหัส</a> ตั้งชื่ออะไรก็ได้ และตั้งวันหมดอายุตามสะดวก<br>' +
@@ -3730,25 +3759,127 @@
       '<div class="btnrow"><button class="btn primary" type="button" id="syConnect">เชื่อมต่อ</button></div>' +
       '<p class="set-note">รหัสเก็บไว้ในเบราว์เซอร์ของเครื่องนี้เท่านั้น ไม่ถูกบันทึกขึ้น GitHub หรือติดไปกับไฟล์สำรอง</p>';
   }
+  function connectCfg(cfg) {
+    return ghReq('GET', '', null, false, cfg).then(function (repo) {
+      if (!repo || repo.private !== true) return 'repo นี้เป็น Public ใครก็เห็นข้อมูลลูกค้าได้ ไปที่ Settings ของ repo แล้วเปลี่ยนเป็น Private ก่อน';
+      SY.cfg = cfg; SY.sha = {}; SY.base = {}; SY.dirty = {}; SY.last = 0;
+      Object.keys(SYNC_KEYS).forEach(function (n) { if (n !== 'settings' && hasLocal(n)) SY.dirty[n] = 1; });
+      sySave();
+      return syncNow({ first: true }).then(function () {
+        if (syncState === 'ok' || syncState === 'pending') return '';
+        var st = syncState, m = syncErr;
+        SY.cfg = null; sySave(); setSync('off');
+        return st === 'auth' ? 'รหัสนี้เขียนข้อมูลลง repo ไม่ได้ ตรวจว่าเลือก repo ถูกและให้สิทธิ์ Contents: Read and write' : 'เชื่อมไม่สำเร็จ: ' + m;
+      });
+    }, function (e) {
+      return e.status === 401 ? 'รหัสเข้าถึงไม่ถูกต้องหรือหมดอายุ' : e.status === 404 || e.status === 403 ? 'ไม่พบ repo นี้ หรือรหัสไม่มีสิทธิ์เข้าถึง ตรวจชื่อบัญชี ชื่อ repo และการเลือก repo ตอนสร้างรหัส' : 'เชื่อมไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่';
+    });
+  }
   function syncConnect() {
     var cfg = { owner: $('syOwner').value.trim(), repo: $('syRepo').value.trim(), token: $('syToken').value.trim() };
     var err = $('syErr'), btn = $('syConnect');
     function fail(m) { err.textContent = m; err.hidden = false; btn.disabled = false; btn.textContent = 'เชื่อมต่อ'; }
     if (!cfg.owner || !cfg.repo || !cfg.token) { fail('กรอกให้ครบทั้ง 3 ช่อง'); return; }
     err.hidden = true; btn.disabled = true; btn.textContent = 'กำลังเชื่อม…';
-    ghReq('GET', '', null, false, cfg).then(function (repo) {
-      if (!repo || repo.private !== true) { fail('repo นี้เป็น Public ใครก็เห็นข้อมูลลูกค้าได้ ไปที่ Settings ของ repo แล้วเปลี่ยนเป็น Private ก่อน'); return; }
-      SY.cfg = cfg; SY.sha = {}; SY.base = {}; SY.dirty = {}; SY.last = 0;
-      Object.keys(SYNC_KEYS).forEach(function (n) { if (n !== 'settings' && hasLocal(n)) SY.dirty[n] = 1; });
-      sySave();
-      return syncNow({ first: true }).then(function () {
-        if (syncState === 'ok' || syncState === 'pending') { openSecs = { sync: true }; renderSettings(); toast('เชื่อม GitHub แล้ว ข้อมูลจะบันทึกออนไลน์อัตโนมัติ'); }
-        else { var m = syncErr; SY.cfg = null; sySave(); setSync('off'); fail(syncState === 'auth' ? 'รหัสนี้เขียนข้อมูลลง repo ไม่ได้ ตรวจว่าเลือก repo ถูกและให้สิทธิ์ Contents: Read and write' : 'เชื่อมไม่สำเร็จ: ' + m); }
-      });
-    }, function (e) {
-      fail(e.status === 401 ? 'รหัสเข้าถึงไม่ถูกต้องหรือหมดอายุ' : e.status === 404 || e.status === 403 ? 'ไม่พบ repo นี้ หรือรหัสไม่มีสิทธิ์เข้าถึง ตรวจชื่อบัญชี ชื่อ repo และการเลือก repo ตอนสร้างรหัส' : 'เชื่อมไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่');
+    connectCfg(cfg).then(function (msg) {
+      if (msg) { fail(msg); return; }
+      openSecs = { sync: true }; renderSettings(); toast('เชื่อม GitHub แล้ว ข้อมูลจะบันทึกออนไลน์อัตโนมัติ');
     });
   }
+
+  // ---------- device link (encrypted with a shop password) ----------
+  var WEB_STUDIO = 'https://ohmsnow007-creator.github.io/33photo/studio/';
+  function b64u(bytes) { var s = ''; for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  function unb64u(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+  function deriveKey(pass, salt) {
+    return crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']).then(function (k) {
+      return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: salt, iterations: 310000, hash: 'SHA-256' }, k, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+    });
+  }
+  function sealCfg(cfg, pass) {
+    var salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+    return deriveKey(pass, salt).then(function (k) {
+      return crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, k, new TextEncoder().encode(JSON.stringify({ o: cfg.owner, r: cfg.repo, t: cfg.token })));
+    }).then(function (ct) {
+      var c = new Uint8Array(ct), out = new Uint8Array(29 + c.length);
+      out[0] = 1; out.set(salt, 1); out.set(iv, 17); out.set(c, 29);
+      return b64u(out);
+    });
+  }
+  function openCfg(blob, pass) {
+    var u = unb64u(blob);
+    if (u[0] !== 1 || u.length < 45) return Promise.reject(new Error('bad link'));
+    return deriveKey(pass, u.slice(1, 17)).then(function (k) {
+      return crypto.subtle.decrypt({ name: 'AES-GCM', iv: u.slice(17, 29) }, k, u.slice(29));
+    }).then(function (pt) { var o = JSON.parse(new TextDecoder().decode(pt)); return { owner: o.o, repo: o.r, token: o.t }; });
+  }
+  function canCrypto() { return !!(window.crypto && crypto.subtle && window.TextEncoder); }
+  function openDevice() {
+    if (!syncOn()) { toast('เชื่อม GitHub ในเครื่องนี้ก่อน'); return; }
+    if (!canCrypto()) { toast('เบราว์เซอร์นี้สร้างลิงก์ไม่ได้ ลองเปิดผ่านเว็บ https'); return; }
+    $('devBody').innerHTML =
+      '<p class="set-note">ตั้ง <b>รหัสผ่านร้าน</b> อย่างน้อย 8 ตัว เครื่องใหม่ต้องพิมพ์รหัสนี้ครั้งเดียวตอนเปิดลิงก์ จดไว้ให้ดี ระบบไม่เก็บรหัสนี้ไว้ที่ไหนเลย</p>' +
+      '<div class="field"><label for="devPass">รหัสผ่านร้าน</label><input id="devPass" type="password" autocomplete="new-password"></div>' +
+      '<div class="field"><label for="devPass2">พิมพ์อีกครั้ง</label><input id="devPass2" type="password" autocomplete="new-password"></div>' +
+      '<div class="err-msg" id="devErr" hidden></div>' +
+      '<button class="btn primary" type="button" id="devMake">สร้าง QR และลิงก์</button>';
+    $('devModal').hidden = false; document.body.style.overflow = 'hidden';
+    setTimeout(function () { $('devPass').focus(); }, 50);
+  }
+  function closeDevice() { $('devModal').hidden = true; $('devBody').innerHTML = ''; if ($('settings').hidden) document.body.style.overflow = ''; }
+  function makeDevice() {
+    var p = $('devPass').value, p2 = $('devPass2').value, err = $('devErr'), btn = $('devMake');
+    function fail(m) { err.textContent = m; err.hidden = false; }
+    if (p.length < 8) { fail('รหัสผ่านร้านต้องยาวอย่างน้อย 8 ตัว'); return; }
+    if (p !== p2) { fail('รหัสผ่านสองช่องไม่ตรงกัน'); return; }
+    err.hidden = true; btn.disabled = true; btn.textContent = 'กำลังสร้าง…';
+    sealCfg(SY.cfg, p).then(function (blob) {
+      var base = /^https?:$/.test(location.protocol) ? location.origin + location.pathname : WEB_STUDIO;
+      var link = base + '#join=' + blob, qr = '';
+      if (window.qrcode) { try { var q = qrcode(0, 'M'); q.addData(link); q.make(); qr = q.createSvgTag(4, 0); } catch (e) { qr = ''; } }
+      $('devBody').innerHTML =
+        (qr ? '<div class="dev-qr" id="devQr">' + qr + '</div><p class="set-note center"><b>มือถือ</b> เปิดกล้องแล้วสแกน QR · <b>คอม</b> คัดลอกลิงก์ส่งให้ตัวเอง แล้วเปิดในเครื่องนั้น</p>' : '<p class="set-note">คัดลอกลิงก์ส่งให้ตัวเอง แล้วเปิดในเครื่องใหม่</p>') +
+        '<div class="field"><label for="devLink">ลิงก์เพิ่มเครื่อง</label><input id="devLink" class="dev-link" type="text" readonly value="' + esc(link) + '"></div>' +
+        '<div class="btnrow"><button class="btn primary" type="button" id="devCopy">คัดลอกลิงก์</button>' + (navigator.share ? '<button class="btn" type="button" id="devShare">ส่งต่อ</button>' : '') + '</div>' +
+        '<p class="set-note">เครื่องใหม่เปิดลิงก์แล้วพิมพ์รหัสผ่านร้านครั้งเดียวก็ใช้ได้ ลิงก์นี้ใช้ได้จนรหัส GitHub หมดอายุ ถ้าเปลี่ยนรหัส GitHub ให้สร้างลิงก์ใหม่ · อย่าส่งลิงก์กับรหัสผ่านร้านไว้ในที่เดียวกัน</p>';
+    }, function () { btn.disabled = false; btn.textContent = 'สร้าง QR และลิงก์'; fail('สร้างลิงก์ไม่สำเร็จ ลองใหม่อีกครั้ง'); });
+  }
+  $('devBody').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.id === 'devMake') makeDevice();
+    if (b.id === 'devCopy') copyText($('devLink').value).then(function (ok) { toast(ok === false ? 'คัดลอกไม่ได้ กดค้างที่ลิงก์แล้วคัดลอกเอง' : 'คัดลอกลิงก์แล้ว'); });
+    if (b.id === 'devShare') navigator.share({ title: 'เพิ่มเครื่อง ' + S.company.name + ' Studio', url: $('devLink').value }).catch(function () {});
+  });
+  $('devBody').addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.target.id === 'devPass' || e.target.id === 'devPass2')) { e.preventDefault(); makeDevice(); } });
+  $('devClose').addEventListener('click', closeDevice);
+  $('devModal').addEventListener('click', function (e) { if (e.target === this) closeDevice(); });
+
+  var joinBlob = null;
+  function openJoin() {
+    $('joinPass').value = ''; $('joinErr').hidden = true;
+    $('joinModal').hidden = false; document.body.style.overflow = 'hidden';
+    setTimeout(function () { $('joinPass').focus(); }, 50);
+  }
+  function closeJoin() { $('joinModal').hidden = true; document.body.style.overflow = ''; }
+  function doJoin() {
+    var p = $('joinPass').value, err = $('joinErr'), btn = $('joinGo');
+    function fail(m) { err.textContent = m; err.hidden = false; btn.disabled = false; btn.textContent = 'เชื่อมต่อ'; }
+    if (!p) { fail('พิมพ์รหัสผ่านร้านก่อน'); return; }
+    if (!canCrypto()) { fail('เบราว์เซอร์นี้เปิดลิงก์ไม่ได้ ลองเปิดด้วย Chrome หรือ Safari'); return; }
+    err.hidden = true; btn.disabled = true; btn.textContent = 'กำลังเชื่อม…';
+    openCfg(joinBlob, p).then(function (cfg) {
+      return connectCfg(cfg).then(function (msg) {
+        if (msg) { fail(msg); return; }
+        joinBlob = null; closeJoin(); goPage('home');
+        btn.disabled = false; btn.textContent = 'เชื่อมต่อ';
+        toast('เครื่องนี้เชื่อมกับข้อมูลร้านแล้ว');
+      });
+    }, function () { fail('รหัสผ่านร้านไม่ถูกต้อง หรือลิงก์ไม่ครบ ลองคัดลอกลิงก์ใหม่'); });
+  }
+  $('joinGo').addEventListener('click', doJoin);
+  $('joinPass').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); doJoin(); } });
+  $('joinClose').addEventListener('click', closeJoin);
+
   function syncDisconnect(wipe) {
     SY = { sha: {}, base: {}, dirty: {} };
     if (wipe) { [SKEY, KEY, HKEY, CKEY, BKEY, JKEY, PKEY, YKEY].forEach(function (k) { localStorage.removeItem(k); }); location.reload(); return; }
@@ -3772,7 +3903,12 @@
   updateHistBadge();
   goPage(lsGet(PKEY, 'home'));
   setSync('off');
-  if (syncOn()) syncNow({ pull: true });
+  var jm = /^#join=([\w-]+)$/.exec(location.hash || '');
+  if (jm) {
+    joinBlob = jm[1];
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    openJoin();
+  } else if (syncOn()) syncNow({ pull: true });
   if (window.__fromPro) setTimeout(function () { toast('นำข้อมูลจากบิล Pro ในเครื่องนี้มาให้แล้ว'); }, 400);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitPreview);
   window.__billPro = { renderCanvas: renderCanvas, S: function () { return S; }, state: function () { return state; },
