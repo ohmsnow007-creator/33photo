@@ -2256,9 +2256,12 @@
     persist(); fillForm(); draw();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-  $('newBill').addEventListener('click', function () {
-    confirmBox('เริ่ม' + curDoc().th + 'ใหม่', 'ล้างข้อมูลลูกค้าและรายการทั้งหมด เลขที่จะขึ้นเลขถัดไปที่ยังไม่เคยใช้', 'เริ่มใหม่', function () { startNew(); });
-  });
+  function newBillKeep() {
+    var kept = keepDraft();
+    startNew();
+    toast(kept ? 'เก็บ' + kept + ' ไว้ในประวัติบิลแล้ว: เริ่ม' + curDoc().th + 'ใหม่ เลขที่ ' + curNo() : 'เริ่ม' + curDoc().th + 'ใหม่ เลขที่ ' + curNo());
+  }
+  $('newBill').addEventListener('click', newBillKeep);
 
   // ================= export: PDF / PNG / print =================
   function loadFonts() {
@@ -2521,6 +2524,8 @@
       });
       return;
     }
+    var kept = keepDraft();
+    if (kept) { toast('เก็บ' + kept + ' ไว้ในประวัติบิลแล้ว'); arr = hist(); for (var q = 0; q < arr.length; q++) if (arr[q].id === id) h = arr[q]; }
     var counters = clone(state.nos), s = sane(clone(h.state));
     if (a === 'open') {
       state = s;
@@ -3417,8 +3422,7 @@
   $('homeNewJob').addEventListener('click', function () { openJob(null); });
   $('homeNewBill').addEventListener('click', function () {
     goPage('bill');
-    if (draftDirty()) confirmBox('เริ่มบิลใหม่?', 'บิลที่กรอกค้างไว้ยังไม่ได้บันทึก จะถูกล้าง', 'เริ่มใหม่', function () { startNew(); });
-    else startNew();
+    newBillKeep();
   });
   document.addEventListener('click', function (e) { if (e.target.closest('[data-newjob]')) openJob(null); });
 
@@ -3737,7 +3741,9 @@
       var id = hb.getAttribute('data-hid'), h = hist().filter(function (x) { return x.id === id; })[0];
       if (!h) return;
       var go = function () { state = sane(clone(h.state)); state.jobId = jobIdOf(h); persist(); fillForm(); draw(); closeJob(); goPage('bill'); switchTab('form'); toast('เปิด ' + h.no + ' แล้ว'); };
-      if (draftDirty()) confirmBox('แทนที่บิลที่กรอกค้างไว้?', 'บิลที่กำลังกรอกยังไม่ได้บันทึก จะถูกแทนที่ด้วย ' + h.no, 'เปิดบิล', go); else go();
+      var kept = keepDraft();
+      if (kept) { toast('เก็บ' + kept + ' ไว้ในประวัติบิลแล้ว'); h = hist().filter(function (x) { return x.id === id; })[0] || h; }
+      go();
       return;
     }
     if (mk) {
@@ -3746,6 +3752,14 @@
       billFromJob(j, mk.getAttribute('data-mk'));
     }
   });
+  function keepDraft() {
+    if (!(String(state.cName).trim() || state.items.some(function (it) { return String(it.price).trim() && num(it.price) || (it.service === OTHER && String(it.custom).trim()); }))) return '';
+    var no = curNo(), arr = hist();
+    for (var k = 0; k < arr.length; k++) if (arr[k].docType === state.docType && arr[k].no === no && JSON.stringify(sane(clone(arr[k].state))) === JSON.stringify(state)) return '';
+    var label = curDoc().th + ' ' + no;
+    syncJob(); recordHistory(); updateHistBadge(); updateNavDot();
+    return label;
+  }
   function draftDirty() {
     if (histHas(state.docType, curNo())) return false;
     return !!(String(state.cName).trim() || state.items.some(function (it) { return String(it.price).trim() && num(it.price) || (it.service === OTHER && String(it.custom).trim()); }));
@@ -3774,8 +3788,9 @@
       persist(); closeJob(); goPage('bill'); fillForm(); draw(); switchTab('form');
       toast('สร้าง' + d.th + 'เลขที่ ' + curNo() + ' จากงานนี้แล้ว');
     };
-    if (draftDirty()) confirmBox('แทนที่บิลที่กรอกค้างไว้?', 'บิลที่กำลังกรอกยังไม่ได้บันทึก จะถูกแทนที่ด้วย' + d.th + 'ของงานนี้', 'แทนที่', go);
-    else go();
+    var kept = keepDraft();
+    if (kept) toast('เก็บ' + kept + ' ไว้ในประวัติบิลแล้ว');
+    go();
   }
 
   // ---------- bill <-> job ----------
