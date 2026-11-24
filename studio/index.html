@@ -1237,22 +1237,52 @@
   .settings.wide .set-search, .settings.wide .set-wrap, .settings.wide .setup-card { max-width: 780px; }
   .settings.wide .set-pv { flex: 0 0 clamp(400px, 33vw, 620px); }
   .settings.wide.nopv .set-pv { display: none; }
-  .settings.wide.nopv #pvToggle { display: none; }
-  .settings.wide #setBody:not(.searching) .set-group-h { display: none; }
-  .settings.wide #setBody:not(.searching) .set-sec:not(.cur) { display: none; }
-  .settings.wide #setBody:not(.searching) .set-group:not(:has(.set-sec.cur)) { display: none; }
-  .settings.wide #setBody:not(.searching) .setup-card { display: none; }
-  .settings.wide #setBody:not(.searching) .set-sec.cur > summary { cursor: default; padding: 18px 20px; background: none; }
-  .settings.wide #setBody:not(.searching) .set-sec.cur > summary::after { content: none; }
-  .settings.wide #setBody:not(.searching) .set-sec.cur > summary .sec-tx { font-size: 1.15rem; }
-  .settings.wide #setBody:not(.searching) .set-sec.cur > summary .sec-ic { width: 48px; height: 48px; border-radius: 14px; }
-  .settings.wide #setBody:not(.searching) .set-sec.cur .set-in { padding: 0 20px 22px; }
-  .settings.wide #setBody:not(.searching) .set-sec.cur { animation: pgIn .25s ease-out; border-radius: 18px; box-shadow: 0 8px 28px rgba(0,0,0,.08); }
-  .settings.wide.home #setBody:not(.searching) .set-group { display: none; }
-  .settings.wide #setBody > .setup-card { display: none !important; }
+  .settings.paged.nopv #pvToggle { display: none; }
+  .settings.paged #setBody:not(.searching) .set-group-h { display: none; }
+  .settings.paged #setBody:not(.searching) .set-sec:not(.cur) { display: none; }
+  .settings.paged #setBody:not(.searching) .set-group:not(:has(.set-sec.cur)) { display: none; }
+  .settings.paged #setBody:not(.searching) .setup-card { display: none; }
+  .settings.paged #setBody:not(.searching) .set-sec.cur > summary { cursor: default; padding: 18px 20px; background: none; }
+  .settings.paged #setBody:not(.searching) .set-sec.cur > summary::after { content: none; }
+  .settings.paged #setBody:not(.searching) .set-sec.cur > summary .sec-tx { font-size: 1.15rem; }
+  .settings.paged #setBody:not(.searching) .set-sec.cur > summary .sec-ic { width: 48px; height: 48px; border-radius: 14px; }
+  .settings.paged #setBody:not(.searching) .set-sec.cur .set-in { padding: 0 20px 22px; }
+  .settings.paged #setBody:not(.searching) .set-sec.cur { animation: pgIn .25s ease-out; border-radius: 18px; box-shadow: 0 8px 28px rgba(0,0,0,.08); }
+  .settings.paged.home #setBody:not(.searching) .set-group { display: none; }
+  .settings.paged #setBody > .setup-card { display: none !important; }
   .set-over .setup-card { display: grid !important; margin: 0; max-width: none; }
-  .settings.wide.home #setBody:not(.searching) .set-over { display: grid; }
+  .settings.paged.home #setBody:not(.searching) .set-over { display: grid; }
   .set-over { width: 100%; margin: 0; gap: 18px; }
+  .settings.paged.nopv .set-pv { display: none; }
+  .settings.paged:not(.wide):not(.home):not(.srch) .set-search { display: none; }
+  @media (max-width: 1099px) {
+    .settings.paged .set-body { padding-top: 14px; }
+    .so-hello .big { font-size: 1.7rem; }
+    .so-hello b { font-size: 1.15rem; }
+    .so-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 8px; }
+    .so-tile { padding: 11px 12px; border-radius: 12px; }
+    .so-tile .ic { width: 38px; height: 38px; }
+    .so-tile::after { content: '›'; margin-left: auto; color: var(--muted); font-size: 1.3rem; }
+    .settings.paged #setBody:not(.searching) .set-sec.cur > summary { padding: 14px 16px; }
+    .settings.paged #setBody:not(.searching) .set-sec.cur .set-in { padding: 0 16px 18px; }
+    .settings.paged #setBody:not(.searching) .set-sec.cur { box-shadow: none; }
+    .set-pv { height: 34vh; }
+  }
+  /* ===== phone: jobs page, job rows ===== */
+  @media (max-width: 640px) {
+    .jobs-head-acts { width: 100%; flex-wrap: nowrap; }
+    .jobs-head-acts .seg { flex: 1; min-width: 0; }
+    #jobsNew { position: fixed; right: 16px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 20; min-height: 54px; padding: 0 22px; border-radius: 27px; font-size: 1rem; box-shadow: 0 10px 26px rgba(0,0,0,.35); }
+    body[data-page="jobs"] .page { padding-bottom: 96px; }
+    #pageJobs .home-head { align-items: stretch; }
+  }
+  @media (max-width: 520px) {
+    .job-row { grid-template-columns: 48px minmax(0, 1fr); gap: 4px 12px; padding: 10px 12px; }
+    .job-row .job-date { grid-row: span 2; align-self: start; }
+    .job-row .job-amt { grid-column: 2; display: flex; align-items: baseline; gap: 8px; text-align: left; font-size: 0.95rem; }
+    .job-row .job-amt:empty { display: none; }
+    .job-chips { margin-top: 4px; }
+  }
   .so-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important; }
   .so-hello { display: flex; align-items: center; gap: 14px; }
   .so-hello b { font-family: var(--font-display); font-size: 1.4rem; font-weight: 600; display: block; }
@@ -3282,7 +3312,7 @@
   function openSettings() { if (viewOnly()) { openLock(openSettingsNow); return; } if (unlocked()) openSettingsNow(); else openLock(openSettingsNow); }
   function openSettingsNow() {
     if (!setJump) curSec = 'home';
-    setJump = false;
+    setJump = false; setEntry = curSec;
     renderSettings();
     $('settings').hidden = false; document.body.style.overflow = 'hidden';
     pvFocus = pvHover = pvLast = null;
@@ -3290,7 +3320,10 @@
   }
   function closeSettings() { $('settings').hidden = true; document.body.style.overflow = ''; lsSet(SKEY, S); if (lockOn() && unlockUntil > Date.now()) unlockUntil = Math.min(unlockUntil, Date.now() + 60000); }
   $('setBtn').addEventListener('click', openSettings);
-  $('setClose').addEventListener('click', closeSettings);
+  $('setClose').addEventListener('click', function () {
+    if (!isWide() && curSec !== 'home' && curSec !== setEntry && !setBody.classList.contains('searching')) { goSec('home'); return; }
+    closeSettings();
+  });
 
   var setBody = $('setBody');
 
@@ -3476,13 +3509,14 @@
   setBody.addEventListener('mouseleave', function () { pvHover = null; if (!pvFocus) maybeRedraw(); });
   if (window.ResizeObserver) new ResizeObserver(function () { if (!$('settings').hidden) { fitPv(); scrollToRing(); } }).observe(pvScroll);
   var pvPref = lsGet('bill33suite.pv', 'on');
+  function pvPrefKey() { return window.matchMedia && matchMedia('(min-width: 1100px)').matches ? 'bill33suite.pv' : 'bill33suite.pvm'; }
   function setPvMode(on) {
     $('settings').classList.toggle('pv-off', !on);
-    $('pvToggleTx').textContent = on ? 'ซ่อนตัวอย่าง' : 'แสดงตัวอย่าง';
-    lsSet('bill33suite.pv', on ? 'on' : 'off');
+    $('pvToggleTx').textContent = on ? 'ซ่อนตัวอย่าง' : 'ดูตัวอย่างบิล';
+    lsSet(pvPrefKey(), on ? 'on' : 'off');
     if (on) { pvShown = null; drawPv(true); }
   }
-  setPvMode(pvPref !== 'off');
+  setPvMode(pvPrefKey() === 'bill33suite.pv' ? pvPref !== 'off' : lsGet('bill33suite.pvm', 'off') === 'on');
   $('pvToggle').addEventListener('click', function () { setPvMode($('settings').classList.contains('pv-off')); });
   $('pvSize').addEventListener('click', function () {
     var big = $('settings').classList.toggle('pv-big');
@@ -5160,7 +5194,7 @@
   }, 30000);
 
   // ================= settings on wide screens =================
-  var curSec = 'home', setJump = false, BILL_SECS = ['company', 'brand', 'theme', 'docs', 'services', 'pays', 'tax', 'sheetL'];
+  var curSec = 'home', setJump = false, setEntry = 'home', BILL_SECS = ['company', 'brand', 'theme', 'docs', 'services', 'pays', 'tax', 'sheetL'];
   var WIDE_MQ = window.matchMedia ? matchMedia('(min-width: 1100px)') : null;
   function isWide() { return !!(WIDE_MQ && WIDE_MQ.matches); }
   function setupCount() {
@@ -5196,21 +5230,27 @@
       }).join('') + '</div>';
     }).join('');
     return '<div class="set-over" id="setOver"><div class="so-hello"><span class="big">' + (c[0] === c[1] ? '🎉' : '⚙️') + '</span><span><b>ตั้งค่าร้าน ' + esc(S.company.name || '') + '</b><span>' +
-      (c[0] === c[1] ? 'ตั้งค่าครบแล้ว เลือกหมวดที่ต้องการแก้ได้เลย' : 'เหลืออีก ' + (c[1] - c[0]) + ' ข้อจะพร้อมใช้งานเต็มที่ · เลือกหมวดจากเมนูซ้ายหรือการ์ดด้านล่าง') + '</span></span></div>' + setupHTML() + tiles + '</div>';
+      (c[0] === c[1] ? 'ตั้งค่าครบแล้ว เลือกหมวดที่ต้องการแก้ได้เลย' : 'เหลืออีก ' + (c[1] - c[0]) + ' ข้อจะพร้อมใช้งานเต็มที่ · ' + (isWide() ? 'เลือกหมวดจากเมนูซ้ายหรือการ์ดด้านล่าง' : 'แตะหมวดด้านล่างเพื่อแก้')) + '</span></span></div>' + setupHTML() + tiles + '</div>';
   }
   function applyWide() {
     var st = $('settings'), wide = isWide();
-    st.classList.toggle('wide', wide);
-    st.classList.toggle('home', wide && curSec === 'home');
-    st.classList.toggle('nopv', wide && BILL_SECS.indexOf(curSec) < 0);
     var searching = setBody.classList.contains('searching');
+    st.classList.add('paged');
+    st.classList.toggle('wide', wide);
+    st.classList.toggle('home', curSec === 'home');
+    st.classList.toggle('srch', searching);
+    st.classList.toggle('nopv', BILL_SECS.indexOf(curSec) < 0 && !searching);
+    var h2 = document.querySelector('.set-title h2');
+    if (h2) h2.textContent = !wide && curSec !== 'home' && !searching && SEC_META[curSec] ? SEC_META[curSec].title : 'ตั้งค่า';
+    $('setClose').setAttribute('aria-label', !wide && curSec !== 'home' && curSec !== setEntry && !searching ? 'กลับไปหน้าตั้งค่า' : 'ปิดตั้งค่า');
+    if (h2 && curSec === setEntry && curSec !== 'home' && !wide) h2.textContent = SEC_META[curSec] ? SEC_META[curSec].title : 'ตั้งค่า';
     Array.prototype.forEach.call(setBody.querySelectorAll('.set-sec'), function (el) {
       var on = el.getAttribute('data-sec') === curSec;
       el.classList.toggle('cur', on);
-      if (wide && on && !searching && !el.open) el.open = true;
+      if (on && !searching && !el.open) el.open = true;
     });
     if (wide) Array.prototype.forEach.call(document.querySelectorAll('#setNav .sn-it'), function (b) { b.classList.toggle('on', b.getAttribute('data-nav') === curSec); });
-    if (wide && !st.hidden && !st.classList.contains('nopv')) setTimeout(function () { drawPv(false); }, 0);
+    if (!st.hidden && !st.classList.contains('nopv')) setTimeout(function () { drawPv(false); }, 0);
   }
   function goSec(id) {
     curSec = id;
@@ -5224,7 +5264,7 @@
     var b = e.target.closest('.so-tile[data-nav]'); if (b) { goSec(b.getAttribute('data-nav')); return; }
     // in wide mode the open section stays open: its header is a title, not a toggle
     var sm = e.target.closest('details.set-sec > summary');
-    if (sm && isWide() && !setBody.classList.contains('searching')) {
+    if (sm && !setBody.classList.contains('searching')) {
       var d = sm.parentNode;
       if (d.classList.contains('cur')) e.preventDefault(); else { e.preventDefault(); goSec(d.getAttribute('data-sec')); }
     }
