@@ -1847,9 +1847,10 @@
   } catch (e) {}
   var JKEY = 'bill33suite.jobs', PKEY = 'bill33suite.page', YKEY = 'bill33suite.sync';
   var SY = (function () { var o; try { o = JSON.parse(localStorage.getItem(YKEY)) || {}; } catch (e) { o = {}; } ['sha', 'base', 'dirty'].forEach(function (k) { if (!o[k] || typeof o[k] !== 'object') o[k] = {}; }); return o; })();
-  var SYNC_KEYS = { settings: 'bill33suite.settings', history: 'bill33suite.history', customers: 'bill33suite.customers', jobs: 'bill33suite.jobs' };
+  var TKEY = 'bill33suite.team';
+  var SYNC_KEYS = { settings: 'bill33suite.settings', history: 'bill33suite.history', customers: 'bill33suite.customers', jobs: 'bill33suite.jobs', team: TKEY };
   var SYNC_OF = {}; Object.keys(SYNC_KEYS).forEach(function (n) { SYNC_OF[SYNC_KEYS[n]] = n; });
-  var SYNC_LABEL = { settings: 'ตั้งค่า', history: 'ประวัติบิล', customers: 'ลูกค้า', jobs: 'งาน' };
+  var SYNC_LABEL = { settings: 'ตั้งค่า', history: 'ประวัติบิล', customers: 'ลูกค้า', jobs: 'งาน', team: 'ทีมงาน' };
   var SKEY = 'bill33suite.settings', KEY = 'bill33suite.bill', HKEY = 'bill33suite.history', CKEY = 'bill33suite.customers', BKEY = 'bill33suite.lastBackup';
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -3235,10 +3236,10 @@
           '<div class="hint">' + esc([c.phone, c.addr].filter(Boolean).join(' · ') || 'ไม่มีข้อมูลเพิ่มเติม') + '</div></div>';
       }).join('') : '<div class="set-empty-box">กดดาว ☆ ข้างช่องชื่อลูกค้า เพื่อบันทึกลูกค้าไว้ใช้ครั้งหน้า</div>'));
 
-    var stf = S.staff || [];
+    var stf = teamNames();
     sec('staff', 'ทีมงานและการส่งงาน', stf.length ? stf.length + ' คน · ' + stf.slice(0, 4).join(', ') : 'ยังไม่มีรายชื่อ',
       '<p class="set-note">รายชื่อนี้ใช้มอบหมายงานในช่อง "ทีมงาน" ของแต่ละงาน ทุกเครื่องเห็นรายชื่อเดียวกัน ให้พนักงานแต่ละคนตั้ง "ชื่อของคุณ" ในเครื่องตัวเองให้ตรงกับรายชื่อนี้ เพื่อใช้ปุ่ม "งานของฉัน"</p>' +
-      (stf.length ? '<div class="staff-list">' + stf.map(function (n, i) { return '<span class="staff-chip on">' + esc(n) + (n === meRaw() ? ' (ฉัน)' : '') + '<button type="button" class="x" data-stdel="' + i + '" aria-label="ลบ ' + esc(n) + '">×</button></span>'; }).join('') + '</div>' : '') +
+      (stf.length ? '<div class="staff-list">' + stf.map(function (n) { return '<span class="staff-chip on">' + esc(n) + (n === meRaw() ? ' (ฉัน)' : '') + '<button type="button" class="x" data-stdel="' + esc(n) + '" aria-label="ลบ ' + esc(n) + '">×</button></span>'; }).join('') + '</div>' : '') +
       '<div class="job-link"><input id="stNew" type="text" autocomplete="off" placeholder="เพิ่มชื่อ เช่น น้องเบล"><button class="btn" type="button" id="stAdd">เพิ่ม</button></div>' +
       sub('การส่งงานลูกค้า') +
       fText('ส่งรูปภายในกี่วันหลังวันงาน', 'delivDays', { mode: 'numeric', note: 'ใช้เป็นกำหนดส่งเริ่มต้นของทุกงาน แก้เป็นรายงานได้ในหน้ารายละเอียดงาน' }) +
@@ -3656,7 +3657,7 @@
         break;
       case 'bkWipe':
         confirmBox('ลบข้อมูลทั้งหมด?', syncOn() ? 'ลบข้อมูลทั้งหมดในเครื่องนี้และยกเลิกการเชื่อม GitHub ข้อมูลบน GitHub ยังอยู่ เชื่อมใหม่เมื่อไหร่ก็ดึงกลับมาได้' : 'ตั้งค่า บิลปัจจุบัน ประวัติ และลูกค้าจะหายทั้งหมด กู้คืนไม่ได้ถ้าไม่ได้สำรองไว้', 'ลบทั้งหมด', function () {
-          [SKEY, KEY, HKEY, CKEY, BKEY, JKEY, PKEY, YKEY, UKEY].forEach(function (k) { localStorage.removeItem(k); });
+          [SKEY, KEY, HKEY, CKEY, BKEY, JKEY, PKEY, YKEY, UKEY, TKEY].forEach(function (k) { localStorage.removeItem(k); });
           location.reload();
         });
         break;
@@ -4389,6 +4390,7 @@
       else if (bh && bh === lh) v = r;
       else if (bh && bh === rh) v = l;
       else if (k === 'staff' && Array.isArray(l) && Array.isArray(r)) { v = l.slice(); r.forEach(function (n) { if (v.indexOf(n) < 0) v.push(n); }); }
+      else if (!bh) v = r === undefined ? l : r;
       else v = l === undefined ? r : l;
       if (v !== undefined) out[k] = v;
     });
@@ -4557,7 +4559,7 @@
       if ($('settings').hidden) fillForm();
     }
     updateHistBadge(); renderCustomers();
-    if ($('jobModal').hidden) refreshPages(); else updateNavDot();
+    if ($('jobModal').hidden) refreshPages(); else { updateNavDot(); if (names.indexOf('team') >= 0 && jEdit) renderJStaff(); }
     if (page === 'bill') { renderJobSel(); updateEvHint(); }
     draw();
   }
@@ -4757,7 +4759,7 @@
 
   function syncDisconnect(wipe) {
     SY = { sha: {}, base: {}, dirty: {} };
-    if (wipe) { [SKEY, KEY, HKEY, CKEY, BKEY, JKEY, PKEY, YKEY, UKEY].forEach(function (k) { localStorage.removeItem(k); }); location.reload(); return; }
+    if (wipe) { [SKEY, KEY, HKEY, CKEY, BKEY, JKEY, PKEY, YKEY, UKEY, TKEY].forEach(function (k) { localStorage.removeItem(k); }); location.reload(); return; }
     sySave(); setSync('off'); renderSettings(); toast('ยกเลิกการเชื่อมแล้ว');
   }
   function openSyncSettings() {
@@ -5025,14 +5027,13 @@
     if (b.id === 'stAdd') {
       var v = $('stNew').value.trim().slice(0, 30);
       if (!v) { $('stNew').focus(); return; }
-      S.staff = (S.staff || []).filter(function (x) { return x !== v; }).concat([v]); lsSet(SKEY, S);
+      teamAdd(v);
       openSecs = { staff: true }; renderSettings();
       setTimeout(function () { var el = $('stNew'); if (el) el.focus(); }, 20);
       return;
     }
     if (b.hasAttribute('data-stdel')) {
-      var i = +b.getAttribute('data-stdel'), arr = (S.staff || []).slice();
-      arr.splice(i, 1); S.staff = arr; lsSet(SKEY, S); openSecs = { staff: true }; renderSettings();
+      teamRemove(b.getAttribute('data-stdel')); openSecs = { staff: true }; renderSettings();
       return;
     }
     if (b.id === 'syNewTok') { var bx = $('syNewBox'); bx.hidden = !bx.hidden; if (!bx.hidden) $('syTok2').focus(); return; }
@@ -5050,9 +5051,9 @@
   var MKEY = 'bill33suite.mine', mineOn = lsGet(MKEY, false) === true;
   function isMine(j) { var me = meRaw(); return !!me && (j.staff || []).indexOf(me) >= 0; }
   function staffNames() {
-    var m = {}, out = [];
-    function add(n) { n = String(n || '').trim(); if (n && !m[n]) { m[n] = 1; out.push(n); } }
-    (S.staff || []).forEach(add);
+    var m = {}, out = [], hid = teamHidden();
+    function add(n) { n = String(n || '').trim(); if (n && !m[n] && !hid[n]) { m[n] = 1; out.push(n); } }
+    teamNames().forEach(add);
     add(meRaw());
     jobs().forEach(function (j) { (j.staff || []).forEach(add); });
     return out;
@@ -5082,7 +5083,7 @@
     if (e.target.closest('[data-staffadd]')) openModal('เพิ่มชื่อทีมงาน', 'ชื่อพนักงานหรือช่างภาพ เช่น พี่โอ, น้องเบล ชื่อนี้จะอยู่ในรายชื่อทีมงานของร้าน', true, '', 'เพิ่ม', function (v) {
       v = String(v || '').trim().slice(0, 30);
       if (!v || !jEdit) return;
-      S.staff = (S.staff || []).filter(function (x) { return x !== v; }).concat([v]); lsSet(SKEY, S);
+      teamAdd(v);
       jEdit.staff = (jEdit.staff || []).filter(function (x) { return x !== v; }).concat([v]); renderJStaff();
     });
   });
@@ -5250,14 +5251,14 @@
   var WIDE_MQ = window.matchMedia ? matchMedia('(min-width: 1100px)') : null;
   function isWide() { return !!(WIDE_MQ && WIDE_MQ.matches); }
   function setupCount() {
-    var it = [syncOn(), !!meRaw(), (S.staff || []).length > 0, lockOn()];
+    var it = [syncOn(), !!meRaw(), teamNames().length > 0, lockOn()];
     if (syncOn()) it.push(!!S.tokenExp);
     return [it.filter(Boolean).length, it.length];
   }
   function needsAttention(id) {
     if (id === 'sync') return !syncOn() || !S.tokenExp;
     if (id === 'lock') return !lockOn();
-    if (id === 'staff') return !(S.staff || []).length || !meRaw();
+    if (id === 'staff') return !teamNames().length || !meRaw();
     return false;
   }
   var NAV_SHORT = { sync: 'ข้อมูลออนไลน์ (GitHub)', lock: 'PIN เจ้าของร้าน', staff: 'ทีมงานและการส่งงาน', sheetL: 'ข้อความบนบิล', ui: 'ปุ่มและข้อความแอป', custs: 'ลูกค้าที่บันทึกไว้', backup: 'สำรองและกู้คืน' };
@@ -5331,7 +5332,7 @@
     var items = [
       ['sync', '☁️', 'เชื่อมข้อมูลออนไลน์', 'ทุกเครื่องเห็นข้อมูลเดียวกัน', syncOn()],
       ['staff', '🙋', 'ตั้งชื่อของคุณในเครื่องนี้', meRaw() ? 'ชื่อ: ' + meRaw() : 'ให้ทีมรู้ว่าใครเพิ่มหรือแก้งาน', !!meRaw()],
-      ['staff', '👥', 'เพิ่มรายชื่อทีมงาน', (S.staff || []).length ? (S.staff || []).length + ' คน' : 'ใช้มอบหมายงานให้แต่ละคน', (S.staff || []).length > 0],
+      ['staff', '👥', 'เพิ่มรายชื่อทีมงาน', teamNames().length ? teamNames().length + ' คน' : 'ใช้มอบหมายงานให้แต่ละคน', teamNames().length > 0],
       ['lock', '🔒', 'ตั้ง PIN เจ้าของร้าน', 'กันคนอื่นเข้ามาแก้การตั้งค่า', lockOn()]
     ];
     if (syncOn()) items.push(['sync', '📅', 'ใส่วันหมดอายุรหัส GitHub', S.tokenExp ? expText() : 'ระบบจะเตือนก่อนหมดอายุ', !!S.tokenExp]);
@@ -5368,11 +5369,53 @@
   }
 
   // ================= every connected person is in the team list =================
-  function ensureStaff(n) {
-    n = String(n || '').trim().slice(0, 30);
-    if (!n || (S.staff || []).indexOf(n) >= 0) return false;
-    S.staff = (S.staff || []).concat([n]); lsSet(SKEY, S);
+  // Team list: data/team.json, one entry per device ({id: device id}) or per added name ({id: 'n:' + name}).
+  // Each device only writes its own entry, so devices never overwrite each other. Removing = hide:true.
+  function teamRaw() { var a = lsGet(TKEY, []); return Array.isArray(a) ? a : []; }
+  function teamHidden() {
+    var vis = {}, hid = {};
+    teamRaw().forEach(function (e) { if (!e || !e.name) return; if (e.hide) hid[e.name] = 1; else vis[e.name] = 1; });
+    Object.keys(vis).forEach(function (n) { delete hid[n]; });
+    return hid;
+  }
+  function teamNames() {
+    var m = {}, out = [], hid = teamHidden();
+    function add(n) { n = String(n || '').trim(); if (n && !m[n] && !hid[n]) { m[n] = 1; out.push(n); } }
+    teamRaw().slice().sort(function (a, b) { return (a.at || a.ts || 0) - (b.at || b.ts || 0); }).forEach(function (e) { if (e && !e.hide) add(e.name); });
+    (S.staff || []).forEach(add);
+    return out;
+  }
+  function teamPut(id, name, hide) {
+    var a = teamRaw(), e = null;
+    for (var i = 0; i < a.length; i++) if (a[i].id === id) { e = a[i]; break; }
+    if (e && e.name === name && !!e.hide === !!hide) return false;
+    if (!e) { e = { id: id, at: Date.now() }; a.push(e); }
+    e.name = name; e.ts = Date.now(); if (hide) e.hide = true; else delete e.hide;
+    lsSet(TKEY, a);
     return true;
+  }
+  function teamAdd(n) {
+    n = String(n || '').trim().slice(0, 30); if (!n) return false;
+    if (teamRaw().some(function (e) { return e.name === n && !e.hide; })) return false;
+    return teamPut('n:' + n, n, false);
+  }
+  function teamRemove(n) {
+    var a = teamRaw(), any = false;
+    a.forEach(function (e) { if (e.name === n) { teamPut(e.id, n, true); any = true; } });
+    if (!any) teamPut('n:' + n, n, true);
+    if ((S.staff || []).indexOf(n) >= 0) { S.staff = S.staff.filter(function (x) { return x !== n; }); lsSet(SKEY, S); }
+    toast('เอา ' + n + ' ออกจากรายชื่อทีมงานแล้ว');
+  }
+  // this device's own entry: added on join / when the name is set, renamed when the name changes
+  function ensureStaff() {
+    var n = meRaw(); if (!n) return false;
+    var mine = teamRaw().filter(function (e) { return e.id === devId(); })[0];
+    if (mine && mine.hide && mine.name === n) return false;
+    return teamPut(devId(), n, false);
+  }
+  function migrateTeam() {
+    var have = {}; teamRaw().forEach(function (e) { have[e.name] = 1; });
+    (S.staff || []).forEach(function (n) { if (n && !have[n]) { teamPut('n:' + n, n, false); have[n] = 1; } });
   }
   function askMyName() {
     openModal('👋 คุณชื่ออะไร', 'ใส่ชื่อของคุณ ชื่อนี้จะเข้าไปอยู่ในรายชื่อทีมงานของร้านทันที เวลามีคนเลือกคุณในงาน งานนั้นจะขึ้นใน "งานของฉัน"', true, '', 'บันทึกชื่อ', function (v) {
@@ -5385,7 +5428,8 @@
   }
   setTimeout(function () {
     if (syncOn() && !meRaw() && $('joinModal').hidden && $('modal').hidden) askMyName();
-    else if (syncOn() && meRaw()) syncNow({ pull: true }).then(function () { if (syncState === 'ok' || syncState === 'pending') ensureStaff(meRaw()); });
+    else if (syncOn()) syncNow({ pull: true }).then(function () { if (syncState === 'ok' || syncState === 'pending') { migrateTeam(); ensureStaff(); refreshPages(); } });
+    else { migrateTeam(); ensureStaff(); }
   }, 2500);
 
   // ================= device type (full / view-only) =================
@@ -5838,7 +5882,7 @@
   window.__billPro = { renderCanvas: renderCanvas, S: function () { return S; }, state: function () { return state; },
     sheetHTML: sheetHTML, applySheetVars: applySheetVars, fitA4: fitA4,
     goPage: goPage, jobs: jobs, jobMoney: jobMoney, openJob: openJob, openPay: openPay,
-    mergeSettings: mergeSettings, syncNow: syncNow, sync: function () { return { state: syncState, err: syncErr, SY: SY }; },
+    mergeSettings: mergeSettings, teamNames: teamNames, staffNames: staffNames, syncNow: syncNow, sync: function () { return { state: syncState, err: syncErr, SY: SY }; },
     delivOf: delivOf, openMsg: openMsg, confetti: confetti, quickISO: quickISO, openCust: openCust, viewOnly: viewOnly, yearReport: yearReport, reportCSV: reportCSV, openSearch: openSearch, openSettings: openSettings, setMe: setMe, merge3: merge3 };
 })();
 </script>
