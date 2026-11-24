@@ -1131,6 +1131,34 @@
   .btn.line:hover { filter: brightness(1.05); }
   #msgText { min-height: 200px; line-height: 1.6; }
 
+  /* ===== customer history ===== */
+  .cu-head { display: flex; gap: 14px; align-items: center; }
+  .cu-av { width: 52px; height: 52px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.4rem; font-weight: 600; background: rgba(139,92,246,.15); color: #7048c6; }
+  .cu-id { min-width: 0; display: grid; gap: 2px; }
+  .cu-id b { font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; overflow-wrap: anywhere; }
+  .cu-id span { font-size: 0.85rem; color: var(--muted); overflow-wrap: anywhere; }
+  .cu-id a { color: #2f7bf6; }
+  .cu-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+  .cu-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .cu-stats div { background: var(--field); border-radius: 10px; padding: 8px 10px; display: grid; }
+  .cu-stats small { font-size: 0.72rem; color: var(--muted); }
+  .cu-stats b { font-family: var(--font-display); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .cu-sec { font-family: var(--font-display); font-size: 0.85rem; color: var(--muted); display: flex; justify-content: space-between; margin-top: 4px; }
+  .cust-link { font: inherit; font-size: 0.8rem; color: #7048c6; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+  .cust-link:hover { text-decoration: underline; }
+  /* ===== view-only devices ===== */
+  body.viewonly .nav-btn[data-go="bill"], body.viewonly .nav-btn[data-go="report"], body.viewonly .home-acts, body.viewonly #jobsNew,
+  body.viewonly #homeImport, body.viewonly .home-grid > section:nth-child(2), body.viewonly #homeStats .stat:nth-child(n+3),
+  body.viewonly [data-newjob], body.viewonly [data-newday] { display: none !important; }
+  body.viewonly .home-grid { grid-template-columns: minmax(0, 1fr); }
+  body.viewonly #homeStats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ro #jDocs, .ro .sec-money, .ro #jMsgs, .ro .sec-msg, .ro #jSave, .ro #jDel, .ro .staff-chip.add, .ro #jStaff + .hint { display: none !important; }
+  .ro .field:has(#j_price) { display: none !important; }
+  .ro input:disabled::placeholder, .ro textarea:disabled::placeholder { color: transparent; -webkit-text-fill-color: transparent; }
+  .ro input:disabled, .ro textarea:disabled { opacity: 1; color: var(--fg); -webkit-text-fill-color: var(--fg); }
+  .ro .seg button, .ro .staff-chip { pointer-events: none; }
+  .vo-badge { font-size: 0.72rem; padding: 3px 8px; border-radius: 6px; background: rgba(47,123,246,.12); color: #1c64d6; border: 1px solid rgba(47,123,246,.3); white-space: nowrap; }
+
   /* print */
   #printRoot { display: none; }
   @media print {
@@ -1521,7 +1549,7 @@
       </div>
       <div class="field"><label for="j_evVenue">สถานที่</label><textarea id="j_evVenue" rows="2" placeholder="เช่น โรงแรม... ห้องบอลรูม ชั้น 2"></textarea></div>
       <div class="job-sec">ลูกค้า</div>
-      <div class="field"><label for="j_cName">ชื่อลูกค้า / บริษัท</label><input id="j_cName" type="text" list="custList" autocomplete="off" placeholder="เช่น คุณสมชาย ใจดี"></div>
+      <div class="field"><label for="j_cName">ชื่อลูกค้า / บริษัท</label><input id="j_cName" type="text" list="custList" autocomplete="off" placeholder="เช่น คุณสมชาย ใจดี"><div id="jCustHint"></div></div>
       <div class="grid2">
         <div class="field"><label for="j_cPhone">เบอร์โทร</label><input id="j_cPhone" type="tel" inputmode="tel" autocomplete="off" placeholder="08x xxx xxxx"></div>
         <div class="field"><label for="j_price">ราคาที่ตกลง (บาท)</label><input id="j_price" class="num" type="text" inputmode="decimal" autocomplete="off" placeholder="ใช้ยอดจากบิล"></div>
@@ -1538,14 +1566,14 @@
         <div class="field"><label for="j_dvDue">กำหนดส่ง</label><input id="j_dvDue" type="date"></div>
         <div class="field"><label for="j_dvLink">ลิงก์รูป (ถ้ามี)</label><input id="j_dvLink" type="url" inputmode="url" autocomplete="off" placeholder="เช่น ลิงก์ Google Drive"></div>
       </div>
-      <div class="job-sec">ส่งข้อความถึงลูกค้า</div>
+      <div class="job-sec sec-msg">ส่งข้อความถึงลูกค้า</div>
       <div class="msg-btns" id="jMsgs">
         <button type="button" class="btn" data-msg="confirm">📅 ยืนยันนัด</button>
         <button type="button" class="btn" data-msg="due">💰 แจ้งยอดคงเหลือ</button>
         <button type="button" class="btn" data-msg="photos">📷 ส่งลิงก์รูป</button>
         <button type="button" class="btn" data-msg="thanks">🙏 ขอบคุณ</button>
       </div>
-      <div class="job-sec">การเงินและเอกสาร</div>
+      <div class="job-sec sec-money">การเงินและเอกสาร</div>
       <div id="jDocs" style="display:grid;gap:10px"></div>
       <div class="err-msg" id="jErr" hidden></div>
     </div>
@@ -1585,6 +1613,13 @@
   </div>
 </div>
 
+<div class="hist-modal" id="custModal" hidden>
+  <div class="hist-sheet job-sheet" role="dialog" aria-modal="true" aria-labelledby="custTitle">
+    <div class="hist-sheet-head"><h3 id="custTitle">ประวัติลูกค้า</h3><button class="mini" id="custClose" type="button">ปิด</button></div>
+    <div class="job-body" id="custBody" style="padding-bottom:16px"></div>
+  </div>
+</div>
+
 <div class="hist-modal" id="msgModal" hidden>
   <div class="hist-sheet job-sheet" role="dialog" aria-modal="true" aria-labelledby="msgTitle">
     <div class="hist-sheet-head"><h3 id="msgTitle">ส่งข้อความถึงลูกค้า</h3><button class="mini" id="msgClose" type="button">ปิด</button></div>
@@ -1610,10 +1645,12 @@
   <div class="hist-sheet" role="dialog" aria-modal="true" aria-labelledby="lockTitle">
     <div class="hist-sheet-head"><h3 id="lockTitle">หน้าตั้งค่าถูกล็อก</h3><button class="mini" id="lockClose" type="button">ปิด</button></div>
     <div class="job-body" style="padding-bottom:16px">
-      <p class="set-note">ใส่ PIN เจ้าของร้านเพื่อเข้าหน้าตั้งค่า</p>
-      <div class="field"><label for="lockPin">PIN เจ้าของร้าน</label><input id="lockPin" class="pin-in" type="password" inputmode="numeric" autocomplete="off"></div>
-      <div class="err-msg" id="lockErr" hidden></div>
-      <button class="btn primary" id="lockGo" type="button">ปลดล็อก</button>
+      <p class="set-note" id="lockNote">ใส่ PIN เจ้าของร้านเพื่อเข้าหน้าตั้งค่า</p>
+      <div id="lockPinBox" style="display:grid;gap:12px">
+        <div class="field"><label for="lockPin">PIN เจ้าของร้าน</label><input id="lockPin" class="pin-in" type="password" inputmode="numeric" autocomplete="off"></div>
+        <div class="err-msg" id="lockErr" hidden></div>
+        <button class="btn primary" id="lockGo" type="button">ปลดล็อก</button>
+      </div>
       <div class="job-sec">สำหรับพนักงาน (ไม่ต้องใช้ PIN)</div>
       <div class="field"><label for="lockMe">ชื่อของคุณในเครื่องนี้</label><input id="lockMe" type="text" autocomplete="off" placeholder="เช่น พี่โอ, น้องเบล"><div class="hint">ใช้แสดงว่าใครเพิ่มหรือแก้งาน และใช้กับปุ่ม "งานของฉัน" · บันทึกอัตโนมัติ</div></div>
       <div class="btnrow" style="margin:0"><button class="btn" type="button" data-pastelink="1">วางลิงก์เข้าร่วมร้านใหม่</button></div>
@@ -2687,6 +2724,7 @@
       if (!modal.hidden) closeModal(mIsText ? null : false);
       else if (!$('searchModal').hidden) closeSearch();
       else if (!$('msgModal').hidden) closeMsg();
+      else if (!$('custModal').hidden) closeCust();
       else if (!$('lockModal').hidden) closeLock();
       else if (!$('shareModal').hidden) closeShare();
       else if (!$('histModal').hidden) closeHist();
@@ -3124,7 +3162,7 @@
       }
     }, full ? 0 : 150);
   }
-  function openSettings() { if (unlocked()) openSettingsNow(); else openLock(openSettingsNow); }
+  function openSettings() { if (viewOnly()) { openLock(openSettingsNow); return; } if (unlocked()) openSettingsNow(); else openLock(openSettingsNow); }
   function openSettingsNow() {
     renderSettings();
     $('settings').hidden = false; document.body.style.overflow = 'hidden';
@@ -3558,7 +3596,7 @@
   function jc(text, tone) { return '<span class="jc' + (tone ? ' ' + tone : '') + '">' + esc(text) + '</span>'; }
   function jobChips(j, m) {
     var st = jstat(j.status), out = jc(st[1], st[2]);
-    if (j.status === 'cancel') return out;
+    if (j.status === 'cancel' || viewOnly()) return out;
     var docs = {};
     m.bills.forEach(function (h) { docs[h.docType] = (docs[h.docType] || 0) + 1; });
     S.docs.forEach(function (d) { if (docs[d.id]) out += jc('✓ ' + d.th + (docs[d.id] > 1 ? ' ×' + docs[d.id] : ''), 'ok'); });
@@ -3573,13 +3611,13 @@
     var m = jobMoney(j), p = isoParts(j.evDate), d = dayDiff(j.evDate);
     var dt = p ? new Date(p.y, p.m - 1, p.d) : null;
     var sub = [eventTime(j), String(j.evVenue || '').split('\n')[0]].filter(Boolean).join(' · ');
-    var amt = opt && opt.due ? m.due : m.total;
+    var amt = viewOnly() ? 0 : opt && opt.due ? m.due : m.total;
     return '<button type="button" class="job-row' + (j.status === 'cancel' ? ' cancel' : '') + '" ' + (opt && opt.due ? 'data-payjob' : 'data-job') + '="' + esc(j.id) + '">' +
       '<div class="job-date' + (d === 0 ? ' today' : '') + '">' + (p ? '<small>' + ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'][dt.getDay()] + '.</small><b>' + p.d + '</b><small>' + MSHORT[p.m - 1] + '</small>' : '<b>–</b><small>ไม่มีวัน</small>') + '</div>' +
       '<div class="job-main"><div class="job-t">' + esc(jobName(j)) + (j.title && j.cName ? ' · ' + esc(j.cName) : '') + '</div>' +
         (sub ? '<div class="job-sub">' + esc(sub) + '</div>' : '') +
         '<div class="job-chips">' + unseenChip(j.id) + staffChip(j) + delivChip(j) + jobChips(j, m) + '</div></div>' +
-      '<div class="job-amt">' + (amt ? '฿' + money(amt) : '<span class="muted">–</span>') +
+      '<div class="job-amt">' + (amt ? '฿' + money(amt) : viewOnly() ? '' : '<span class="muted">–</span>') +
         '<small class="' + (d != null && d >= 0 && d <= 7 && j.status !== 'cancel' && j.status !== 'done' ? 'soon' : '') + '">' + (opt && opt.due ? 'ค้างรับ' : whenText(d)) + '</small></div>' +
     '</button>';
   }
@@ -3587,7 +3625,7 @@
   // ---------- pages ----------
   var PAGES = ['home', 'jobs', 'bill', 'report'], page = 'home';
   function goPage(p) {
-    if (PAGES.indexOf(p) < 0) p = 'home';
+    if (PAGES.indexOf(p) < 0 || (viewOnly() && (p === 'bill' || p === 'report'))) p = 'home';
     page = p;
     document.body.setAttribute('data-page', p);
     $('pageHome').hidden = p !== 'home';
@@ -3607,7 +3645,7 @@
     var b = e.target.closest('[data-go]');
     if (b) { goPage(b.getAttribute('data-go')); return; }
     var r = e.target.closest('[data-job]');
-    if (r && !e.target.closest('#jobModal')) openJob(r.getAttribute('data-job'));
+    if (r && !e.target.closest('#jobModal') && !e.target.closest('#custModal')) openJob(r.getAttribute('data-job'));
   });
   function updateNavDot() {
     var u = unseen().length;
@@ -3799,18 +3837,23 @@
   var JF = ['title', 'evDate', 'evStart', 'evEnd', 'evVenue', 'cName', 'cPhone', 'price', 'cAddr', 'note'];
   var jEdit = null;
   function openJob(id, preset) {
+    if (!id && viewOnly()) { toast('เครื่องนี้ใช้ดูตารางอย่างเดียว เพิ่มงานไม่ได้'); return; }
     var j = id ? jobById(id) : null;
     j = j ? clone(j) : { id: '', title: '', status: 'booked', staff: [], cName: '', cAddr: '', cPhone: '', cTax: '', evDate: '', evStart: '', evEnd: '', evVenue: '', price: '', note: '' };
     if (preset) Object.keys(preset).forEach(function (k) { j[k] = preset[k]; });
     jEdit = j;
     if (j.id && unseenOf(j.id)) markSeen(j.id);
-    $('jobTitleH').textContent = j.id ? 'รายละเอียดงาน' : 'งานใหม่';
+    var ro = viewOnly();
+    $('jobTitleH').textContent = ro ? 'รายละเอียดงาน (ดูอย่างเดียว)' : j.id ? 'รายละเอียดงาน' : 'งานใหม่';
+    $('jobModal').classList.toggle('ro', ro);
+    JF.concat(['dvDue', 'dvLink']).forEach(function (k) { $('j_' + k).disabled = ro; });
+    $('jCancel').textContent = ro ? 'ปิด' : 'ยกเลิก';
     JF.forEach(function (k) { $('j_' + k).value = j[k] || ''; });
     $('svcList').innerHTML = S.services.map(function (s) { return '<option value="' + esc(s.name) + '">'; }).join('');
     $('jErr').hidden = true;
     $('jDel').hidden = !j.id;
     $('j_dvDue').value = (j.deliv && j.deliv.due) || ''; $('j_dvLink').value = (j.deliv && j.deliv.link) || '';
-    renderJStatus(); renderJStaff(); renderJDeliv(); updJobHint(); renderJDocs();
+    renderJStatus(); renderJStaff(); renderJDeliv(); updJobHint(); updCustHint(); renderJDocs();
     jSnap = jobSnap();
     $('jobModal').hidden = false; document.body.style.overflow = 'hidden';
     $('jobBody').scrollTop = 0;
@@ -3827,7 +3870,7 @@
   function renderJStatus() {
     $('jStatus').innerHTML = JSTAT.map(function (s) { return '<button type="button" data-st="' + s[0] + '" aria-pressed="' + (jEdit.status === s[0]) + '">' + s[1] + '</button>'; }).join('');
   }
-  $('jStatus').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; jEdit.status = b.getAttribute('data-st'); renderJStatus(); });
+  $('jStatus').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b || viewOnly()) return; jEdit.status = b.getAttribute('data-st'); renderJStatus(); });
   function updJobHint() {
     var v = $('j_evDate').value, d = dayDiff(v);
     $('jDateHint').textContent = v ? eventDate(v, false) + ' · ' + whenText(d) : 'ยังไม่ระบุวัน';
@@ -3839,6 +3882,7 @@
     }).join('<br>');
   }
   ['j_evDate', 'j_cName'].forEach(function (id) { $(id).addEventListener('input', updJobHint); });
+  $('j_cName').addEventListener('input', updCustHint);
   ['j_evDate', 'j_dvDue', 'j_dvLink'].forEach(function (id) { $(id).addEventListener('input', function () { if (jEdit) renderJDeliv(); }); });
   $('j_cName').addEventListener('change', function () {
     var c = custs()[custIndex(this.value)];
@@ -3880,6 +3924,7 @@
   // ---------- payment window (money only) ----------
   var payId = null;
   function openPay(id) {
+    if (viewOnly()) return;
     var j = jobById(id);
     if (!j) return;
     payId = id;
@@ -3993,6 +4038,7 @@
   }
   function refreshPages() { if (page === 'home') renderHome(); if (page === 'jobs') renderJobs(); if (page === 'report') renderReport(); if (page === 'bill') { renderJobSel(); updateEvHint(); } updateNavDot(); }
   $('jSave').addEventListener('click', function () {
+    if (viewOnly()) return;
     var isNew = !jEdit.id, j = saveJob();
     if (!j) return;
     closeJob(); refreshPages();
@@ -4396,10 +4442,10 @@
       return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: salt, iterations: 310000, hash: 'SHA-256' }, k, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
     });
   }
-  function sealCfg(cfg, pass) {
+  function sealCfg(cfg, pass, role) {
     var salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
     return deriveKey(pass, salt).then(function (k) {
-      return crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, k, new TextEncoder().encode(JSON.stringify({ o: cfg.owner, r: cfg.repo, t: cfg.token })));
+      return crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, k, new TextEncoder().encode(JSON.stringify(role === 'view' ? { o: cfg.owner, r: cfg.repo, t: cfg.token, v: 1 } : { o: cfg.owner, r: cfg.repo, t: cfg.token })));
     }).then(function (ct) {
       var c = new Uint8Array(ct), out = new Uint8Array(29 + c.length);
       out[0] = 1; out.set(salt, 1); out.set(iv, 17); out.set(c, 29);
@@ -4411,13 +4457,17 @@
     if (u[0] !== 1 || u.length < 45) return Promise.reject(new Error('bad link'));
     return deriveKey(pass, u.slice(1, 17)).then(function (k) {
       return crypto.subtle.decrypt({ name: 'AES-GCM', iv: u.slice(17, 29) }, k, u.slice(29));
-    }).then(function (pt) { var o = JSON.parse(new TextDecoder().decode(pt)); return { owner: o.o, repo: o.r, token: o.t }; });
+    }).then(function (pt) { var o = JSON.parse(new TextDecoder().decode(pt)); return { owner: o.o, repo: o.r, token: o.t, role: o.v ? 'view' : 'full' }; });
   }
   function canCrypto() { return !!(window.crypto && crypto.subtle && window.TextEncoder); }
+  var devRoleSel = 'full';
   function openDevice() {
+    devRoleSel = 'full';
     if (!syncOn()) { toast('เชื่อม GitHub ในเครื่องนี้ก่อน'); return; }
     if (!canCrypto()) { toast('เบราว์เซอร์นี้สร้างลิงก์ไม่ได้ ลองเปิดผ่านเว็บ https'); return; }
     $('devBody').innerHTML =
+      '<div class="field"><span class="lbl">เครื่องนี้ใช้ทำอะไร</span><div class="seg" id="devRole" role="group" aria-label="ประเภทเครื่อง" style="--n:2"><button type="button" data-role="full" aria-pressed="true">ใช้งานเต็ม</button><button type="button" data-role="view" aria-pressed="false">ดูตารางอย่างเดียว</button></div>' +
+        '<div class="hint" id="devRoleHint">เพิ่มงาน ออกบิล รับเงิน และเห็นยอดเงินได้ทั้งหมด</div></div>' +
       '<p class="set-note">ตั้ง <b>รหัสผ่านร้าน</b> อย่างน้อย 8 ตัว เครื่องใหม่ต้องพิมพ์รหัสนี้ครั้งเดียวตอนเปิดลิงก์ จดไว้ให้ดี ระบบไม่เก็บรหัสนี้ไว้ที่ไหนเลย</p>' +
       '<div class="field"><label for="devPass">รหัสผ่านร้าน</label><input id="devPass" type="password" autocomplete="new-password"></div>' +
       '<div class="field"><label for="devPass2">พิมพ์อีกครั้ง</label><input id="devPass2" type="password" autocomplete="new-password"></div>' +
@@ -4433,12 +4483,14 @@
     if (p.length < 8) { fail('รหัสผ่านร้านต้องยาวอย่างน้อย 8 ตัว'); return; }
     if (p !== p2) { fail('รหัสผ่านสองช่องไม่ตรงกัน'); return; }
     err.hidden = true; btn.disabled = true; btn.textContent = 'กำลังสร้าง…';
-    sealCfg(SY.cfg, p).then(function (blob) {
+    var role = devRoleSel;
+    sealCfg(SY.cfg, p, role).then(function (blob) {
       var base = /^https?:$/.test(location.protocol) ? location.origin + location.pathname : WEB_STUDIO;
       var link = base + '#join=' + blob, qr = '';
       if (window.qrcode) { try { var q = qrcode(0, 'M'); q.addData(link); q.make(); qr = q.createSvgTag(4, 0); } catch (e) { qr = ''; } }
       $('devBody').innerHTML =
         (qr ? '<div class="dev-qr" id="devQr">' + qr + '</div><p class="set-note center"><b>มือถือ</b> เปิดกล้องแล้วสแกน QR · <b>คอม</b> คัดลอกลิงก์ส่งให้ตัวเอง แล้วเปิดในเครื่องนั้น</p>' : '<p class="set-note">คัดลอกลิงก์ส่งให้ตัวเอง แล้วเปิดในเครื่องใหม่</p>') +
+        '<p class="set-note center"><span class="vo-badge">' + (role === 'view' ? 'ลิงก์สำหรับเครื่องดูตารางอย่างเดียว' : 'ลิงก์สำหรับเครื่องใช้งานเต็ม') + '</span></p>' +
         '<div class="field"><label for="devLink">ลิงก์เพิ่มเครื่อง</label><input id="devLink" class="dev-link" type="text" readonly value="' + esc(link) + '"></div>' +
         '<div class="btnrow"><button class="btn primary" type="button" id="devCopy">คัดลอกลิงก์</button>' + (navigator.share ? '<button class="btn" type="button" id="devShare">ส่งต่อ</button>' : '') + '</div>' +
         '<p class="set-note">เครื่องใหม่เปิดลิงก์แล้วพิมพ์รหัสผ่านร้านครั้งเดียวก็ใช้ได้ ลิงก์นี้ใช้ได้จนรหัส GitHub หมดอายุ ถ้าเปลี่ยนรหัส GitHub ให้สร้างลิงก์ใหม่ · อย่าส่งลิงก์กับรหัสผ่านร้านไว้ในที่เดียวกัน</p>';
@@ -4447,6 +4499,11 @@
   $('devBody').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
     if (b.id === 'devMake') makeDevice();
+    if (b.hasAttribute('data-role')) {
+      devRoleSel = b.getAttribute('data-role');
+      Array.prototype.forEach.call($('devRole').children, function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      $('devRoleHint').textContent = devRoleSel === 'view' ? 'เห็นตารางงาน ปฏิทิน และงานของตัวเอง ไม่เห็นยอดเงินและบิล และแก้หรือลบงานไม่ได้' : 'เพิ่มงาน ออกบิล รับเงิน และเห็นยอดเงินได้ทั้งหมด';
+    }
     if (b.id === 'devCopy') copyText($('devLink').value).then(function (ok) { toast(ok === false ? 'คัดลอกไม่ได้ กดค้างที่ลิงก์แล้วคัดลอกเอง' : 'คัดลอกลิงก์แล้ว'); });
     if (b.id === 'devShare') navigator.share({ title: 'เพิ่มเครื่อง ' + S.company.name + ' Studio', url: $('devLink').value }).catch(function () {});
   });
@@ -4469,10 +4526,11 @@
     if (!canCrypto()) { fail('เบราว์เซอร์นี้เปิดลิงก์ไม่ได้ ลองเปิดด้วย Chrome หรือ Safari'); return; }
     err.hidden = true; btn.disabled = true; btn.textContent = 'กำลังเชื่อม…';
     openCfg(joinBlob, p).then(function (cfg) {
+      var role = cfg.role; delete cfg.role;
       return connectCfg(cfg).then(function (msg) {
         if (msg) { fail(msg); return; }
         if ($('joinName').value.trim()) setMe($('joinName').value);
-        var dv = devInfo(); dv.join = joinBlob; rawSet(DKEY, dv);
+        var dv = devInfo(); dv.join = joinBlob; dv.role = role === 'view' ? 'view' : 'full'; rawSet(DKEY, dv); applyRole();
         if (!$('settings').hidden) { $('settings').hidden = true; }
         joinBlob = null; closeJoin(); goPage('home');
         btn.disabled = false; btn.textContent = 'เชื่อมต่อ';
@@ -4567,6 +4625,7 @@
       if (!kind) return;
       var prev = null;
       list = list.filter(function (x) { if (x.id === j.id) { prev = x; return false; } return true; });
+      if (kind === 'paid' && viewOnly()) kind = 'edit';
       if (kind === 'edit' && o && (j.deliv || {}).stage === 'sent' && (o.deliv || {}).stage !== 'sent') kind = 'sent';
       if (prev && prev.kind === 'new' && kind === 'edit') kind = 'new';
       var me2 = meRaw();
@@ -4643,6 +4702,11 @@
   function openLock(cb) {
     lockCb = cb;
     $('lockPin').value = ''; $('lockErr').hidden = true; $('lockMe').value = meRaw();
+    var vo = viewOnly();
+    $('lockTitle').textContent = vo ? 'เครื่องนี้ใช้ดูตารางอย่างเดียว' : 'หน้าตั้งค่าถูกล็อก';
+    $('lockNote').textContent = vo ? (lockOn() ? 'เจ้าของร้านใส่ PIN เพื่อเปลี่ยนเครื่องนี้เป็นเครื่องใช้งานเต็ม' : 'ถ้าต้องการใช้งานเต็ม ให้เจ้าของร้านสร้างลิงก์แบบ "ใช้งานเต็ม" แล้ววางลิงก์ใหม่ด้านล่าง') : 'ใส่ PIN เจ้าของร้านเพื่อเข้าหน้าตั้งค่า';
+    $('lockPinBox').hidden = vo && !lockOn();
+    $('lockPinBox').style.display = $('lockPinBox').hidden ? 'none' : 'grid';
     $('lockForgot').innerHTML = 'ลืม PIN? เจ้าของร้านเปิดไฟล์ <code>data/settings.json</code> ' +
       (syncOn() ? 'ใน <a href="https://github.com/' + esc(SY.cfg.owner) + '/' + esc(SY.cfg.repo) + '/blob/HEAD/data/settings.json" target="_blank" rel="noopener">repo บน GitHub</a>' : 'ใน repo บน GitHub') +
       ' กดแก้ไข แล้วลบส่วน <code>"lock"</code> ออก';
@@ -4655,6 +4719,7 @@
     if (Date.now() < lockWait) { err.textContent = 'ใส่ผิดหลายครั้ง รออีก ' + Math.ceil((lockWait - Date.now()) / 1000) + ' วินาที'; err.hidden = false; return; }
     if (checkPin($('lockPin').value)) {
       lockFails = 0; unlockUntil = Date.now() + 10 * 60000;
+      if (viewOnly()) { var dv0 = devInfo(); dv0.role = 'full'; rawSet(DKEY, dv0); applyRole(); toast('เปลี่ยนเครื่องนี้เป็นเครื่องใช้งานเต็มแล้ว'); }
       var cb = lockCb; closeLock(); if (cb) cb();
       return;
     }
@@ -4791,6 +4856,7 @@
     }).join('') + '<button type="button" class="staff-chip add" data-staffadd="1">+ เพิ่มชื่อ</button>';
   }
   $('jStaff').addEventListener('click', function (e) {
+    if (viewOnly()) return;
     var b = e.target.closest('[data-staff]');
     if (b) {
       var n = b.getAttribute('data-staff'), a = (jEdit.staff || []).slice(), i = a.indexOf(n);
@@ -4861,7 +4927,7 @@
     $('jDelivHint').innerHTML = h;
   }
   $('jDeliv').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-dv]'); if (!b || !jEdit) return;
+    var b = e.target.closest('[data-dv]'); if (!b || !jEdit || viewOnly()) return;
     var dv = clone(jEdit.deliv || {}), st = b.getAttribute('data-dv');
     dv.stage = st;
     if (st === 'sent') { dv.sentAt = todayISO(); dv.sentBy = meName(); } else { delete dv.sentAt; delete dv.sentBy; }
@@ -4875,6 +4941,97 @@
   }
   $('homeDelivAll').addEventListener('click', showDeliv);
   $('homeDeliv').addEventListener('click', function (e) { if (e.target.closest('#homeDelivMore')) showDeliv(); });
+
+  // ================= device type (full / view-only) =================
+  function viewOnly() { var d = lsGet(DKEY, null); return !!(d && d.role === 'view'); }
+  function applyRole() {
+    var vo = viewOnly();
+    document.body.classList.toggle('viewonly', vo);
+    if (vo && (page === 'bill' || page === 'report')) goPage('home'); else refreshPages();
+  }
+
+  // ================= customer history =================
+  function custKey(n) { return String(n || '').trim().replace(/^(คุณ|นาย|นางสาว|นาง|น\.ส\.)\s*/, '').replace(/\s+/g, ' ').toLowerCase(); }
+  function custList() {
+    var map = {}, out = [];
+    function get(name, phone) {
+      var k = custKey(name); if (!k) return null;
+      if (!map[k]) { map[k] = { name: String(name).trim(), phone: '', addr: '', tax: '', jobs: [], bills: [], last: '' }; out.push(map[k]); }
+      if (!map[k].phone && phone) map[k].phone = phone;
+      if (/^(คุณ|นาย|นาง|น\.ส\.)/.test(String(name).trim()) && !/^(คุณ|นาย|นาง|น\.ส\.)/.test(map[k].name)) map[k].name = String(name).trim();
+      return map[k];
+    }
+    custs().forEach(function (c) { var o = get(c.name, c.phone); if (o) { o.addr = o.addr || c.addr || ''; o.tax = o.tax || c.tax || ''; o.saved = true; } });
+    jobs().forEach(function (j) { var o = get(j.cName, j.cPhone); if (!o) return; o.jobs.push(j); o.addr = o.addr || j.cAddr || ''; if ((j.evDate || '') > o.last) o.last = j.evDate; });
+    hist().forEach(function (h) { var o = get(h.cName, h.cPhone); if (!o) return; o.bills.push(h); if (!o.addr && h.state) o.addr = h.state.cAddr || ''; if ((h.date || '') > o.last) o.last = h.date; });
+    return out;
+  }
+  function custOf(name) { var k = custKey(name), all = custList(); for (var i = 0; i < all.length; i++) if (custKey(all[i].name) === k) return all[i]; return null; }
+  function updCustHint() {
+    var el = $('jCustHint'), name = $('j_cName').value, c = name.trim() ? custOf(name) : null;
+    var others = c ? c.jobs.filter(function (j) { return !jEdit || j.id !== jEdit.id; }).length : 0;
+    var nb = viewOnly() || !c ? 0 : c.bills.length;
+    el.innerHTML = c && (others || nb) ? '<button type="button" class="cust-link" data-cust="' + esc(c.name) + '">ลูกค้าเก่า · ' + (others ? 'มีงานอื่นอีก ' + others + ' งาน' : 'มีบิล ' + nb + ' ใบ') + ' · ดูประวัติลูกค้า ›</button>' : '';
+  }
+  var custName = null;
+  function openCust(name) {
+    var c = custOf(name);
+    if (!c) { toast('ไม่พบข้อมูลลูกค้านี้'); return; }
+    custName = c.name; renderCust();
+    $('custModal').hidden = false; document.body.style.overflow = 'hidden';
+    $('custBody').scrollTop = 0;
+  }
+  function closeCust() { $('custModal').hidden = true; custName = null; if ($('jobModal').hidden && $('settings').hidden) document.body.style.overflow = ''; }
+  function renderCust() {
+    var c = custOf(custName); if (!c) { closeCust(); return; }
+    var vo = viewOnly(), live = c.jobs.filter(function (j) { return j.status !== 'cancel'; });
+    var total = 0, paid = 0, due = 0;
+    live.forEach(function (j) { var m = jobMoney(j); total += m.total; paid += m.paid; if (j.status !== 'tentative') due += m.due; });
+    var dates = c.jobs.map(function (j) { return j.evDate; }).concat(c.bills.map(function (h) { return h.date; })).filter(Boolean).sort();
+    var phone = String(c.phone || '').replace(/[^\d+]/g, ''), tags = '';
+    if (live.length >= 2) tags += jc('ลูกค้าประจำ · ' + live.length + ' งาน', 'ok');
+    if (!vo && due > 0) tags += jc('ค้างชำระ ฿' + money(r2(due)), 'warn');
+    var up = live.filter(function (j) { return j.evDate && dayDiff(j.evDate) >= 0; }).length;
+    if (up) tags += jc('มีงานที่กำลังจะถึง ' + up, 'wait');
+    var html = '<div class="cu-head"><span class="cu-av">' + esc(c.name.replace(/^(คุณ|นาย|นางสาว|นาง|บริษัท)\s*/, '').slice(0, 1) || '?') + '</span><div class="cu-id"><b>' + esc(c.name) + '</b>' +
+      (phone ? '<span>โทร <a href="tel:' + esc(phone) + '">' + esc(c.phone) + '</a></span>' : '') +
+      (c.addr ? '<span>' + esc(String(c.addr).split('\n').join(' ')) + '</span>' : '') +
+      (!vo && c.tax ? '<span>เลขผู้เสียภาษี ' + esc(c.tax) + '</span>' : '') +
+      (tags ? '<div class="cu-tags">' + tags + '</div>' : '') + '</div></div>';
+    html += '<div class="cu-stats">' +
+      '<div><small>งานทั้งหมด</small><b>' + live.length + (c.jobs.length > live.length ? ' <small>(ยกเลิก ' + (c.jobs.length - live.length) + ')</small>' : '') + '</b></div>' +
+      '<div><small>ลูกค้าตั้งแต่</small><b>' + (dates[0] ? thaiShort(dates[0]) : '–') + '</b></div>' +
+      (vo ? '' : '<div><small>ยอดใช้บริการรวม</small><b>฿' + money(r2(total)) + '</b></div><div><small>ชำระแล้ว</small><b style="color:#2b8a3e">฿' + money(r2(paid)) + '</b></div>') + '</div>';
+    var js = c.jobs.slice().sort(function (a, b) { return String(b.evDate || '9') < String(a.evDate || '9') ? -1 : 1; });
+    html += '<div class="cu-sec"><span>งานของลูกค้านี้</span><span>' + js.length + ' งาน</span></div>' +
+      (js.length ? '<div class="job-list">' + js.map(function (j) { return jobRow(j); }).join('') + '</div>' : '<div class="hint">ยังไม่มีงาน</div>');
+    if (!vo) {
+      var bs = c.bills.slice().sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+      html += '<div class="cu-sec"><span>บิลและเอกสาร</span><span>' + bs.length + ' ใบ</span></div>' +
+        (bs.length ? bs.slice(0, 20).map(function (h) {
+          var d = docById(h.docType) || { th: h.docType };
+          return '<button type="button" class="jbill" data-cbill="' + esc(h.id) + '"><span class="grow"><span>' + esc(d.th) + ' ' + esc(h.no) + '</span><small>ออกวันที่ ' + thaiShort(h.date) + (paidOf(h) ? ' · รับเงินแล้ว' : '') + '</small></span><b>฿' + money(num(h.grand)) + '</b></button>';
+        }).join('') : '<div class="hint">ยังไม่มีบิล</div>');
+      html += '<div class="btnrow" style="margin:0"><button class="btn primary" type="button" data-cnewjob="1">+ งานใหม่ให้ลูกค้านี้</button></div>';
+    }
+    $('custTitle').textContent = 'ประวัติลูกค้า';
+    $('custBody').innerHTML = html;
+  }
+  $('custClose').addEventListener('click', closeCust);
+  $('custModal').addEventListener('click', function (e) {
+    if (e.target === this) { closeCust(); return; }
+    var b = e.target.closest('[data-cbill]');
+    if (b) { var id = b.getAttribute('data-cbill'); closeCust(); if (!$('jobModal').hidden) closeJob(); openBillEntry(id); return; }
+    if (e.target.closest('[data-cnewjob]')) {
+      var c = custOf(custName); closeCust();
+      if (!$('jobModal').hidden) closeJob();
+      openJob(null, { cName: c.name, cPhone: c.phone || '', cAddr: c.addr || '', cTax: c.tax || '' });
+      return;
+    }
+    var r = e.target.closest('[data-job]');
+    if (r) { e.stopPropagation(); var jid = r.getAttribute('data-job'); closeCust(); if (!$('jobModal').hidden && jEdit && jEdit.id === jid) return; if (!$('jobModal').hidden) { if (jobDirty()) { toast('บันทึกหรือยกเลิกงานที่เปิดอยู่ก่อน'); return; } closeJob(); } openJob(jid); }
+  });
+  $('jCustHint').addEventListener('click', function (e) { var b = e.target.closest('[data-cust]'); if (b) openCust(b.getAttribute('data-cust')); });
 
   // ================= today & tomorrow at a glance =================
   function renderDay(all) {
@@ -4890,7 +5047,7 @@
         '<span class="day-time">' + esc(j.evStart || 'ทั้งวัน') + (j.evEnd ? '<small>ถึง ' + esc(j.evEnd) + '</small>' : '') + '</span>' +
         '<span class="day-main"><b>' + esc(jobName(j)) + (j.title && j.cName ? ' · ' + esc(j.cName) : '') + '</b>' +
         (sub ? '<small>' + esc(sub) + '</small>' : '') +
-        '<span class="job-chips">' + unseenChip(j.id) + (j.status === 'tentative' ? jc('รอยืนยัน', 'wait') : '') + (m.due > 0 ? jc('เก็บเงินหน้างาน ฿' + money(m.due), 'warn') : '') + '</span></span></button>';
+        '<span class="job-chips">' + unseenChip(j.id) + (j.status === 'tentative' ? jc('รอยืนยัน', 'wait') : '') + (m.due > 0 && !viewOnly() ? jc('เก็บเงินหน้างาน ฿' + money(m.due), 'warn') : '') + '</span></span></button>';
     }
     function col(label, iso, arr) {
       return '<div class="day-col"><h2>' + label + '<small>' + esc(eventDate(iso, false).replace(/^วัน/, '').replace(/ \d{4}$/, '')) + '</small><span class="n">' + (arr.length ? arr.length + ' งาน' : '') + '</span></h2>' +
@@ -4902,7 +5059,7 @@
     if (late) foot += '<button type="button" class="mini bad" data-daydeliv="1">📷 เลยกำหนดส่งรูป ' + late + ' งาน</button>';
     if (dueToday) foot += '<button type="button" class="mini warn" data-daydeliv="1">📷 ต้องส่งรูปวันนี้ ' + dueToday + ' งาน</button>';
     var conf = b.filter(function (j) { return j.cPhone || j.cName; }).length;
-    if (conf) foot += '<button type="button" class="mini" data-dayconfirm="1">📅 ส่งยืนยันนัดงานพรุ่งนี้ (' + conf + ')</button>';
+    if (conf && !viewOnly()) foot += '<button type="button" class="mini" data-dayconfirm="1">📅 ส่งยืนยันนัดงานพรุ่งนี้ (' + conf + ')</button>';
     $('homeDay').innerHTML = '<div class="day-cols">' + col('วันนี้', t0, a) + col('พรุ่งนี้', t1, b) + '</div>' + (foot ? '<div class="day-foot">' + foot + '</div>' : '');
   }
   $('homeDay').addEventListener('click', function (e) {
@@ -4981,6 +5138,7 @@
 
   // ================= new bills from other devices =================
   function noteBillChanges(oldArr, newArr) {
+    if (viewOnly()) return;
     var O = {}, me = devId(), list = unseen(), added = [];
     oldArr.forEach(function (h) { if (h && h.id) O[h.id] = 1; });
     newArr.forEach(function (h) {
@@ -5024,11 +5182,20 @@
   function closeSearch() { $('searchModal').hidden = true; if ($('settings').hidden) document.body.style.overflow = ''; }
   function renderSearch() {
     var q = $('sq').value.trim().toLowerCase(), qd = digitsOf(q), out = '', n = 0;
-    if (!q) { $('sRes').innerHTML = '<div class="list-empty">พิมพ์ชื่องาน ชื่อลูกค้า เบอร์โทร เลขที่บิล หรือสถานที่<br><small>ค้นได้ทั้งงาน บิล และลูกค้าในที่เดียว</small></div>'; return; }
+    if (!q) {
+      var top = custList().filter(function (c) { return c.jobs.length + c.bills.length > 0; })
+        .sort(function (a, b) { return (b.jobs.length - a.jobs.length) || (b.last > a.last ? 1 : -1); }).slice(0, 8);
+      $('sRes').innerHTML = '<div class="list-empty" style="padding:10px 8px 4px">พิมพ์ชื่องาน ชื่อลูกค้า เบอร์โทร เลขที่บิล หรือสถานที่</div>' +
+        (top.length ? '<div class="s-grp"><div class="s-h"><span>ลูกค้าประจำ</span><span>กดดูประวัติ</span></div>' + top.map(function (c) {
+          return '<button type="button" class="s-row" data-scust="' + esc(c.name) + '"><span class="s-ic cust">' + S_IC.cust + '</span><span class="grow"><b>' + esc(c.name) + '</b><small>' +
+            esc([c.phone, 'งาน ' + c.jobs.length, c.last ? 'ล่าสุด ' + thaiShort(c.last) : ''].filter(Boolean).join(' · ')) + '</small></span></button>';
+        }).join('') + '</div>' : '');
+      return;
+    }
     var all = jobs(), hs = hist();
     var js = all.filter(function (j) { return sHit(q, qd, [j.title, j.cName, j.cPhone, j.evVenue, j.note, (j.staff || []).join(' ')], j.cPhone); })
       .sort(function (a, b) { return String(a.evDate || '') < String(b.evDate || '') ? 1 : -1; });
-    var bs = hs.filter(function (h) { var d = docById(h.docType) || {}; return sHit(q, qd, [h.no, h.cName, h.cPhone, h.evVenue, d.th], h.cPhone); });
+    var bs = viewOnly() ? [] : hs.filter(function (h) { var d = docById(h.docType) || {}; return sHit(q, qd, [h.no, h.cName, h.cPhone, h.evVenue, d.th], h.cPhone); });
     var seen = {}, cs = [];
     function addC(name, phone) { name = String(name || '').trim(); if (!name) return; if (seen[name]) { if (!seen[name].phone && phone) seen[name].phone = phone; return; } seen[name] = { name: name, phone: phone || '' }; cs.push(seen[name]); }
     custs().forEach(function (c) { addC(c.name, c.phone); });
@@ -5073,13 +5240,7 @@
     var j = e.target.closest('[data-sjob]'), b = e.target.closest('[data-sbill]'), c = e.target.closest('[data-scust]');
     if (j) { closeSearch(); openJob(j.getAttribute('data-sjob')); return; }
     if (b) { closeSearch(); openBillEntry(b.getAttribute('data-sbill')); return; }
-    if (c) {
-      closeSearch();
-      mineOn = false; rawSet(MKEY, false); jobsV = 'list'; jobsF = 'all';
-      Array.prototype.forEach.call($('jobsFilter').children, function (x) { x.setAttribute('aria-pressed', String(x.getAttribute('data-f') === 'all')); });
-      $('jobsQ').value = c.getAttribute('data-scust');
-      goPage('jobs');
-    }
+    if (c) { closeSearch(); openCust(c.getAttribute('data-scust')); }
   });
   document.addEventListener('keydown', function (e) {
     if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
@@ -5211,6 +5372,7 @@
   }
 
   // ================= init =================
+  document.body.classList.toggle('viewonly', viewOnly());
   applyChrome();
   fillForm();
   draw();
@@ -5229,7 +5391,7 @@
     sheetHTML: sheetHTML, applySheetVars: applySheetVars, fitA4: fitA4,
     goPage: goPage, jobs: jobs, jobMoney: jobMoney, openJob: openJob, openPay: openPay,
     syncNow: syncNow, sync: function () { return { state: syncState, err: syncErr, SY: SY }; },
-    delivOf: delivOf, openMsg: openMsg, yearReport: yearReport, reportCSV: reportCSV, openSearch: openSearch, openSettings: openSettings, setMe: setMe, merge3: merge3 };
+    delivOf: delivOf, openMsg: openMsg, openCust: openCust, viewOnly: viewOnly, yearReport: yearReport, reportCSV: reportCSV, openSearch: openSearch, openSettings: openSettings, setMe: setMe, merge3: merge3 };
 })();
 </script>
 </body>
