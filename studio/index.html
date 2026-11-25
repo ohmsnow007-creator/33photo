@@ -1301,6 +1301,31 @@
   .so-tile small { color: var(--muted); font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .so-gh { font-family: var(--font-display); font-size: 0.82rem; color: var(--muted); margin: 6px 2px -8px; }
 
+  /* ===== add a device (invite) ===== */
+  .inv-steps { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .inv-steps li { display: flex; gap: 10px; align-items: flex-start; font-size: 0.9rem; line-height: 1.5; }
+  .inv-steps .n { flex: none; width: 26px; height: 26px; border-radius: 50%; background: rgba(47,123,246,.14); color: #1c64d6; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 0.82rem; }
+  .inv-qr { background: #fff; border-radius: 16px; padding: 14px; width: min(260px, 72vw); margin: 0 auto; box-shadow: 0 8px 26px rgba(0,0,0,.18); }
+  .inv-qr svg { width: 100%; height: auto; display: block; }
+  .inv-role { text-align: center; font-size: 0.82rem; color: var(--muted); margin-top: -4px; }
+  .inv-btns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .inv-btns .btn { min-height: 46px; }
+  .inv-btns .btn.line { grid-column: 1 / -1; }
+  .pw-wrap { position: relative; }
+  .pw-wrap input { padding-right: 52px; }
+  .pw-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: 0; background: none; color: var(--muted); font-size: 1.1rem; width: 40px; height: 40px; cursor: pointer; border-radius: 8px; }
+  .inapp-warn { padding: 10px 12px; border-radius: 12px; background: rgba(229,160,26,.12); border: 1px solid rgba(229,160,26,.45); color: var(--fg); font-size: 0.86rem; line-height: 1.55; }
+  .inapp-warn b { color: #b06d00; }
+  .upd-bar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 92; background: #2f7bf6; color: #fff; border: 0; border-radius: 24px; padding: 12px 20px; font: inherit; font-weight: 600; box-shadow: 0 10px 28px rgba(0,0,0,.3); cursor: pointer; }
+  .tm-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--field); }
+  .tm-row .av { width: 34px; height: 34px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; font-weight: 700; background: rgba(47,123,246,.14); color: #1c64d6; }
+  .tm-row .grow { flex: 1; min-width: 0; display: grid; }
+  .tm-row b { font-family: var(--font-display); font-weight: 500; }
+  .tm-row small { color: var(--muted); font-size: 0.76rem; }
+  .tm-row .x { border: 0; background: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; width: 34px; height: 34px; border-radius: 8px; }
+  .tm-row .x:hover { color: var(--danger); background: var(--surface); }
+  .tm-list { display: grid; gap: 6px; }
+
   /* print */
   #printRoot { display: none; }
   @media print {
@@ -1748,9 +1773,10 @@
   <div class="hist-sheet" role="dialog" aria-modal="true" aria-labelledby="joinTitle">
     <div class="hist-sheet-head"><h3 id="joinTitle">เชื่อมเครื่องนี้กับข้อมูลร้าน</h3><button class="mini" id="joinClose" type="button">ปิด</button></div>
     <div class="job-body" style="padding-bottom:16px">
-      <p class="set-note">พิมพ์รหัสผ่านร้านที่ตั้งไว้ตอนสร้างลิงก์ ทำครั้งเดียวต่อเครื่อง หลังจากนั้นเปิดเว็บใช้ได้เลย</p>
+      <div class="inapp-warn" id="joinInapp" hidden></div>
+      <p class="set-note">ทำครั้งเดียวต่อเครื่อง ใส่ <b>ชื่อเล่น</b> กับ <b>รหัสร้าน</b> ที่เจ้าของร้านบอก แล้วกดเชื่อมต่อ</p>
       <div class="field"><label for="joinName">ชื่อของคุณ <span style="color:var(--danger)">*</span></label><input id="joinName" type="text" autocomplete="off" maxlength="30" placeholder="เช่น พี่โอ, น้องเบล"><div class="hint">👥 ชื่อนี้จะเข้าไปอยู่ในรายชื่อทีมงานของร้านทันที เวลามีคนเลือกคุณในงาน งานนั้นจะขึ้นใน "งานของฉัน" และคุณจะได้แจ้งเตือน</div></div>
-      <div class="field"><label for="joinPass">รหัสผ่านร้าน</label><input id="joinPass" type="password" autocomplete="off"></div>
+      <div class="field"><label for="joinPass">รหัสร้าน</label><div class="pw-wrap"><input id="joinPass" type="password" autocomplete="off" autocapitalize="off" spellcheck="false"><button type="button" class="pw-eye" data-eye="joinPass" aria-label="แสดงรหัส">👁</button></div></div>
       <div class="err-msg" id="joinErr" hidden></div>
       <button class="btn primary" id="joinGo" type="button">เชื่อมต่อ</button>
     </div>
@@ -3239,7 +3265,13 @@
     var stf = teamNames();
     sec('staff', 'ทีมงานและการส่งงาน', stf.length ? stf.length + ' คน · ' + stf.slice(0, 4).join(', ') : 'ยังไม่มีรายชื่อ',
       '<p class="set-note">รายชื่อนี้ใช้มอบหมายงานในช่อง "ทีมงาน" ของแต่ละงาน ทุกเครื่องเห็นรายชื่อเดียวกัน ให้พนักงานแต่ละคนตั้ง "ชื่อของคุณ" ในเครื่องตัวเองให้ตรงกับรายชื่อนี้ เพื่อใช้ปุ่ม "งานของฉัน"</p>' +
-      (stf.length ? '<div class="staff-list">' + stf.map(function (n) { return '<span class="staff-chip on">' + esc(n) + (n === meRaw() ? ' (ฉัน)' : '') + '<button type="button" class="x" data-stdel="' + esc(n) + '" aria-label="ลบ ' + esc(n) + '">×</button></span>'; }).join('') + '</div>' : '') +
+      '<div class="btnrow" style="margin:0"><button class="btn primary" type="button" data-adddev="1">📱 เพิ่มเครื่องพนักงาน (QR)</button></div>' +
+      (stf.length ? '<div class="tm-list">' + stf.map(function (n) {
+        var devs = teamRaw().filter(function (x) { return x.name === n && !x.hide && x.dev; });
+        var last = devs.reduce(function (m, x) { return Math.max(m, x.seen || 0); }, 0);
+        var info = devs.length ? devs.map(function (x) { return (x.dev === 'คอมพิวเตอร์' ? '💻 ' : '📱 ') + x.dev + (x.role === 'view' ? ' (ดูอย่างเดียว)' : ''); }).join(' · ') + (last ? ' · ออนไลน์ล่าสุด ' + ago(last) : '') : 'ยังไม่ได้เชื่อมเครื่อง (เพิ่มชื่อเอง)';
+        return '<div class="tm-row"><span class="av">' + esc(n.replace(/^(พี่|น้อง|คุณ)/, '').slice(0, 1) || '?') + '</span><span class="grow"><b>' + esc(n) + (n === meRaw() ? ' (ฉัน)' : '') + '</b><small>' + esc(info) + '</small></span><button type="button" class="x" data-stdel="' + esc(n) + '" aria-label="ลบ ' + esc(n) + '">×</button></div>';
+      }).join('') + '</div>' : '') +
       '<div class="job-link"><input id="stNew" type="text" autocomplete="off" placeholder="เพิ่มชื่อ เช่น น้องเบล"><button class="btn" type="button" id="stAdd">เพิ่ม</button></div>' +
       sub('การส่งงานลูกค้า') +
       fText('ส่งรูปภายในกี่วันหลังวันงาน', 'delivDays', { mode: 'numeric', note: 'ใช้เป็นกำหนดส่งเริ่มต้นของทุกงาน แก้เป็นรายงานได้ในหน้ารายละเอียดงาน' }) +
@@ -4675,59 +4707,82 @@
   }
   function canCrypto() { return !!(window.crypto && crypto.subtle && window.TextEncoder); }
   var devRoleSel = 'full';
+  // Invite links are encrypted with the shop code and kept in the shop settings, so after the first
+  // time the owner just opens this window and the QR is already there.
+  function inviteOK() { return !!(S.invite && S.invite.full && S.invite.view && syncOn() && S.invite.tk === hstr(SY.cfg.token)); }
+  function inviteLink(role) {
+    var base = /^https?:$/.test(location.protocol) ? location.origin + location.pathname : WEB_STUDIO;
+    return base + '?openExternalBrowser=1#join=' + (role === 'view' ? S.invite.view : S.invite.full);
+  }
+  function roleSeg() {
+    return '<div class="seg" id="devRole" role="group" aria-label="ประเภทเครื่อง" style="--n:2"><button type="button" data-role="full" aria-pressed="' + (devRoleSel === 'full') + '">👤 พนักงาน (ใช้งานเต็ม)</button><button type="button" data-role="view" aria-pressed="' + (devRoleSel === 'view') + '">👀 ดูตารางอย่างเดียว</button></div>' +
+      '<div class="hint" id="devRoleHint">' + (devRoleSel === 'view' ? 'เห็นตารางงาน ปฏิทิน และงานของตัวเอง ไม่เห็นยอดเงินและบิล และแก้หรือลบงานไม่ได้' : 'เพิ่มงาน ออกบิล รับเงิน และเห็นยอดเงินได้ทั้งหมด') + '</div>';
+  }
+  function renderInvite() {
+    var link = inviteLink(devRoleSel), qr = '';
+    if (window.qrcode) { try { var q = qrcode(0, 'M'); q.addData(link); q.make(); qr = q.createSvgTag(4, 0); } catch (e) { qr = ''; } }
+    $('devBody').innerHTML = roleSeg() +
+      (qr ? '<div class="inv-qr" id="devQr">' + qr + '</div>' : '') +
+      '<div class="inv-role">' + (devRoleSel === 'view' ? 'QR สำหรับเครื่องดูตารางอย่างเดียว' : 'QR สำหรับพนักงานใช้งานเต็ม') + '</div>' +
+      '<ol class="inv-steps"><li><span class="n">1</span><span>ให้พนักงาน<b>เปิดกล้องมือถือ</b>แล้วสแกน QR นี้ (iPhone ใช้แอปกล้อง · Android ใช้กล้องหรือ Google Lens) หรือกด "ส่งลิงก์ทาง LINE" แล้วให้เขากดลิงก์</span></li>' +
+        '<li><span class="n">2</span><span>เขากรอก <b>ชื่อเล่น</b> + <b>รหัสร้าน</b> แล้วกดเชื่อมต่อ เสร็จ! ชื่อจะขึ้นในรายชื่อทีมงานของทุกเครื่องทันที</span></li></ol>' +
+      '<div class="inv-btns"><button class="btn line" type="button" id="devLine">💬 ส่งลิงก์ทาง LINE</button><button class="btn" type="button" id="devCopy">📋 คัดลอกลิงก์</button>' +
+        (navigator.share ? '<button class="btn" type="button" id="devShare">📤 แชร์</button>' : '<span></span>') + '</div>' +
+      '<input id="devLink" class="dev-link" type="hidden" value="' + esc(link) + '">' +
+      '<p class="set-note">รหัสร้านไม่ได้อยู่ในลิงก์ บอกพนักงานด้วยปากหรือส่งแยกต่างหาก · <button type="button" class="cust-link" id="devReset">ลืมรหัสร้าน / ตั้งรหัสใหม่</button></p>';
+  }
+  function renderInviteSetup() {
+    $('devBody').innerHTML = roleSeg() +
+      '<div class="sy-on" style="background:rgba(47,123,246,.08)"><b style="color:inherit">🔑 ตั้งรหัสร้าน (ทำครั้งเดียว)</b><span>พนักงานใช้รหัสนี้ตอนเชื่อมเครื่องครั้งแรก ตั้งให้จำง่าย อย่างน้อย 6 ตัว เช่น 33photo หรือเบอร์ร้าน ครั้งต่อไปกดปุ่มนี้แล้ว QR ขึ้นทันที ไม่ต้องตั้งใหม่</span></div>' +
+      '<div class="field"><label for="devPass">รหัสร้าน</label><div class="pw-wrap"><input id="devPass" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false"><button type="button" class="pw-eye" data-eye="devPass" aria-label="แสดงรหัส">👁</button></div></div>' +
+      '<div class="field"><label for="devPass2">พิมพ์อีกครั้ง</label><input id="devPass2" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false"></div>' +
+      '<div class="err-msg" id="devErr" hidden></div>' +
+      '<button class="btn primary" type="button" id="devMake">สร้าง QR</button>';
+    setTimeout(function () { var x = $('devPass'); if (x) x.focus(); }, 50);
+  }
   function openDevice() {
     devRoleSel = 'full';
     if (!syncOn()) { toast('เชื่อม GitHub ในเครื่องนี้ก่อน'); return; }
     if (!canCrypto()) { toast('เบราว์เซอร์นี้สร้างลิงก์ไม่ได้ ลองเปิดผ่านเว็บ https'); return; }
-    $('devBody').innerHTML =
-      '<div class="field"><span class="lbl">เครื่องนี้ใช้ทำอะไร</span><div class="seg" id="devRole" role="group" aria-label="ประเภทเครื่อง" style="--n:2"><button type="button" data-role="full" aria-pressed="true">ใช้งานเต็ม</button><button type="button" data-role="view" aria-pressed="false">ดูตารางอย่างเดียว</button></div>' +
-        '<div class="hint" id="devRoleHint">เพิ่มงาน ออกบิล รับเงิน และเห็นยอดเงินได้ทั้งหมด</div></div>' +
-      '<p class="set-note">ตั้ง <b>รหัสผ่านร้าน</b> อย่างน้อย 8 ตัว เครื่องใหม่ต้องพิมพ์รหัสนี้ครั้งเดียวตอนเปิดลิงก์ จดไว้ให้ดี ระบบไม่เก็บรหัสนี้ไว้ที่ไหนเลย</p>' +
-      '<div class="field"><label for="devPass">รหัสผ่านร้าน</label><input id="devPass" type="password" autocomplete="new-password"></div>' +
-      '<div class="field"><label for="devPass2">พิมพ์อีกครั้ง</label><input id="devPass2" type="password" autocomplete="new-password"></div>' +
-      '<div class="err-msg" id="devErr" hidden></div>' +
-      '<button class="btn primary" type="button" id="devMake">สร้าง QR และลิงก์</button>';
+    if (inviteOK()) renderInvite(); else renderInviteSetup();
     $('devModal').hidden = false; document.body.style.overflow = 'hidden';
-    setTimeout(function () { $('devPass').focus(); }, 50);
   }
   function closeDevice() { $('devModal').hidden = true; $('devBody').innerHTML = ''; if ($('settings').hidden) document.body.style.overflow = ''; }
   function makeDevice() {
     var p = $('devPass').value, p2 = $('devPass2').value, err = $('devErr'), btn = $('devMake');
     function fail(m) { err.textContent = m; err.hidden = false; }
-    if (p.length < 8) { fail('รหัสผ่านร้านต้องยาวอย่างน้อย 8 ตัว'); return; }
-    if (p !== p2) { fail('รหัสผ่านสองช่องไม่ตรงกัน'); return; }
+    if (p.length < 6) { fail('รหัสร้านต้องยาวอย่างน้อย 6 ตัว'); return; }
+    if (p !== p2) { fail('รหัสสองช่องไม่ตรงกัน'); return; }
     err.hidden = true; btn.disabled = true; btn.textContent = 'กำลังสร้าง…';
-    var role = devRoleSel;
-    sealCfg(SY.cfg, p, role).then(function (blob) {
-      var base = /^https?:$/.test(location.protocol) ? location.origin + location.pathname : WEB_STUDIO;
-      var link = base + '#join=' + blob, qr = '';
-      if (window.qrcode) { try { var q = qrcode(0, 'M'); q.addData(link); q.make(); qr = q.createSvgTag(4, 0); } catch (e) { qr = ''; } }
-      $('devBody').innerHTML =
-        (qr ? '<div class="dev-qr" id="devQr">' + qr + '</div><p class="set-note center"><b>มือถือ</b> เปิดกล้องแล้วสแกน QR · <b>คอม</b> คัดลอกลิงก์ส่งให้ตัวเอง แล้วเปิดในเครื่องนั้น</p>' : '<p class="set-note">คัดลอกลิงก์ส่งให้ตัวเอง แล้วเปิดในเครื่องใหม่</p>') +
-        '<p class="set-note center"><span class="vo-badge">' + (role === 'view' ? 'ลิงก์สำหรับเครื่องดูตารางอย่างเดียว' : 'ลิงก์สำหรับเครื่องใช้งานเต็ม') + '</span></p>' +
-        '<div class="field"><label for="devLink">ลิงก์เพิ่มเครื่อง</label><input id="devLink" class="dev-link" type="text" readonly value="' + esc(link) + '"></div>' +
-        '<div class="btnrow"><button class="btn primary" type="button" id="devCopy">คัดลอกลิงก์</button>' + (navigator.share ? '<button class="btn" type="button" id="devShare">ส่งต่อ</button>' : '') + '</div>' +
-        '<p class="set-note">เครื่องใหม่เปิดลิงก์แล้วพิมพ์รหัสผ่านร้านครั้งเดียวก็ใช้ได้ ลิงก์นี้ใช้ได้จนรหัส GitHub หมดอายุ ถ้าเปลี่ยนรหัส GitHub ให้สร้างลิงก์ใหม่ · อย่าส่งลิงก์กับรหัสผ่านร้านไว้ในที่เดียวกัน</p>';
-    }, function () { btn.disabled = false; btn.textContent = 'สร้าง QR และลิงก์'; fail('สร้างลิงก์ไม่สำเร็จ ลองใหม่อีกครั้ง'); });
+    Promise.all([sealCfg(SY.cfg, p, 'full'), sealCfg(SY.cfg, p, 'view')]).then(function (b) {
+      S.invite = { full: b[0], view: b[1], tk: hstr(SY.cfg.token), at: Date.now(), by: meName() };
+      lsSet(SKEY, S);
+      renderInvite();
+      toast('สร้าง QR แล้ว: ครั้งต่อไปกด "เพิ่มเครื่อง" แล้ว QR ขึ้นทันที');
+    }, function () { btn.disabled = false; btn.textContent = 'สร้าง QR'; fail('สร้างไม่สำเร็จ ลองใหม่อีกครั้ง'); });
   }
   $('devBody').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
     if (b.id === 'devMake') makeDevice();
-    if (b.hasAttribute('data-role')) {
-      devRoleSel = b.getAttribute('data-role');
-      Array.prototype.forEach.call($('devRole').children, function (x) { x.setAttribute('aria-pressed', String(x === b)); });
-      $('devRoleHint').textContent = devRoleSel === 'view' ? 'เห็นตารางงาน ปฏิทิน และงานของตัวเอง ไม่เห็นยอดเงินและบิล และแก้หรือลบงานไม่ได้' : 'เพิ่มงาน ออกบิล รับเงิน และเห็นยอดเงินได้ทั้งหมด';
-    }
-    if (b.id === 'devCopy') copyText($('devLink').value).then(function (ok) { toast(ok === false ? 'คัดลอกไม่ได้ กดค้างที่ลิงก์แล้วคัดลอกเอง' : 'คัดลอกลิงก์แล้ว'); });
-    if (b.id === 'devShare') navigator.share({ title: 'เพิ่มเครื่อง ' + S.company.name + ' Studio', url: $('devLink').value }).catch(function () {});
+    if (b.hasAttribute('data-role')) { devRoleSel = b.getAttribute('data-role'); if (inviteOK() && $('devQr')) renderInvite(); else { Array.prototype.forEach.call($('devRole').children, function (x) { x.setAttribute('aria-pressed', String(x === b)); }); $('devRoleHint').textContent = devRoleSel === 'view' ? 'เห็นตารางงาน ปฏิทิน และงานของตัวเอง ไม่เห็นยอดเงินและบิล และแก้หรือลบงานไม่ได้' : 'เพิ่มงาน ออกบิล รับเงิน และเห็นยอดเงินได้ทั้งหมด'; } }
+    if (b.id === 'devCopy') copyText($('devLink').value).then(function (ok) { toast(ok === false ? 'คัดลอกไม่ได้ ลองกด "แชร์" แทน' : 'คัดลอกลิงก์แล้ว: วางส่งให้พนักงานได้เลย'); });
+    if (b.id === 'devShare') navigator.share({ title: 'เข้าร่วม ' + S.company.name + ' Studio', text: 'กดลิงก์นี้แล้วใส่ชื่อเล่นกับรหัสร้าน', url: $('devLink').value }).catch(function () {});
+    if (b.id === 'devLine') { var tx = 'เข้าร่วมแอป ' + S.company.name + ' Studio 📸\nกดลิงก์แล้วใส่ชื่อเล่นกับรหัสร้าน\n' + $('devLink').value; copyText(tx); window.open('https://line.me/R/share?text=' + encodeURIComponent(tx), '_blank', 'noopener'); }
+    if (b.id === 'devReset') confirmBox('ตั้งรหัสร้านใหม่?', 'QR และลิงก์เดิมจะใช้ไม่ได้ เครื่องที่เชื่อมไว้แล้วใช้งานต่อได้ตามปกติ', 'ตั้งรหัสใหม่', function () { delete S.invite; lsSet(SKEY, S); renderInviteSetup(); });
   });
   $('devBody').addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.target.id === 'devPass' || e.target.id === 'devPass2')) { e.preventDefault(); makeDevice(); } });
   $('devClose').addEventListener('click', closeDevice);
   $('devModal').addEventListener('click', function (e) { if (e.target === this) nudge(this.querySelector('.hist-sheet')); });
 
   var joinBlob = null;
+  function inAppName() { var u = navigator.userAgent || ''; return /\bLine\//i.test(u) ? 'LINE' : /FBAN|FBAV|FB_IAB/.test(u) ? 'Facebook' : /Instagram/.test(u) ? 'Instagram' : /TikTok|musical_ly/i.test(u) ? 'TikTok' : ''; }
+  function inAppHTML() {
+    var a = inAppName(); if (!a) return '';
+    return '⚠️ <b>ตอนนี้เปิดอยู่ในแอป ' + a + '</b> ข้อมูลจะหายเมื่อปิด กดปุ่ม <b>⋯</b> หรือ <b>⋮</b> มุมขวา แล้วเลือก <b>"เปิดในเบราว์เซอร์"</b> (Safari หรือ Chrome) ก่อน แล้วค่อยกดเชื่อมต่อ';
+  }
   function openJoin() {
     $('joinPass').value = ''; $('joinErr').hidden = true;
+    var w = inAppHTML(); $('joinInapp').innerHTML = w; $('joinInapp').hidden = !w;
     if (!$('joinName').value) $('joinName').value = meRaw();
     $('joinModal').hidden = false; document.body.style.overflow = 'hidden';
     setTimeout(function () { $('joinPass').focus(); }, 50);
@@ -4751,9 +4806,14 @@
         btn.disabled = false; btn.textContent = 'เชื่อมต่อ';
         toast('เครื่องนี้เชื่อมกับข้อมูลร้านแล้ว');
       });
-    }, function () { fail('รหัสผ่านร้านไม่ถูกต้อง หรือลิงก์ไม่ครบ ลองคัดลอกลิงก์ใหม่'); });
+    }, function () { fail('รหัสร้านไม่ถูกต้อง ลองใหม่ (กด 👁 เพื่อดูที่พิมพ์) หรือถ้าลิงก์ไม่ครบ ให้ขอลิงก์ใหม่จากเจ้าของร้าน'); });
   }
   $('joinGo').addEventListener('click', doJoin);
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-eye]'); if (!b) return;
+    var inp = $(b.getAttribute('data-eye')); if (!inp) return;
+    inp.type = inp.type === 'password' ? 'text' : 'password'; b.textContent = inp.type === 'password' ? '👁' : '🙈'; inp.focus();
+  });
   $('joinPass').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); doJoin(); } });
   $('joinClose').addEventListener('click', closeJoin);
 
@@ -4996,6 +5056,7 @@
     ghReq('GET', '', null, false, cfg).then(function (repo) {
       if (!repo || repo.private !== true) { fail('repo นี้ไม่ได้เป็น Private'); return; }
       SY.cfg = cfg; sySave();
+      delete S.invite;
       if (exp) S.tokenExp = exp;
       lsSet(SKEY, S);
       return syncNow({ pull: true }).then(function () {
@@ -5008,6 +5069,7 @@
   }
 
   // ================= settings: staff, PIN, token buttons =================
+  document.addEventListener('click', function (e) { if (e.target.closest('[data-adddev]')) openDevice(); });
   setBody.addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
     if (b.id === 'pinSet') {
@@ -5335,6 +5397,7 @@
       ['staff', '👥', 'เพิ่มรายชื่อทีมงาน', teamNames().length ? teamNames().length + ' คน' : 'ใช้มอบหมายงานให้แต่ละคน', teamNames().length > 0],
       ['lock', '🔒', 'ตั้ง PIN เจ้าของร้าน', 'กันคนอื่นเข้ามาแก้การตั้งค่า', lockOn()]
     ];
+    if (syncOn()) items.splice(1, 0, ['adddev', '📱', 'เพิ่มเครื่องพนักงาน', inviteOK() ? 'QR พร้อมแล้ว กดเพื่อเปิด' : 'ตั้งรหัสร้านครั้งเดียว แล้วได้ QR', inviteOK()]);
     if (syncOn()) items.push(['sync', '📅', 'ใส่วันหมดอายุรหัส GitHub', S.tokenExp ? expText() : 'ระบบจะเตือนก่อนหมดอายุ', !!S.tokenExp]);
     var done = items.filter(function (x) { return x[4]; }).length, all = done === items.length;
     if (all) return '<div class="setup-card"><div class="setup-done">🎉 ตั้งค่าครบแล้ว ร้านพร้อมใช้งานเต็มที่</div></div>';
@@ -5347,6 +5410,7 @@
   setBody.addEventListener('click', function (e) {
     var b = e.target.closest('[data-gosec]'); if (!b) return;
     var id = b.getAttribute('data-gosec');
+    if (id === 'adddev') { openDevice(); return; }
     openSecs = {}; openSecs[id] = true; curSec = id; renderSettings();
     setTimeout(function () {
       var el = setBody.querySelector('[data-sec="' + id + '"]'); if (!el) return;
@@ -5385,12 +5449,14 @@
     (S.staff || []).forEach(add);
     return out;
   }
-  function teamPut(id, name, hide) {
+  function teamPut(id, name, hide, extra) {
     var a = teamRaw(), e = null;
     for (var i = 0; i < a.length; i++) if (a[i].id === id) { e = a[i]; break; }
-    if (e && e.name === name && !!e.hide === !!hide) return false;
+    var ex = extra && e && Object.keys(extra).some(function (k) { return e[k] !== extra[k]; });
+    if (e && e.name === name && !!e.hide === !!hide && !ex && !(extra && !e)) return false;
     if (!e) { e = { id: id, at: Date.now() }; a.push(e); }
     e.name = name; e.ts = Date.now(); if (hide) e.hide = true; else delete e.hide;
+    if (extra) Object.keys(extra).forEach(function (k) { e[k] = extra[k]; });
     lsSet(TKEY, a);
     return true;
   }
@@ -5411,7 +5477,12 @@
     var n = meRaw(); if (!n) return false;
     var mine = teamRaw().filter(function (e) { return e.id === devId(); })[0];
     if (mine && mine.hide && mine.name === n) return false;
-    return teamPut(devId(), n, false);
+    var kind = /iPhone|iPad|iPod/.test(navigator.userAgent || '') ? 'iPhone' : /Android/i.test(navigator.userAgent || '') ? 'Android' : 'คอมพิวเตอร์';
+    var extra = { dev: kind, role: viewOnly() ? 'view' : 'full', app: standalone() ? 1 : 0 };
+    // 'seen' is refreshed at most every 6 hours so the file isn't rewritten all day
+    if (!mine || !mine.seen || Date.now() - mine.seen > 6 * 3600000 || mine.dev !== kind || mine.role !== extra.role || mine.app !== extra.app) extra.seen = Date.now();
+    else extra.seen = mine.seen;
+    return teamPut(devId(), n, false, extra);
   }
   function migrateTeam() {
     var have = {}; teamRaw().forEach(function (e) { have[e.name] = 1; });
@@ -5431,6 +5502,30 @@
     else if (syncOn()) syncNow({ pull: true }).then(function () { if (syncState === 'ok' || syncState === 'pending') { migrateTeam(); ensureStaff(); refreshPages(); } });
     else { migrateTeam(); ensureStaff(); }
   }, 2500);
+
+  // ================= auto-update (home-screen apps can't be refreshed by hand) =================
+  var BUILD = 'e56d1455e094';
+  function safeToReload() {
+    return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
+      $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
+  }
+  function checkUpdate() {
+    if (!/^https?:$/.test(location.protocol) || BUILD.indexOf('__') === 0 || !window.fetch) return;
+    fetch('version.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
+      if (!v || !v.v || v.v === BUILD) return;
+      var tried = {}; try { tried = JSON.parse(sessionStorage.getItem('upd') || '{}'); } catch (e) {}
+      if (tried.v === v.v && Date.now() - tried.at < 120000) return;
+      if (safeToReload()) { try { sessionStorage.setItem('upd', JSON.stringify({ v: v.v, at: Date.now() })); } catch (e) {} location.reload(); return; }
+      if (!$('updBar')) {
+        var b = document.createElement('button'); b.id = 'updBar'; b.className = 'upd-bar'; b.type = 'button'; b.textContent = '✨ มีเวอร์ชันใหม่ · แตะเพื่ออัปเดต';
+        b.addEventListener('click', function () { try { sessionStorage.setItem('upd', JSON.stringify({ v: v.v, at: Date.now() })); } catch (e) {} location.reload(); });
+        document.body.appendChild(b);
+      }
+    }).catch(function () {});
+  }
+  setTimeout(checkUpdate, 4000);
+  setInterval(checkUpdate, 5 * 60000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) setTimeout(checkUpdate, 800); });
 
   // ================= device type (full / view-only) =================
   function viewOnly() { var d = lsGet(DKEY, null); return !!(d && d.role === 'view'); }
@@ -5882,7 +5977,7 @@
   window.__billPro = { renderCanvas: renderCanvas, S: function () { return S; }, state: function () { return state; },
     sheetHTML: sheetHTML, applySheetVars: applySheetVars, fitA4: fitA4,
     goPage: goPage, jobs: jobs, jobMoney: jobMoney, openJob: openJob, openPay: openPay,
-    mergeSettings: mergeSettings, teamNames: teamNames, staffNames: staffNames, syncNow: syncNow, sync: function () { return { state: syncState, err: syncErr, SY: SY }; },
+    mergeSettings: mergeSettings, openDevice: openDevice, BUILD: function () { return BUILD; }, teamNames: teamNames, staffNames: staffNames, syncNow: syncNow, sync: function () { return { state: syncState, err: syncErr, SY: SY }; },
     delivOf: delivOf, openMsg: openMsg, confetti: confetti, quickISO: quickISO, openCust: openCust, viewOnly: viewOnly, yearReport: yearReport, reportCSV: reportCSV, openSearch: openSearch, openSettings: openSettings, setMe: setMe, merge3: merge3 };
 })();
 </script>
