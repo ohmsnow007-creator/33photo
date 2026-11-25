@@ -1339,6 +1339,19 @@
   .inv-exp b { color: #2b8a3e; }
   .inv-exp.soon b { color: #b06d00; }
 
+  .inv-limit { display: grid; gap: 6px; }
+  .inv-used { display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px; background: var(--field); border: 1px solid var(--border); }
+  .inv-used .hd { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-display); font-weight: 600; }
+  .inv-used .bar { height: 8px; border-radius: 4px; background: var(--surface); overflow: hidden; }
+  .inv-used .bar i { display: block; height: 100%; background: linear-gradient(90deg, #2f9e44, #2f7bf6); border-radius: 4px; transition: width .4s; }
+  .inv-used .who { display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.8rem; }
+  .inv-used .who span { padding: 3px 9px; border-radius: 10px; background: rgba(47,158,68,.12); color: #2b8a3e; }
+  .inv-used .empty { font-size: 0.8rem; color: var(--muted); }
+  .inv-full { text-align: center; padding: 18px 12px; border-radius: 16px; background: rgba(47,158,68,.1); border: 1px solid rgba(47,158,68,.35); display: grid; gap: 6px; }
+  .inv-full .big { font-size: 2.2rem; }
+  .inv-full b { font-family: var(--font-display); font-size: 1.05rem; }
+  .live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #2f9e44; margin-right: 6px; animation: liveDot 1.4s ease-in-out infinite; vertical-align: 1px; }
+
   /* print */
   #printRoot { display: none; }
   @media print {
@@ -4546,6 +4559,7 @@
       var changed = JSON.stringify(val) !== JSON.stringify(local);
       if (changed && name === 'jobs' && !first) noteJobChanges(Array.isArray(local) ? local : [], val);
       if (changed && name === 'history' && !first) noteBillChanges(Array.isArray(local) ? local : [], val);
+      if (changed && name === 'team' && !first) noteTeamJoins(Array.isArray(local) ? local : [], val);
       if (changed) rawSet(SYNC_KEYS[name], val);
       sySave();
       return changed;
@@ -4729,70 +4743,127 @@
   var devRoleSel = 'full';
   // Invite links are encrypted with the shop code and kept in the shop settings, so after the first
   // time the owner just opens this window and the QR is already there.
-  var INV_LIFE = 24 * 3600000;
-  function inviteOK() { return !!(S.invite && S.invite.full && S.invite.view && S.invite.gen && S.invite.exp && syncOn() && S.invite.tk === hstr(SY.cfg.token) && S.invite.exp - Date.now() > 3600000); }
+  // ===== invite links: stored in data/invite.json (private repo). One record = the current link.
+  // {gen, exp, max (0 = no limit), used: [{dev, name, kind, role, at}], full, view (encrypted links), tk}
+  // A joining device claims a seat with a compare-and-swap write (GitHub sha), so the limit can't be passed.
+  var INV_LIFE = 24 * 3600000, INV_PATH = '/contents/data/invite.json', INV = lsGet('bill33suite.inv', null), invPoll = null, devMax = 1;
   function shopCode() { return devInfo().shopCode || ''; }
-  function makeInvite(code, remember) {
+  function devKind() { var u = navigator.userAgent || ''; return /iPhone|iPad|iPod/.test(u) ? 'iPhone' : /Android/i.test(u) ? 'Android' : 'คอมพิวเตอร์'; }
+  function invGet(cfg) {
+    return ghReq('GET', INV_PATH, null, false, cfg).then(function (j) {
+      var rec = null; try { rec = JSON.parse(b64dec(j.content)); } catch (x) {}
+      return { rec: rec, sha: j.sha };
+    }, function (er) { if (er.status === 404) return { rec: null, sha: '' }; throw er; });
+  }
+  function invPut(rec, sha, msg, cfg) { return ghReq('PUT', INV_PATH, { message: msg, content: b64enc(JSON.stringify(rec, null, 1)), sha: sha || undefined }, false, cfg); }
+  function invFull(r) { return !!(r && r.max && (r.used || []).length >= r.max); }
+  function invValid(r) { return !!(r && r.gen && r.full && r.view && syncOn() && r.tk === hstr(SY.cfg.token) && r.exp - Date.now() > 3600000 && !invFull(r)); }
+  function inviteOK() { return invValid(INV); }
+  function setINV(r) { INV = r; rawSet('bill33suite.inv', r); }
+  function makeInvite(code, remember, max) {
     var meta = { gen: uid() + uid(), exp: Date.now() + INV_LIFE };
     return Promise.all([sealCfg(SY.cfg, code, 'full', meta), sealCfg(SY.cfg, code, 'view', meta)]).then(function (b) {
-      S.invite = { full: b[0], view: b[1], tk: hstr(SY.cfg.token), gen: meta.gen, exp: meta.exp, at: Date.now(), by: meName() };
-      lsSet(SKEY, S);
-      var dv = devInfo(); if (remember) dv.shopCode = code; else delete dv.shopCode; rawSet(DKEY, dv);
+      var rec = { gen: meta.gen, exp: meta.exp, max: max == null ? 1 : max, used: [], full: b[0], view: b[1], tk: hstr(SY.cfg.token), at: Date.now(), by: meName() };
+      return invGet().then(function (cur) { return invPut(rec, cur.sha, 'สร้างลิงก์เข้าร้านใหม่ (' + (rec.max ? rec.max + ' คน' : 'ไม่จำกัด') + ')'); }).then(function () {
+        setINV(rec);
+        var dv = devInfo(); if (remember) dv.shopCode = code; rawSet(DKEY, dv);
+      });
     });
-  }
-  function expLine() {
-    var left = S.invite.exp - Date.now(), h = Math.floor(left / 3600000), m = Math.floor(left % 3600000 / 60000);
-    var d = new Date(S.invite.exp);
-    return '<div class="inv-exp' + (left < 6 * 3600000 ? ' soon' : '') + '">⏱ ลิงก์นี้ใช้ได้ถึง <b>' + d.getDate() + ' ' + MSHORT[d.getMonth()] + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ' น.</b> (อีก ' + (h ? h + ' ชม. ' : '') + m + ' นาที) · หมดเวลาแล้วระบบสร้างลิงก์ใหม่ให้เองเมื่อเปิดหน้านี้</div>';
   }
   function inviteLink(role) {
     var base = /^https?:$/.test(location.protocol) ? location.origin + location.pathname : WEB_STUDIO;
-    return base + '?openExternalBrowser=1#join=' + (role === 'view' ? S.invite.view : S.invite.full);
+    return base + '?openExternalBrowser=1#join=' + (role === 'view' ? INV.view : INV.full);
+  }
+  function expLine() {
+    var left = INV.exp - Date.now(), h = Math.floor(left / 3600000), m = Math.floor(left % 3600000 / 60000), d = new Date(INV.exp);
+    return '<div class="inv-exp' + (left < 6 * 3600000 ? ' soon' : '') + '">⏱ ใช้ได้ถึง <b>' + d.getDate() + ' ' + MSHORT[d.getMonth()] + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ' น.</b> (อีก ' + (h ? h + ' ชม. ' : '') + m + ' นาที)</div>';
   }
   function roleSeg() {
     return '<div class="seg" id="devRole" role="group" aria-label="ประเภทเครื่อง" style="--n:2"><button type="button" data-role="full" aria-pressed="' + (devRoleSel === 'full') + '">👤 พนักงาน (ใช้งานเต็ม)</button><button type="button" data-role="view" aria-pressed="' + (devRoleSel === 'view') + '">👀 ดูตารางอย่างเดียว</button></div>' +
       '<div class="hint" id="devRoleHint">' + (devRoleSel === 'view' ? 'เห็นตารางงาน ปฏิทิน และงานของตัวเอง ไม่เห็นยอดเงินและบิล และแก้หรือลบงานไม่ได้' : 'เพิ่มงาน ออกบิล รับเงิน และเห็นยอดเงินได้ทั้งหมด') + '</div>';
   }
+  function limitSeg(cur) {
+    return '<div class="inv-limit"><span class="lbl">ลิงก์นี้เข้าได้กี่คน</span><div class="seg" id="devMax" role="group" aria-label="จำนวนคน" style="--n:4">' +
+      [[1, '1 คน'], [3, '3 คน'], [5, '5 คน'], [0, 'ไม่จำกัด']].map(function (o) { return '<button type="button" data-max="' + o[0] + '" aria-pressed="' + (cur === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</div></div>';
+  }
+  function usedHTML() {
+    var u = INV.used || [], max = INV.max;
+    return '<div class="inv-used" id="invUsed"><div class="hd"><span><i class="live-dot"></i>เข้าร้านด้วยลิงก์นี้แล้ว</span><span>' + u.length + (max ? ' / ' + max : '') + ' คน</span></div>' +
+      (max ? '<div class="bar"><i style="width:' + Math.min(100, Math.round(u.length / max * 100)) + '%"></i></div>' : '') +
+      (u.length ? '<div class="who">' + u.map(function (x) { var d = new Date(x.at); return '<span>✓ ' + esc(x.name || '?') + ' · ' + esc(x.kind || '') + ' · ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + '</span>'; }).join('') + '</div>' : '<div class="empty">ยังไม่มีใครเข้า · หน้านี้อัปเดตเองเมื่อมีคนเข้าร้าน</div>') + '</div>';
+  }
   function renderInvite() {
+    devMax = INV.max || 0;
+    if (invFull(INV)) {
+      $('devBody').innerHTML = '<div class="inv-full"><span class="big">✅</span><b>ลิงก์นี้มีคนเข้าครบ ' + INV.max + ' คนแล้ว</b><span class="set-note">ลิงก์และ QR นี้ปิดแล้ว ใครสแกนตอนนี้จะเข้าไม่ได้</span></div>' + usedHTML() +
+        limitSeg(devMax || 1) + '<button class="btn primary" type="button" id="devNext">➕ สร้าง QR ใหม่สำหรับคนต่อไป</button>';
+      return;
+    }
     var link = inviteLink(devRoleSel), qr = '';
-    if (window.qrcode) { try { var q = qrcode(0, 'M'); q.addData(link); q.make(); qr = q.createSvgTag(4, 0); } catch (e) { qr = ''; } }
+    if (window.qrcode) { try { var q = qrcode(0, 'M'); q.addData(link); q.make(); qr = q.createSvgTag(4, 0); } catch (x) { qr = ''; } }
     $('devBody').innerHTML = roleSeg() +
       (qr ? '<div class="inv-qr" id="devQr">' + qr + '</div>' : '') +
       '<div class="inv-role">' + (devRoleSel === 'view' ? 'QR สำหรับเครื่องดูตารางอย่างเดียว' : 'QR สำหรับพนักงานใช้งานเต็ม') + '</div>' + expLine() +
-      '<ol class="inv-steps"><li><span class="n">1</span><span>ให้พนักงาน<b>เปิดกล้องมือถือ</b>แล้วสแกน QR นี้ (iPhone ใช้แอปกล้อง · Android ใช้กล้องหรือ Google Lens) หรือกด "ส่งลิงก์ทาง LINE" แล้วให้เขากดลิงก์</span></li>' +
-        '<li><span class="n">2</span><span>เขากรอก <b>ชื่อเล่น</b> + <b>รหัสร้าน</b> แล้วกดเชื่อมต่อ เสร็จ! ชื่อจะขึ้นในรายชื่อทีมงานของทุกเครื่องทันที</span></li></ol>' +
+      usedHTML() + limitSeg(devMax) +
+      '<ol class="inv-steps"><li><span class="n">1</span><span>ให้พนักงาน<b>เปิดกล้องมือถือ</b>แล้วสแกน QR นี้ (iPhone ใช้แอปกล้อง · Android ใช้กล้องหรือ Google Lens) หรือกด "ส่งลิงก์ทาง LINE"</span></li>' +
+        '<li><span class="n">2</span><span>เขากรอก <b>ชื่อเล่น</b> + <b>รหัสร้าน</b> แล้วกดเชื่อมต่อ เสร็จ! ชื่อขึ้นที่นี่และในรายชื่อทีมงานทันที</span></li></ol>' +
       '<div class="inv-btns"><button class="btn line" type="button" id="devLine">💬 ส่งลิงก์ทาง LINE</button><button class="btn" type="button" id="devCopy">📋 คัดลอกลิงก์</button>' +
         (navigator.share ? '<button class="btn" type="button" id="devShare">📤 แชร์</button>' : '<span></span>') + '</div>' +
       '<input id="devLink" class="dev-link" type="hidden" value="' + esc(link) + '">' +
       '<div class="btnrow" style="margin:0"><button class="btn" type="button" id="devRenew">🔄 สร้างลิงก์ใหม่ตอนนี้ (ลิงก์เก่าใช้ไม่ได้ทันที)</button></div>' +
-      '<p class="set-note">คนที่เข้าร้านแล้วใช้งานต่อได้ปกติ ลิงก์มีผลแค่กับการเข้าร้านครั้งแรก · รหัสร้านไม่ได้อยู่ในลิงก์ บอกพนักงานแยกต่างหาก · <button type="button" class="cust-link" id="devReset">เปลี่ยนรหัสร้าน</button></p>';
+      '<p class="set-note">คนที่เข้าร้านแล้วใช้งานต่อได้ปกติ · ลิงก์หมดอายุใน 24 ชม. หรือเมื่อมีคนเข้าครบ · รหัสร้านไม่ได้อยู่ในลิงก์ บอกพนักงานแยกต่างหาก · <button type="button" class="cust-link" id="devReset">เปลี่ยนรหัสร้าน</button></p>';
   }
-  // the owner's device remembers the shop code, so a fresh link is made automatically each day
-  function renewInvite(force) {
+  function renewInvite(force, max) {
     var code = shopCode();
     if (!code) { renderInviteSetup(true); return; }
     $('devBody').innerHTML = '<p class="set-note center" style="padding:30px 0">⏳ กำลังสร้างลิงก์ใหม่…</p>';
-    makeInvite(code, true).then(function () { renderInvite(); if (force) toast('สร้างลิงก์ใหม่แล้ว: ลิงก์และ QR เก่าใช้เข้าร้านไม่ได้แล้ว'); }, function () { renderInviteSetup(true); });
+    makeInvite(code, true, max == null ? (INV && INV.max != null ? INV.max : 1) : max).then(function () { renderInvite(); if (force) toast('สร้างลิงก์ใหม่แล้ว: ลิงก์และ QR เก่าใช้เข้าร้านไม่ได้แล้ว'); }, function () { renderInviteSetup(true); });
   }
   function renderInviteSetup(again) {
     devAgain = !!again;
     $('devBody').innerHTML = roleSeg() +
-      (again ? '<div class="sy-on" style="background:rgba(47,123,246,.08)"><b style="color:inherit">🔑 ใส่รหัสร้านเพื่อสร้างลิงก์ของวันนี้</b><span>ลิงก์เข้าร้านมีอายุ 24 ชั่วโมง เครื่องนี้ยังไม่ได้จำรหัสร้านไว้ ใส่ครั้งเดียว แล้ววันต่อไประบบสร้างลิงก์ให้เอง</span></div>'
-        : '<div class="sy-on" style="background:rgba(47,123,246,.08)"><b style="color:inherit">🔑 ตั้งรหัสร้าน (ทำครั้งเดียว)</b><span>พนักงานใช้รหัสนี้ตอนเชื่อมเครื่องครั้งแรก ตั้งให้จำง่าย อย่างน้อย 6 ตัว เช่น 33photo หรือเบอร์ร้าน ลิงก์เข้าร้านมีอายุ 24 ชม. และระบบสร้างลิงก์ใหม่ให้เองทุกวัน</span></div>') +
+      (again ? '<div class="sy-on" style="background:rgba(47,123,246,.08)"><b style="color:inherit">🔑 ใส่รหัสร้านเพื่อสร้างลิงก์ใหม่</b><span>เครื่องนี้ยังไม่ได้จำรหัสร้านไว้ ใส่ครั้งเดียว ครั้งต่อไประบบสร้างลิงก์ให้เองเมื่อลิงก์หมดอายุหรือมีคนเข้าครบ</span></div>'
+        : '<div class="sy-on" style="background:rgba(47,123,246,.08)"><b style="color:inherit">🔑 ตั้งรหัสร้าน (ทำครั้งเดียว)</b><span>พนักงานใช้รหัสนี้ตอนเชื่อมเครื่องครั้งแรก ตั้งให้จำง่าย อย่างน้อย 6 ตัว เช่น 33photo ลิงก์เข้าร้านจะหมดอายุใน 24 ชม. หรือเมื่อมีคนเข้าครบตามจำนวนที่ตั้ง</span></div>') +
+      limitSeg(devMax) +
       '<div class="field"><label for="devPass">รหัสร้าน</label><div class="pw-wrap"><input id="devPass" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false"><button type="button" class="pw-eye" data-eye="devPass" aria-label="แสดงรหัส">👁</button></div></div>' +
       (again ? '' : '<div class="field"><label for="devPass2">พิมพ์อีกครั้ง</label><input id="devPass2" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false"></div>') +
       '<div class="err-msg" id="devErr" hidden></div>' +
       '<button class="btn primary" type="button" id="devMake">สร้าง QR</button>';
     setTimeout(function () { var x = $('devPass'); if (x) x.focus(); }, 50);
   }
+  function pollInvite() {
+    clearInterval(invPoll);
+    invPoll = setInterval(function () {
+      if ($('devModal').hidden || !INV) { clearInterval(invPoll); return; }
+      invGet().then(function (cur) {
+        if (!cur.rec || !INV || cur.rec.gen !== INV.gen) return;
+        var before = (INV.used || []).length, wasFull = invFull(INV);
+        setINV(cur.rec);
+        if ((cur.rec.used || []).length !== before || invFull(cur.rec) !== wasFull) {
+          var nu = (cur.rec.used || [])[(cur.rec.used || []).length - 1];
+          if ((cur.rec.used || []).length > before && nu) toast('👋 ' + (nu.name || 'มีคน') + ' เข้าร้านแล้ว: ' + (nu.kind || ''));
+          if ($('devQr') || invFull(cur.rec)) renderInvite(); else if ($('invUsed')) $('invUsed').outerHTML = usedHTML();
+        }
+      }).catch(function () {});
+    }, 6000);
+  }
   function openDevice() {
     devRoleSel = 'full';
     if (!syncOn()) { toast('เชื่อม GitHub ในเครื่องนี้ก่อน'); return; }
     if (!canCrypto()) { toast('เบราว์เซอร์นี้สร้างลิงก์ไม่ได้ ลองเปิดผ่านเว็บ https'); return; }
     $('devModal').hidden = false; document.body.style.overflow = 'hidden';
-    if (inviteOK()) renderInvite(); else if (shopCode()) renewInvite(false); else renderInviteSetup(!!(S.invite && S.invite.gen));
+    $('devBody').innerHTML = '<p class="set-note center" style="padding:30px 0">⏳ กำลังโหลด…</p>';
+    invGet().then(function (cur) {
+      if (cur.rec) setINV(cur.rec);
+      devMax = INV && INV.max != null ? INV.max : 1;
+      if (invValid(INV)) renderInvite();
+      else if (INV && invFull(INV) && INV.exp > Date.now() && INV.tk === hstr(SY.cfg.token)) renderInvite();
+      else if (shopCode()) renewInvite(false);
+      else renderInviteSetup(!!(INV && INV.gen));
+      pollInvite();
+    }, function () { $('devBody').innerHTML = '<p class="set-note center" style="padding:30px 0">โหลดไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่</p>'; });
   }
-  function closeDevice() { $('devModal').hidden = true; $('devBody').innerHTML = ''; if ($('settings').hidden) document.body.style.overflow = ''; }
+  function closeDevice() { clearInterval(invPoll); $('devModal').hidden = true; $('devBody').innerHTML = ''; if ($('settings').hidden) document.body.style.overflow = ''; }
   var devAgain = false;
   function makeDevice() {
     var p = $('devPass').value, p2 = devAgain ? p : $('devPass2').value, err = $('devErr'), btn = $('devMake');
@@ -4800,20 +4871,32 @@
     if (p.length < 6) { fail('รหัสร้านต้องยาวอย่างน้อย 6 ตัว'); return; }
     if (p !== p2) { fail('รหัสสองช่องไม่ตรงกัน'); return; }
     err.hidden = true; btn.disabled = true; btn.textContent = 'กำลังสร้าง…';
-    makeInvite(p, true).then(function () {
-      renderInvite();
+    makeInvite(p, true, devMax).then(function () {
+      renderInvite(); pollInvite();
       toast('สร้าง QR แล้ว: ครั้งต่อไปกด "เพิ่มเครื่อง" แล้ว QR ขึ้นทันที');
-    }, function () { btn.disabled = false; btn.textContent = 'สร้าง QR'; fail('สร้างไม่สำเร็จ ลองใหม่อีกครั้ง'); });
+    }, function () { btn.disabled = false; btn.textContent = 'สร้าง QR'; fail('สร้างไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่'); });
+  }
+  function setLimit(max) {
+    devMax = max;
+    if (!$('devQr') && !$('devNext')) { Array.prototype.forEach.call($('devMax').children, function (x) { x.setAttribute('aria-pressed', String(+x.getAttribute('data-max') === max)); }); return; }
+    if ($('devNext')) { Array.prototype.forEach.call($('devMax').children, function (x) { x.setAttribute('aria-pressed', String(+x.getAttribute('data-max') === max)); }); return; }
+    invGet().then(function (cur) {
+      if (!cur.rec || cur.rec.gen !== INV.gen) return;
+      cur.rec.max = max;
+      return invPut(cur.rec, cur.sha, 'เปลี่ยนจำนวนคนของลิงก์เป็น ' + (max ? max + ' คน' : 'ไม่จำกัด')).then(function () { setINV(cur.rec); renderInvite(); toast('ลิงก์นี้เข้าได้ ' + (max ? max + ' คน' : 'ไม่จำกัดจำนวน')); });
+    }).catch(function () { toast('เปลี่ยนไม่สำเร็จ ลองใหม่'); });
   }
   $('devBody').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
     if (b.id === 'devMake') makeDevice();
-    if (b.hasAttribute('data-role')) { devRoleSel = b.getAttribute('data-role'); if (inviteOK() && $('devQr')) renderInvite(); else { Array.prototype.forEach.call($('devRole').children, function (x) { x.setAttribute('aria-pressed', String(x === b)); }); $('devRoleHint').textContent = devRoleSel === 'view' ? 'เห็นตารางงาน ปฏิทิน และงานของตัวเอง ไม่เห็นยอดเงินและบิล และแก้หรือลบงานไม่ได้' : 'เพิ่มงาน ออกบิล รับเงิน และเห็นยอดเงินได้ทั้งหมด'; } }
+    if (b.hasAttribute('data-max')) { setLimit(+b.getAttribute('data-max')); return; }
+    if (b.id === 'devNext') { renewInvite(false, devMax); return; }
+    if (b.hasAttribute('data-role')) { devRoleSel = b.getAttribute('data-role'); if (INV && $('devQr')) renderInvite(); else { Array.prototype.forEach.call($('devRole').children, function (x) { x.setAttribute('aria-pressed', String(x === b)); }); $('devRoleHint').textContent = devRoleSel === 'view' ? 'เห็นตารางงาน ปฏิทิน และงานของตัวเอง ไม่เห็นยอดเงินและบิล และแก้หรือลบงานไม่ได้' : 'เพิ่มงาน ออกบิล รับเงิน และเห็นยอดเงินได้ทั้งหมด'; } }
     if (b.id === 'devCopy') copyText($('devLink').value).then(function (ok) { toast(ok === false ? 'คัดลอกไม่ได้ ลองกด "แชร์" แทน' : 'คัดลอกลิงก์แล้ว: วางส่งให้พนักงานได้เลย'); });
     if (b.id === 'devShare') navigator.share({ title: 'เข้าร่วม ' + S.company.name + ' Studio', text: 'กดลิงก์นี้แล้วใส่ชื่อเล่นกับรหัสร้าน', url: $('devLink').value }).catch(function () {});
-    if (b.id === 'devLine') { var tx = 'เข้าร่วมแอป ' + S.company.name + ' Studio 📸\nกดลิงก์แล้วใส่ชื่อเล่นกับรหัสร้าน\n' + $('devLink').value; copyText(tx); window.open('https://line.me/R/share?text=' + encodeURIComponent(tx), '_blank', 'noopener'); }
+    if (b.id === 'devLine') { var tx = 'เข้าร่วมแอป ' + S.company.name + ' Studio 📸\nกดลิงก์แล้วใส่ชื่อเล่นกับรหัสร้าน (ลิงก์ใช้ได้ 24 ชม.)\n' + $('devLink').value; copyText(tx); window.open('https://line.me/R/share?text=' + encodeURIComponent(tx), '_blank', 'noopener'); }
     if (b.id === 'devRenew') { confirmBox('สร้างลิงก์ใหม่?', 'ลิงก์และ QR เดิมจะใช้เข้าร้านไม่ได้ทันที คนที่เข้าร้านไปแล้วใช้งานต่อได้ตามปกติ', 'สร้างลิงก์ใหม่', function () { renewInvite(true); }); return; }
-    if (b.id === 'devReset') confirmBox('ตั้งรหัสร้านใหม่?', 'QR และลิงก์เดิมจะใช้ไม่ได้ เครื่องที่เชื่อมไว้แล้วใช้งานต่อได้ตามปกติ', 'ตั้งรหัสใหม่', function () { delete S.invite; lsSet(SKEY, S); var dv = devInfo(); delete dv.shopCode; rawSet(DKEY, dv); renderInviteSetup(false); });
+    if (b.id === 'devReset') confirmBox('ตั้งรหัสร้านใหม่?', 'QR และลิงก์เดิมจะใช้ไม่ได้ เครื่องที่เชื่อมไว้แล้วใช้งานต่อได้ตามปกติ', 'ตั้งรหัสใหม่', function () { var dv = devInfo(); delete dv.shopCode; rawSet(DKEY, dv); renderInviteSetup(false); });
   });
   $('devBody').addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.target.id === 'devPass' || e.target.id === 'devPass2')) { e.preventDefault(); makeDevice(); } });
   $('devClose').addEventListener('click', closeDevice);
@@ -4833,6 +4916,26 @@
     setTimeout(function () { $('joinPass').focus(); }, 50);
   }
   function closeJoin() { $('joinModal').hidden = true; document.body.style.overflow = ''; }
+  function claimSeat(cfg, gen, name, role, EXPIRED) {
+    var tries = 0, CANCELLED = 'ลิงก์นี้ถูกยกเลิกแล้ว เพราะร้านสร้างลิงก์ใหม่ ขอลิงก์ล่าสุดจากเจ้าของร้าน';
+    function attempt() {
+      return invGet(cfg).then(function (cur) {
+        var rec = cur.rec;
+        if (!rec) return gen ? CANCELLED : '';
+        if (!gen || rec.gen !== gen) return CANCELLED;
+        if (Date.now() > rec.exp) return EXPIRED;
+        var used = rec.used || [];
+        if (used.some(function (u) { return u.dev === devId(); })) return '';
+        if (rec.max && used.length >= rec.max) return '🔒 ลิงก์นี้ถูกใช้ครบ ' + rec.max + ' คนแล้ว ขอให้ร้านสร้างลิงก์ใหม่ให้';
+        rec.used = used.concat([{ dev: devId(), name: name, kind: devKind(), role: role === 'view' ? 'view' : 'full', at: Date.now() }]);
+        return invPut(rec, cur.sha, 'เข้าร้าน: ' + name, cfg).then(function () { return ''; }, function (er) {
+          if ((er.status === 409 || er.status === 422) && ++tries < 5) return attempt();
+          throw er;
+        });
+      });
+    }
+    return attempt().then(null, function (er) { return er && er.status === 401 ? 'ลิงก์นี้ใช้ไม่ได้แล้ว (รหัส GitHub ของร้านเปลี่ยน) ขอลิงก์ใหม่จากเจ้าของร้าน' : 'เชื่อมต่อไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่'; });
+  }
   function doJoin() {
     var p = $('joinPass').value, err = $('joinErr'), btn = $('joinGo');
     function fail(m) { err.textContent = m; err.hidden = false; btn.disabled = false; btn.textContent = 'เชื่อมต่อ'; }
@@ -4844,10 +4947,8 @@
       var role = cfg.role, gen = cfg.gen, exp = cfg.exp; delete cfg.role; delete cfg.gen; delete cfg.exp;
       var EXPIRED = 'ลิงก์นี้หมดอายุแล้ว (ใช้ได้ 24 ชั่วโมง) ขอลิงก์ใหม่ของวันนี้จากเจ้าของร้าน';
       if (exp && Date.now() > exp) { fail(EXPIRED); return; }
-      return ghReq('GET', ghPath('settings'), null, true, cfg).then(function (tx) { try { return JSON.parse(tx) || {}; } catch (e) { return {}; } }, function () { return {}; }).then(function (rs) {
-      var inv = rs && rs.invite;
-      if (inv && inv.gen && gen !== inv.gen) { fail('ลิงก์นี้ถูกยกเลิกแล้ว เพราะเจ้าของร้านสร้างลิงก์ใหม่ ขอลิงก์ล่าสุดจากเจ้าของร้าน'); return; }
-      if (inv && inv.exp && Date.now() > inv.exp) { fail(EXPIRED); return; }
+      return claimSeat(cfg, gen, $('joinName').value.trim(), role, EXPIRED).then(function (why) {
+      if (why) { fail(why); return; }
       return connectCfg(cfg).then(function (msg) {
         if (msg) { fail(msg); return; }
         if ($('joinName').value.trim()) { setMe($('joinName').value); ensureStaff(meRaw()); }
@@ -5108,7 +5209,7 @@
     ghReq('GET', '', null, false, cfg).then(function (repo) {
       if (!repo || repo.private !== true) { fail('repo นี้ไม่ได้เป็น Private'); return; }
       SY.cfg = cfg; sySave();
-      delete S.invite;
+      delete S.invite; setINV(null);
       if (exp) S.tokenExp = exp;
       lsSet(SKEY, S);
       return syncNow({ pull: true }).then(function () {
@@ -5558,6 +5659,13 @@
     return true;
   }
   function devLabel(e) { return e.dev ? (e.dev === 'คอมพิวเตอร์' ? '💻 ' : '📱 ') + e.dev + (e.app ? ' (แอป)' : '') + (e.role === 'view' ? ' · ดูอย่างเดียว' : '') : '❔ เครื่องเวอร์ชันเก่า'; }
+  function noteTeamJoins(oldArr, newArr) {
+    var had = {}; oldArr.forEach(function (e) { if (e && e.id) had[e.id] = 1; });
+    newArr.forEach(function (e) {
+      if (!e || !e.id || had[e.id] || /^[nk]:/.test(e.id) || e.id === devId() || e.hide) return;
+      setTimeout(function () { toast('👋 ' + e.name + ' เข้าร้านแล้ว: ' + (e.dev || 'เครื่องใหม่')); }, 300);
+    });
+  }
   function migrateTeam() {
     var have = {}; teamRaw().forEach(function (e) { have[e.name] = 1; });
     (S.staff || []).forEach(function (n) { if (n && !have[n]) { teamPut('n:' + n, n, false); have[n] = 1; } });
@@ -5578,7 +5686,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'c8ecc8cfdf91';
+  var BUILD = 'f91f59e67b2a';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
@@ -6058,7 +6166,7 @@
   window.__billPro = { renderCanvas: renderCanvas, S: function () { return S; }, state: function () { return state; },
     sheetHTML: sheetHTML, applySheetVars: applySheetVars, fitA4: fitA4,
     goPage: goPage, jobs: jobs, jobMoney: jobMoney, openJob: openJob, openPay: openPay,
-    mergeSettings: mergeSettings, teamRaw: teamRaw, openDevice: openDevice, BUILD: function () { return BUILD; }, teamNames: teamNames, staffNames: staffNames, syncNow: syncNow, sync: function () { return { state: syncState, err: syncErr, SY: SY }; },
+    mergeSettings: mergeSettings, invite: function () { return INV; }, teamRaw: teamRaw, openDevice: openDevice, BUILD: function () { return BUILD; }, teamNames: teamNames, staffNames: staffNames, syncNow: syncNow, sync: function () { return { state: syncState, err: syncErr, SY: SY }; },
     delivOf: delivOf, openMsg: openMsg, confetti: confetti, quickISO: quickISO, openCust: openCust, viewOnly: viewOnly, yearReport: yearReport, reportCSV: reportCSV, openSearch: openSearch, openSettings: openSettings, setMe: setMe, merge3: merge3 };
 })();
 </script>
