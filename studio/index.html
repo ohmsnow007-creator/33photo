@@ -1036,6 +1036,7 @@
   .staff-chip { font: inherit; font-size: 0.85rem; min-height: 34px; padding: 0 12px; border-radius: 17px; border: 1px solid var(--border); background: var(--field); color: var(--fg); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
   .staff-chip[aria-pressed="true"], .staff-chip.on { background: rgba(47,123,246,.12); border-color: rgba(47,123,246,.5); color: #1c64d6; }
   .staff-chip.add { border-style: dashed; color: var(--muted); background: none; }
+  .staff-chip.gone { opacity: .7; text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--fg) 45%, transparent); }
   .staff-chip .x { border: 0; background: none; color: inherit; font-size: 1.1rem; cursor: pointer; padding: 0 0 0 2px; line-height: 1; }
   #jobsMine[aria-pressed="true"] { background: var(--ink); color: var(--ink-fg); border-color: var(--ink); }
   .hist-modal.search-modal { align-items: flex-start; padding-top: max(8px, env(safe-area-inset-top, 0px)); }
@@ -5112,26 +5113,22 @@
   // ================= team: assign staff to jobs, "my jobs" =================
   var MKEY = 'bill33suite.mine', mineOn = lsGet(MKEY, false) === true;
   function isMine(j) { var me = meRaw(); return !!me && (j.staff || []).indexOf(me) >= 0; }
-  function staffNames() {
-    var m = {}, out = [], hid = teamHidden();
-    function add(n) { n = String(n || '').trim(); if (n && !m[n] && !hid[n]) { m[n] = 1; out.push(n); } }
-    teamNames().forEach(add);
-    add(meRaw());
-    jobs().forEach(function (j) { (j.staff || []).forEach(add); });
-    return out;
-  }
+  // the job picker uses exactly the team list from Settings → ทีมงาน (one source of truth)
+  function staffNames() { return teamNames(); }
   function staffChip(j) {
     var st = j.staff || [];
     if (!st.length) return '';
     return jc('ทีม: ' + st.join(', '), isMine(j) ? 'wait' : '');
   }
   function renderJStaff() {
-    var cur = jEdit.staff || [], names = staffNames();
-    cur.forEach(function (n) { if (names.indexOf(n) < 0) names.push(n); });
+    var cur = jEdit.staff || [], names = staffNames().slice(), gone = {};
+    // someone removed from the team but still on this job: shown (crossed out) only here, so it can be taken off
+    cur.forEach(function (n) { if (names.indexOf(n) < 0) { names.push(n); gone[n] = 1; } });
     $('jStaff').innerHTML = names.map(function (n) {
       var on = cur.indexOf(n) >= 0;
-      return '<button type="button" class="staff-chip" data-staff="' + esc(n) + '" aria-pressed="' + on + '">' + (on ? '✓ ' : '') + esc(n) + (n === meRaw() ? ' (ฉัน)' : '') + '</button>';
-    }).join('') + '<button type="button" class="staff-chip add" data-staffadd="1">+ เพิ่มชื่อ</button>';
+      return '<button type="button" class="staff-chip' + (gone[n] ? ' gone' : '') + '" data-staff="' + esc(n) + '" aria-pressed="' + on + '"' + (gone[n] ? ' title="ไม่อยู่ในรายชื่อทีมงานแล้ว กดเพื่อเอาออกจากงานนี้"' : '') + '>' + (on ? '✓ ' : '') + esc(n) + (n === meRaw() ? ' (ฉัน)' : '') + (gone[n] ? ' · ไม่อยู่ในทีมแล้ว' : '') + '</button>';
+    }).join('') + '<button type="button" class="staff-chip add" data-staffadd="1">+ เพิ่มชื่อ</button>' +
+      (names.length ? '' : '<span class="hint" style="align-self:center">ยังไม่มีรายชื่อทีมงาน เพิ่มได้ที่ปุ่ม "+ เพิ่มชื่อ" หรือ ตั้งค่า → ทีมงาน</span>');
   }
   $('jStaff').addEventListener('click', function (e) {
     if (viewOnly()) return;
@@ -5504,7 +5501,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'e56d1455e094';
+  var BUILD = '110921c9b4ad';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
