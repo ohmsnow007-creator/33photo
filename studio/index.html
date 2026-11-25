@@ -1327,6 +1327,18 @@
   .tm-row .x:hover { color: var(--danger); background: var(--surface); }
   .tm-list { display: grid; gap: 6px; }
 
+  .tm-devs { display: grid; gap: 4px; margin: 4px 0 0 44px; }
+  .tm-dev { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--muted); }
+  .tm-dev .grow { flex: 1; min-width: 0; }
+  .tm-dev .kick { font: inherit; font-size: 0.76rem; border: 1px solid rgba(229,72,77,.4); color: #c92a2a; background: none; border-radius: 8px; padding: 3px 9px; cursor: pointer; white-space: nowrap; }
+  .tm-dev .kick:hover { background: rgba(229,72,77,.08); }
+  .tm-dev .me { font-size: 0.74rem; color: #2b8a3e; }
+  .tm-block { padding: 8px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--field); }
+  .tm-block .tm-row { padding: 0; border: 0; background: none; }
+  .inv-exp { text-align: center; font-size: 0.84rem; }
+  .inv-exp b { color: #2b8a3e; }
+  .inv-exp.soon b { color: #b06d00; }
+
   /* print */
   #printRoot { display: none; }
   @media print {
@@ -2016,6 +2028,7 @@
   }
   function lsGet(k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } }
   function lsSet(k, v) {
+    if (typeof KICKED !== 'undefined' && KICKED) return false;
     try {
       var nv = JSON.stringify(v);
       if (SYNC_OF[k] && localStorage.getItem(k) === nv) return true;
@@ -3268,11 +3281,15 @@
       '<p class="set-note">รายชื่อนี้ใช้มอบหมายงานในช่อง "ทีมงาน" ของแต่ละงาน ทุกเครื่องเห็นรายชื่อเดียวกัน ให้พนักงานแต่ละคนตั้ง "ชื่อของคุณ" ในเครื่องตัวเองให้ตรงกับรายชื่อนี้ เพื่อใช้ปุ่ม "งานของฉัน"</p>' +
       '<div class="btnrow" style="margin:0"><button class="btn primary" type="button" data-adddev="1">📱 เพิ่มเครื่องพนักงาน (QR)</button></div>' +
       (stf.length ? '<div class="tm-list">' + stf.map(function (n) {
-        var devs = teamRaw().filter(function (x) { return x.name === n && !x.hide && x.dev; });
+        var kk = kickedIds(), devs = teamRaw().filter(function (x) { return x.name === n && !x.hide && !kk[x.id] && !/^[nk]:/.test(x.id); });
         var last = devs.reduce(function (m, x) { return Math.max(m, x.seen || 0); }, 0);
-        var info = devs.length ? devs.map(function (x) { return (x.dev === 'คอมพิวเตอร์' ? '💻 ' : '📱 ') + x.dev + (x.role === 'view' ? ' (ดูอย่างเดียว)' : ''); }).join(' · ') + (last ? ' · ออนไลน์ล่าสุด ' + ago(last) : '') : 'ยังไม่ได้เชื่อมเครื่อง (เพิ่มชื่อเอง)';
-        return '<div class="tm-row"><span class="av">' + esc(n.replace(/^(พี่|น้อง|คุณ)/, '').slice(0, 1) || '?') + '</span><span class="grow"><b>' + esc(n) + (n === meRaw() ? ' (ฉัน)' : '') + '</b><small>' + esc(info) + '</small></span><button type="button" class="x" data-stdel="' + esc(n) + '" aria-label="ลบ ' + esc(n) + '">×</button></div>';
+        var info = devs.length ? devs.length + ' เครื่อง' + (last ? ' · ออนไลน์ล่าสุด ' + ago(last) : '') : 'ยังไม่ได้เชื่อมเครื่อง (เพิ่มชื่อเอง)';
+        return '<div class="tm-block"><div class="tm-row"><span class="av">' + esc(n.replace(/^(พี่|น้อง|คุณ)/, '').slice(0, 1) || '?') + '</span><span class="grow"><b>' + esc(n) + (n === meRaw() ? ' (ฉัน)' : '') + '</b><small>' + esc(info) + '</small></span><button type="button" class="x" data-stdel="' + esc(n) + '" title="เอาชื่อออกจากรายชื่อทีมงาน" aria-label="ลบชื่อ ' + esc(n) + '">×</button></div>' +
+          (devs.length ? '<div class="tm-devs">' + devs.map(function (x) {
+            return '<div class="tm-dev"><span class="grow">' + esc(devLabel(x)) + (x.seen ? ' · ' + esc(ago(x.seen)) : '') + '</span>' + (x.id === devId() ? '<span class="me">เครื่องนี้</span>' : '<button type="button" class="kick" data-kick="' + esc(x.id) + '" data-kname="' + esc(n) + '">นำเครื่องออก</button>') + '</div>';
+          }).join('') + '</div>' : '') + '</div>';
       }).join('') + '</div>' : '') +
+      '<p class="set-note">× = เอาชื่อออกจากรายชื่อทีมงาน · "นำเครื่องออก" = ตัดเครื่องนั้นออกจากร้าน ข้อมูลร้านในเครื่องนั้นจะถูกล้างทันทีที่ออนไลน์ ต้องขอลิงก์และรหัสร้านใหม่ถึงจะกลับเข้ามาได้</p>' +
       '<div class="job-link"><input id="stNew" type="text" autocomplete="off" placeholder="เพิ่มชื่อ เช่น น้องเบล"><button class="btn" type="button" id="stAdd">เพิ่ม</button></div>' +
       sub('การส่งงานลูกค้า') +
       fText('ส่งรูปภายในกี่วันหลังวันงาน', 'delivDays', { mode: 'numeric', note: 'ใช้เป็นกำหนดส่งเริ่มต้นของทุกงาน แก้เป็นรายงานได้ในหน้ารายละเอียดงาน' }) +
@@ -4402,8 +4419,9 @@
   // ================= GitHub sync =================
   var syncState = 'off', syncErr = '', syncing = false, syncAgain = null, syncP = null, pushT = null;
   function syncOn() { return !!(SY.cfg && SY.cfg.owner && SY.cfg.repo && SY.cfg.token); }
-  function sySave() { try { localStorage.setItem(YKEY, JSON.stringify(SY)); } catch (e) {} }
-  function rawSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { toast('พื้นที่เก็บข้อมูลในเครื่องเต็ม'); } }
+  var KICKED = false;
+  function sySave() { if (KICKED) return; try { localStorage.setItem(YKEY, JSON.stringify(SY)); } catch (e) {} }
+  function rawSet(k, v) { if (KICKED) return; try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { toast('พื้นที่เก็บข้อมูลในเครื่องเต็ม'); } }
   function markDirty(name) {
     if (!syncOn()) return;
     SY.dirty[name] = (SY.dirty[name] || 0) + 1; sySave();
@@ -4592,6 +4610,7 @@
       if ($('settings').hidden) fillForm();
     }
     updateHistBadge(); renderCustomers();
+    if (names.indexOf('team') >= 0 && checkKicked()) return;
     if ($('jobModal').hidden) refreshPages(); else { updateNavDot(); if (names.indexOf('team') >= 0 && jEdit) renderJStaff(); }
     if (page === 'bill') { renderJobSel(); updateEvHint(); }
     draw();
@@ -4689,10 +4708,10 @@
       return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: salt, iterations: 310000, hash: 'SHA-256' }, k, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
     });
   }
-  function sealCfg(cfg, pass, role) {
+  function sealCfg(cfg, pass, role, meta) {
     var salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
     return deriveKey(pass, salt).then(function (k) {
-      return crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, k, new TextEncoder().encode(JSON.stringify(role === 'view' ? { o: cfg.owner, r: cfg.repo, t: cfg.token, v: 1 } : { o: cfg.owner, r: cfg.repo, t: cfg.token })));
+      return crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, k, new TextEncoder().encode(JSON.stringify(function () { var o = { o: cfg.owner, r: cfg.repo, t: cfg.token }; if (role === 'view') o.v = 1; if (meta) { o.g = meta.gen; o.x = meta.exp; } return o; }())));
     }).then(function (ct) {
       var c = new Uint8Array(ct), out = new Uint8Array(29 + c.length);
       out[0] = 1; out.set(salt, 1); out.set(iv, 17); out.set(c, 29);
@@ -4704,13 +4723,28 @@
     if (u[0] !== 1 || u.length < 45) return Promise.reject(new Error('bad link'));
     return deriveKey(pass, u.slice(1, 17)).then(function (k) {
       return crypto.subtle.decrypt({ name: 'AES-GCM', iv: u.slice(17, 29) }, k, u.slice(29));
-    }).then(function (pt) { var o = JSON.parse(new TextDecoder().decode(pt)); return { owner: o.o, repo: o.r, token: o.t, role: o.v ? 'view' : 'full' }; });
+    }).then(function (pt) { var o = JSON.parse(new TextDecoder().decode(pt)); return { owner: o.o, repo: o.r, token: o.t, role: o.v ? 'view' : 'full', gen: o.g || '', exp: o.x || 0 }; });
   }
   function canCrypto() { return !!(window.crypto && crypto.subtle && window.TextEncoder); }
   var devRoleSel = 'full';
   // Invite links are encrypted with the shop code and kept in the shop settings, so after the first
   // time the owner just opens this window and the QR is already there.
-  function inviteOK() { return !!(S.invite && S.invite.full && S.invite.view && syncOn() && S.invite.tk === hstr(SY.cfg.token)); }
+  var INV_LIFE = 24 * 3600000;
+  function inviteOK() { return !!(S.invite && S.invite.full && S.invite.view && S.invite.gen && S.invite.exp && syncOn() && S.invite.tk === hstr(SY.cfg.token) && S.invite.exp - Date.now() > 3600000); }
+  function shopCode() { return devInfo().shopCode || ''; }
+  function makeInvite(code, remember) {
+    var meta = { gen: uid() + uid(), exp: Date.now() + INV_LIFE };
+    return Promise.all([sealCfg(SY.cfg, code, 'full', meta), sealCfg(SY.cfg, code, 'view', meta)]).then(function (b) {
+      S.invite = { full: b[0], view: b[1], tk: hstr(SY.cfg.token), gen: meta.gen, exp: meta.exp, at: Date.now(), by: meName() };
+      lsSet(SKEY, S);
+      var dv = devInfo(); if (remember) dv.shopCode = code; else delete dv.shopCode; rawSet(DKEY, dv);
+    });
+  }
+  function expLine() {
+    var left = S.invite.exp - Date.now(), h = Math.floor(left / 3600000), m = Math.floor(left % 3600000 / 60000);
+    var d = new Date(S.invite.exp);
+    return '<div class="inv-exp' + (left < 6 * 3600000 ? ' soon' : '') + '">⏱ ลิงก์นี้ใช้ได้ถึง <b>' + d.getDate() + ' ' + MSHORT[d.getMonth()] + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ' น.</b> (อีก ' + (h ? h + ' ชม. ' : '') + m + ' นาที) · หมดเวลาแล้วระบบสร้างลิงก์ใหม่ให้เองเมื่อเปิดหน้านี้</div>';
+  }
   function inviteLink(role) {
     var base = /^https?:$/.test(location.protocol) ? location.origin + location.pathname : WEB_STUDIO;
     return base + '?openExternalBrowser=1#join=' + (role === 'view' ? S.invite.view : S.invite.full);
@@ -4724,19 +4758,29 @@
     if (window.qrcode) { try { var q = qrcode(0, 'M'); q.addData(link); q.make(); qr = q.createSvgTag(4, 0); } catch (e) { qr = ''; } }
     $('devBody').innerHTML = roleSeg() +
       (qr ? '<div class="inv-qr" id="devQr">' + qr + '</div>' : '') +
-      '<div class="inv-role">' + (devRoleSel === 'view' ? 'QR สำหรับเครื่องดูตารางอย่างเดียว' : 'QR สำหรับพนักงานใช้งานเต็ม') + '</div>' +
+      '<div class="inv-role">' + (devRoleSel === 'view' ? 'QR สำหรับเครื่องดูตารางอย่างเดียว' : 'QR สำหรับพนักงานใช้งานเต็ม') + '</div>' + expLine() +
       '<ol class="inv-steps"><li><span class="n">1</span><span>ให้พนักงาน<b>เปิดกล้องมือถือ</b>แล้วสแกน QR นี้ (iPhone ใช้แอปกล้อง · Android ใช้กล้องหรือ Google Lens) หรือกด "ส่งลิงก์ทาง LINE" แล้วให้เขากดลิงก์</span></li>' +
         '<li><span class="n">2</span><span>เขากรอก <b>ชื่อเล่น</b> + <b>รหัสร้าน</b> แล้วกดเชื่อมต่อ เสร็จ! ชื่อจะขึ้นในรายชื่อทีมงานของทุกเครื่องทันที</span></li></ol>' +
       '<div class="inv-btns"><button class="btn line" type="button" id="devLine">💬 ส่งลิงก์ทาง LINE</button><button class="btn" type="button" id="devCopy">📋 คัดลอกลิงก์</button>' +
         (navigator.share ? '<button class="btn" type="button" id="devShare">📤 แชร์</button>' : '<span></span>') + '</div>' +
       '<input id="devLink" class="dev-link" type="hidden" value="' + esc(link) + '">' +
-      '<p class="set-note">รหัสร้านไม่ได้อยู่ในลิงก์ บอกพนักงานด้วยปากหรือส่งแยกต่างหาก · <button type="button" class="cust-link" id="devReset">ลืมรหัสร้าน / ตั้งรหัสใหม่</button></p>';
+      '<div class="btnrow" style="margin:0"><button class="btn" type="button" id="devRenew">🔄 สร้างลิงก์ใหม่ตอนนี้ (ลิงก์เก่าใช้ไม่ได้ทันที)</button></div>' +
+      '<p class="set-note">คนที่เข้าร้านแล้วใช้งานต่อได้ปกติ ลิงก์มีผลแค่กับการเข้าร้านครั้งแรก · รหัสร้านไม่ได้อยู่ในลิงก์ บอกพนักงานแยกต่างหาก · <button type="button" class="cust-link" id="devReset">เปลี่ยนรหัสร้าน</button></p>';
   }
-  function renderInviteSetup() {
+  // the owner's device remembers the shop code, so a fresh link is made automatically each day
+  function renewInvite(force) {
+    var code = shopCode();
+    if (!code) { renderInviteSetup(true); return; }
+    $('devBody').innerHTML = '<p class="set-note center" style="padding:30px 0">⏳ กำลังสร้างลิงก์ใหม่…</p>';
+    makeInvite(code, true).then(function () { renderInvite(); if (force) toast('สร้างลิงก์ใหม่แล้ว: ลิงก์และ QR เก่าใช้เข้าร้านไม่ได้แล้ว'); }, function () { renderInviteSetup(true); });
+  }
+  function renderInviteSetup(again) {
+    devAgain = !!again;
     $('devBody').innerHTML = roleSeg() +
-      '<div class="sy-on" style="background:rgba(47,123,246,.08)"><b style="color:inherit">🔑 ตั้งรหัสร้าน (ทำครั้งเดียว)</b><span>พนักงานใช้รหัสนี้ตอนเชื่อมเครื่องครั้งแรก ตั้งให้จำง่าย อย่างน้อย 6 ตัว เช่น 33photo หรือเบอร์ร้าน ครั้งต่อไปกดปุ่มนี้แล้ว QR ขึ้นทันที ไม่ต้องตั้งใหม่</span></div>' +
+      (again ? '<div class="sy-on" style="background:rgba(47,123,246,.08)"><b style="color:inherit">🔑 ใส่รหัสร้านเพื่อสร้างลิงก์ของวันนี้</b><span>ลิงก์เข้าร้านมีอายุ 24 ชั่วโมง เครื่องนี้ยังไม่ได้จำรหัสร้านไว้ ใส่ครั้งเดียว แล้ววันต่อไประบบสร้างลิงก์ให้เอง</span></div>'
+        : '<div class="sy-on" style="background:rgba(47,123,246,.08)"><b style="color:inherit">🔑 ตั้งรหัสร้าน (ทำครั้งเดียว)</b><span>พนักงานใช้รหัสนี้ตอนเชื่อมเครื่องครั้งแรก ตั้งให้จำง่าย อย่างน้อย 6 ตัว เช่น 33photo หรือเบอร์ร้าน ลิงก์เข้าร้านมีอายุ 24 ชม. และระบบสร้างลิงก์ใหม่ให้เองทุกวัน</span></div>') +
       '<div class="field"><label for="devPass">รหัสร้าน</label><div class="pw-wrap"><input id="devPass" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false"><button type="button" class="pw-eye" data-eye="devPass" aria-label="แสดงรหัส">👁</button></div></div>' +
-      '<div class="field"><label for="devPass2">พิมพ์อีกครั้ง</label><input id="devPass2" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false"></div>' +
+      (again ? '' : '<div class="field"><label for="devPass2">พิมพ์อีกครั้ง</label><input id="devPass2" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false"></div>') +
       '<div class="err-msg" id="devErr" hidden></div>' +
       '<button class="btn primary" type="button" id="devMake">สร้าง QR</button>';
     setTimeout(function () { var x = $('devPass'); if (x) x.focus(); }, 50);
@@ -4745,19 +4789,18 @@
     devRoleSel = 'full';
     if (!syncOn()) { toast('เชื่อม GitHub ในเครื่องนี้ก่อน'); return; }
     if (!canCrypto()) { toast('เบราว์เซอร์นี้สร้างลิงก์ไม่ได้ ลองเปิดผ่านเว็บ https'); return; }
-    if (inviteOK()) renderInvite(); else renderInviteSetup();
     $('devModal').hidden = false; document.body.style.overflow = 'hidden';
+    if (inviteOK()) renderInvite(); else if (shopCode()) renewInvite(false); else renderInviteSetup(!!(S.invite && S.invite.gen));
   }
   function closeDevice() { $('devModal').hidden = true; $('devBody').innerHTML = ''; if ($('settings').hidden) document.body.style.overflow = ''; }
+  var devAgain = false;
   function makeDevice() {
-    var p = $('devPass').value, p2 = $('devPass2').value, err = $('devErr'), btn = $('devMake');
+    var p = $('devPass').value, p2 = devAgain ? p : $('devPass2').value, err = $('devErr'), btn = $('devMake');
     function fail(m) { err.textContent = m; err.hidden = false; }
     if (p.length < 6) { fail('รหัสร้านต้องยาวอย่างน้อย 6 ตัว'); return; }
     if (p !== p2) { fail('รหัสสองช่องไม่ตรงกัน'); return; }
     err.hidden = true; btn.disabled = true; btn.textContent = 'กำลังสร้าง…';
-    Promise.all([sealCfg(SY.cfg, p, 'full'), sealCfg(SY.cfg, p, 'view')]).then(function (b) {
-      S.invite = { full: b[0], view: b[1], tk: hstr(SY.cfg.token), at: Date.now(), by: meName() };
-      lsSet(SKEY, S);
+    makeInvite(p, true).then(function () {
       renderInvite();
       toast('สร้าง QR แล้ว: ครั้งต่อไปกด "เพิ่มเครื่อง" แล้ว QR ขึ้นทันที');
     }, function () { btn.disabled = false; btn.textContent = 'สร้าง QR'; fail('สร้างไม่สำเร็จ ลองใหม่อีกครั้ง'); });
@@ -4769,7 +4812,8 @@
     if (b.id === 'devCopy') copyText($('devLink').value).then(function (ok) { toast(ok === false ? 'คัดลอกไม่ได้ ลองกด "แชร์" แทน' : 'คัดลอกลิงก์แล้ว: วางส่งให้พนักงานได้เลย'); });
     if (b.id === 'devShare') navigator.share({ title: 'เข้าร่วม ' + S.company.name + ' Studio', text: 'กดลิงก์นี้แล้วใส่ชื่อเล่นกับรหัสร้าน', url: $('devLink').value }).catch(function () {});
     if (b.id === 'devLine') { var tx = 'เข้าร่วมแอป ' + S.company.name + ' Studio 📸\nกดลิงก์แล้วใส่ชื่อเล่นกับรหัสร้าน\n' + $('devLink').value; copyText(tx); window.open('https://line.me/R/share?text=' + encodeURIComponent(tx), '_blank', 'noopener'); }
-    if (b.id === 'devReset') confirmBox('ตั้งรหัสร้านใหม่?', 'QR และลิงก์เดิมจะใช้ไม่ได้ เครื่องที่เชื่อมไว้แล้วใช้งานต่อได้ตามปกติ', 'ตั้งรหัสใหม่', function () { delete S.invite; lsSet(SKEY, S); renderInviteSetup(); });
+    if (b.id === 'devRenew') { confirmBox('สร้างลิงก์ใหม่?', 'ลิงก์และ QR เดิมจะใช้เข้าร้านไม่ได้ทันที คนที่เข้าร้านไปแล้วใช้งานต่อได้ตามปกติ', 'สร้างลิงก์ใหม่', function () { renewInvite(true); }); return; }
+    if (b.id === 'devReset') confirmBox('ตั้งรหัสร้านใหม่?', 'QR และลิงก์เดิมจะใช้ไม่ได้ เครื่องที่เชื่อมไว้แล้วใช้งานต่อได้ตามปกติ', 'ตั้งรหัสใหม่', function () { delete S.invite; lsSet(SKEY, S); var dv = devInfo(); delete dv.shopCode; rawSet(DKEY, dv); renderInviteSetup(false); });
   });
   $('devBody').addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.target.id === 'devPass' || e.target.id === 'devPass2')) { e.preventDefault(); makeDevice(); } });
   $('devClose').addEventListener('click', closeDevice);
@@ -4797,7 +4841,13 @@
     if (!canCrypto()) { fail('เบราว์เซอร์นี้เปิดลิงก์ไม่ได้ ลองเปิดด้วย Chrome หรือ Safari'); return; }
     err.hidden = true; btn.disabled = true; btn.textContent = 'กำลังเชื่อม…';
     openCfg(joinBlob, p).then(function (cfg) {
-      var role = cfg.role; delete cfg.role;
+      var role = cfg.role, gen = cfg.gen, exp = cfg.exp; delete cfg.role; delete cfg.gen; delete cfg.exp;
+      var EXPIRED = 'ลิงก์นี้หมดอายุแล้ว (ใช้ได้ 24 ชั่วโมง) ขอลิงก์ใหม่ของวันนี้จากเจ้าของร้าน';
+      if (exp && Date.now() > exp) { fail(EXPIRED); return; }
+      return ghReq('GET', ghPath('settings'), null, true, cfg).then(function (tx) { try { return JSON.parse(tx) || {}; } catch (e) { return {}; } }, function () { return {}; }).then(function (rs) {
+      var inv = rs && rs.invite;
+      if (inv && inv.gen && gen !== inv.gen) { fail('ลิงก์นี้ถูกยกเลิกแล้ว เพราะเจ้าของร้านสร้างลิงก์ใหม่ ขอลิงก์ล่าสุดจากเจ้าของร้าน'); return; }
+      if (inv && inv.exp && Date.now() > inv.exp) { fail(EXPIRED); return; }
       return connectCfg(cfg).then(function (msg) {
         if (msg) { fail(msg); return; }
         if ($('joinName').value.trim()) { setMe($('joinName').value); ensureStaff(meRaw()); }
@@ -4806,6 +4856,7 @@
         joinBlob = null; closeJoin(); goPage('home');
         btn.disabled = false; btn.textContent = 'เชื่อมต่อ';
         toast('เครื่องนี้เชื่อมกับข้อมูลร้านแล้ว');
+      });
       });
     }, function () { fail('รหัสร้านไม่ถูกต้อง ลองใหม่ (กด 👁 เพื่อดูที่พิมพ์) หรือถ้าลิงก์ไม่ครบ ให้ขอลิงก์ใหม่จากเจ้าของร้าน'); });
   }
@@ -5093,6 +5144,13 @@
       teamAdd(v);
       openSecs = { staff: true }; renderSettings();
       setTimeout(function () { var el = $('stNew'); if (el) el.focus(); }, 20);
+      return;
+    }
+    if (b.hasAttribute('data-kick')) {
+      var kid = b.getAttribute('data-kick'), kn = b.getAttribute('data-kname');
+      confirmBox('นำเครื่องของ ' + kn + ' ออกจากร้าน?', 'เครื่องนั้นจะถูกล้างข้อมูลร้านทันทีที่ออนไลน์ และต้องขอลิงก์ของวันนั้นกับรหัสร้านใหม่ถึงจะกลับเข้ามาได้ (ถ้าเป็นเรื่องร้ายแรง แนะนำให้เปลี่ยนรหัสร้านด้วย)', 'นำเครื่องออก', function () {
+        teamKick(kid); openSecs = { staff: true }; renderSettings(); toast('นำเครื่องของ ' + kn + ' ออกจากร้านแล้ว');
+      });
       return;
     }
     if (b.hasAttribute('data-stdel')) {
@@ -5434,15 +5492,16 @@
   // Each device only writes its own entry, so devices never overwrite each other. Removing = hide:true.
   function teamRaw() { var a = lsGet(TKEY, []); return Array.isArray(a) ? a : []; }
   function teamHidden() {
-    var vis = {}, hid = {};
-    teamRaw().forEach(function (e) { if (!e || !e.name) return; if (e.hide) hid[e.name] = 1; else vis[e.name] = 1; });
+    var vis = {}, hid = {}, kk = kickedIds();
+    teamRaw().forEach(function (e) { if (!e || !e.name || e.kick) return; if (e.hide || kk[e.id]) hid[e.name] = 1; else vis[e.name] = 1; });
     Object.keys(vis).forEach(function (n) { delete hid[n]; });
     return hid;
   }
+  function kickedIds() { var k = {}; teamRaw().forEach(function (e) { if (e && e.kick) k[e.kick] = 1; }); return k; }
   function teamNames() {
-    var m = {}, out = [], hid = teamHidden();
+    var m = {}, out = [], hid = teamHidden(), kk = kickedIds();
     function add(n) { n = String(n || '').trim(); if (n && !m[n] && !hid[n]) { m[n] = 1; out.push(n); } }
-    teamRaw().slice().sort(function (a, b) { return (a.at || a.ts || 0) - (b.at || b.ts || 0); }).forEach(function (e) { if (e && !e.hide) add(e.name); });
+    teamRaw().slice().sort(function (a, b) { return (a.at || a.ts || 0) - (b.at || b.ts || 0); }).forEach(function (e) { if (e && !e.hide && !kk[e.id]) add(e.name); });
     (S.staff || []).forEach(add);
     return out;
   }
@@ -5481,6 +5540,24 @@
     else extra.seen = mine.seen;
     return teamPut(devId(), n, false, extra);
   }
+  // A removed device is listed as {id: 'k:<device id>', kick: <device id>}. The device never writes that entry,
+  // so its own updates can't undo it. When it sees it, it wipes the shop data and must be invited again.
+  function teamKick(id) {
+    var e = teamRaw().filter(function (x) { return x.id === id; })[0];
+    teamPut('k:' + id, e ? e.name : '', true, { kick: id });
+  }
+  function checkKicked() {
+    if (!syncOn() || !kickedIds()[devId()]) return false;
+    var shop = S.company.name || 'ร้าน', name = meRaw();
+    KICKED = true; SY = { sha: {}, base: {}, dirty: {} }; clearTimeout(pushT);
+    [SKEY, KEY, HKEY, CKEY, BKEY, JKEY, PKEY, YKEY, UKEY, TKEY, DKEY, 'bill33suite.mine'].forEach(function (k) { localStorage.removeItem(k); });
+    try { localStorage.setItem('bill33suite.kickedMsg', JSON.stringify({ shop: shop, name: name, at: Date.now() })); } catch (e) {}
+    var ov = document.createElement('div'); ov.style.cssText = 'position:fixed;inset:0;z-index:999;background:var(--bg);color:var(--fg);display:flex;align-items:center;justify-content:center;font-size:1.1rem;padding:24px;text-align:center';
+    ov.textContent = '🚪 เครื่องนี้ถูกนำออกจากร้านแล้ว…'; document.body.appendChild(ov);
+    location.reload();
+    return true;
+  }
+  function devLabel(e) { return e.dev ? (e.dev === 'คอมพิวเตอร์' ? '💻 ' : '📱 ') + e.dev + (e.app ? ' (แอป)' : '') + (e.role === 'view' ? ' · ดูอย่างเดียว' : '') : '❔ เครื่องเวอร์ชันเก่า'; }
   function migrateTeam() {
     var have = {}; teamRaw().forEach(function (e) { have[e.name] = 1; });
     (S.staff || []).forEach(function (n) { if (n && !have[n]) { teamPut('n:' + n, n, false); have[n] = 1; } });
@@ -5496,12 +5573,12 @@
   }
   setTimeout(function () {
     if (syncOn() && !meRaw() && $('joinModal').hidden && $('modal').hidden) askMyName();
-    else if (syncOn()) syncNow({ pull: true }).then(function () { if (syncState === 'ok' || syncState === 'pending') { migrateTeam(); ensureStaff(); refreshPages(); } });
+    else if (syncOn()) syncNow({ pull: true }).then(function () { if (checkKicked()) return; if (syncState === 'ok' || syncState === 'pending') { migrateTeam(); ensureStaff(); refreshPages(); } });
     else { migrateTeam(); ensureStaff(); }
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '110921c9b4ad';
+  var BUILD = 'c8ecc8cfdf91';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
@@ -5955,6 +6032,13 @@
   }
 
   // ================= init =================
+  (function () {
+    var k = lsGet('bill33suite.kickedMsg', null);
+    if (!k) return;
+    localStorage.removeItem('bill33suite.kickedMsg');
+    if (k.name) setMe(k.name);
+    setTimeout(function () { openModal('🚪 เครื่องนี้ถูกนำออกจากร้าน', 'เจ้าของร้าน ' + (k.shop || '') + ' นำเครื่องนี้ออกแล้ว ข้อมูลร้านในเครื่องนี้ถูกล้างเรียบร้อย ถ้าจะกลับเข้าร้าน ให้ขอลิงก์ของวันนี้และรหัสร้านใหม่จากเจ้าของร้าน', false, '', 'เข้าใจแล้ว', function () {}, 'ปิด'); }, 600);
+  })();
   document.body.classList.toggle('viewonly', viewOnly());
   enhanceDT(document);
   applyChrome();
@@ -5974,7 +6058,7 @@
   window.__billPro = { renderCanvas: renderCanvas, S: function () { return S; }, state: function () { return state; },
     sheetHTML: sheetHTML, applySheetVars: applySheetVars, fitA4: fitA4,
     goPage: goPage, jobs: jobs, jobMoney: jobMoney, openJob: openJob, openPay: openPay,
-    mergeSettings: mergeSettings, openDevice: openDevice, BUILD: function () { return BUILD; }, teamNames: teamNames, staffNames: staffNames, syncNow: syncNow, sync: function () { return { state: syncState, err: syncErr, SY: SY }; },
+    mergeSettings: mergeSettings, teamRaw: teamRaw, openDevice: openDevice, BUILD: function () { return BUILD; }, teamNames: teamNames, staffNames: staffNames, syncNow: syncNow, sync: function () { return { state: syncState, err: syncErr, SY: SY }; },
     delivOf: delivOf, openMsg: openMsg, confetti: confetti, quickISO: quickISO, openCust: openCust, viewOnly: viewOnly, yearReport: yearReport, reportCSV: reportCSV, openSearch: openSearch, openSettings: openSettings, setMe: setMe, merge3: merge3 };
 })();
 </script>
