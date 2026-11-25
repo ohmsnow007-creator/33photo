@@ -1086,6 +1086,8 @@
   .lock-note { font-size: 0.8rem; color: var(--muted); line-height: 1.6; margin: 0; }
   .lock-note code { font-family: ui-monospace, Consolas, monospace; font-size: 0.78rem; background: var(--field); border-radius: 4px; padding: 0 4px; }
   .lock-note a { color: #2f7bf6; }
+  .lock-note summary { cursor: pointer; color: var(--muted); font-weight: 500; }
+  .lock-note details[open] summary { margin-bottom: 4px; }
 
   /* ===== photo delivery ===== */
   .dv-card { border-color: rgba(139,92,246,.45); }
@@ -1170,6 +1172,8 @@
   .qchip { font: inherit; font-size: 0.78rem; min-height: 30px; padding: 0 11px; border-radius: 15px; border: 1px solid var(--border); background: var(--field); color: var(--fg); cursor: pointer; transition: transform .12s, border-color .12s; }
   .qchip:hover { border-color: var(--muted); }
   .qchip:active { transform: scale(.95); }
+  .qchips-slot .qchips { margin-top: 0; }
+  .qchips-wide .qchip { flex: 1 1 auto; min-height: 34px; }
   .qchip.on { background: rgba(47,123,246,.12); border-color: rgba(47,123,246,.5); color: #1c64d6; }
   .time-warn { font-size: 0.8rem; color: #b06d00; margin-top: 4px; }
   /* ===== setup checklist in settings ===== */
@@ -1584,6 +1588,7 @@
         <div class="field"><label for="evStart" data-l="fEvStart">เริ่ม</label><input id="evStart" type="time"></div>
         <div class="field"><label for="evEnd" data-l="fEvEnd">ถึง</label><input id="evEnd" type="time"></div>
       </div>
+      <div class="field qchips-slot" data-qfor="evDate"><label>⚡ เลือกวันงานแบบเร็ว</label></div>
       <div class="field"><label for="evVenue" data-l="fEvVenue">สถานที่จัดงาน</label><textarea id="evVenue" rows="2" placeholder="เช่น โรงแรม... ห้องบอลรูม ชั้น 2"></textarea></div>
     </section>
 
@@ -1839,17 +1844,17 @@
 
 <div class="hist-modal" id="lockModal" hidden>
   <div class="hist-sheet" role="dialog" aria-modal="true" aria-labelledby="lockTitle">
-    <div class="hist-sheet-head"><h3 id="lockTitle">หน้าตั้งค่าถูกล็อก</h3><button class="mini" id="lockClose" type="button">ปิด</button></div>
+    <div class="hist-sheet-head"><h3 id="lockTitle">🔒 หน้าตั้งค่าสำหรับเจ้าของร้าน</h3><button class="mini" id="lockClose" type="button">ปิด</button></div>
     <div class="job-body" style="padding-bottom:16px">
-      <p class="set-note" id="lockNote">ใส่ PIN เจ้าของร้านเพื่อเข้าหน้าตั้งค่า</p>
+      <p class="set-note" id="lockNote"></p>
       <div id="lockPinBox" style="display:grid;gap:12px">
-        <div class="field"><label for="lockPin">PIN เจ้าของร้าน</label><input id="lockPin" class="pin-in" type="password" inputmode="numeric" autocomplete="off"></div>
+        <div class="field"><label for="lockPin">🔑 PIN เจ้าของร้าน</label><input id="lockPin" class="pin-in" type="password" inputmode="numeric" autocomplete="off" placeholder="••••"></div>
         <div class="err-msg" id="lockErr" hidden></div>
-        <button class="btn primary" id="lockGo" type="button">ปลดล็อก</button>
+        <button class="btn primary" id="lockGo" type="button">🔓 เข้าหน้าตั้งค่า</button>
       </div>
-      <div class="job-sec">สำหรับพนักงาน (ไม่ต้องใช้ PIN)</div>
-      <div class="field"><label for="lockMe">ชื่อของคุณในเครื่องนี้</label><input id="lockMe" type="text" autocomplete="off" placeholder="เช่น พี่โอ, น้องเบล"><div class="hint">ใช้แสดงว่าใครเพิ่มหรือแก้งาน และใช้กับปุ่ม "งานของฉัน" · บันทึกอัตโนมัติ</div></div>
-      <div class="btnrow" style="margin:0"><button class="btn" type="button" data-pastelink="1">วางลิงก์เข้าร่วมร้านใหม่</button></div>
+      <div class="job-sec">👤 สำหรับพนักงาน · ไม่ต้องใช้ PIN</div>
+      <div class="field"><label for="lockMe">ชื่อเล่นของคุณ</label><input id="lockMe" type="text" autocomplete="off" placeholder="เช่น พี่โอ, น้องเบล"><div class="hint">ชื่อนี้จะขึ้นในงานที่คุณเพิ่มหรือแก้ และใช้ดู "งานของฉัน" · บันทึกให้อัตโนมัติ ✓</div></div>
+      <div class="btnrow" style="margin:0"><button class="btn" type="button" data-pastelink="1">🔗 วางลิงก์เข้าร้านใหม่</button></div>
       <p class="lock-note" id="lockForgot"></p>
     </div>
   </div>
@@ -5132,20 +5137,20 @@
     lockCb = cb;
     $('lockPin').value = ''; $('lockErr').hidden = true; $('lockMe').value = meRaw();
     var vo = viewOnly();
-    $('lockTitle').textContent = vo ? 'เครื่องนี้ใช้ดูตารางอย่างเดียว' : 'หน้าตั้งค่าถูกล็อก';
-    $('lockNote').textContent = vo ? (lockOn() ? 'เจ้าของร้านใส่ PIN เพื่อเปลี่ยนเครื่องนี้เป็นเครื่องใช้งานเต็ม' : 'ถ้าต้องการใช้งานเต็ม ให้เจ้าของร้านสร้างลิงก์แบบ "ใช้งานเต็ม" แล้ววางลิงก์ใหม่ด้านล่าง') : 'ใส่ PIN เจ้าของร้านเพื่อเข้าหน้าตั้งค่า';
+    $('lockTitle').textContent = vo ? '👀 เครื่องนี้ใช้ดูตารางอย่างเดียว' : '🔒 หน้าตั้งค่าสำหรับเจ้าของร้าน';
+    $('lockNote').textContent = vo ? (lockOn() ? 'เจ้าของร้านใส่ PIN เพื่อเปลี่ยนเครื่องนี้เป็นเครื่องใช้งานเต็ม' : 'ถ้าต้องการใช้งานเต็ม ขอลิงก์แบบ "ใช้งานเต็ม" จากเจ้าของร้าน แล้ววางลิงก์ใหม่ด้านล่าง') : 'เจ้าของร้านใส่ PIN เพื่อแก้ไขการตั้งค่าร้าน';
     $('lockPinBox').hidden = vo && !lockOn();
     $('lockPinBox').style.display = $('lockPinBox').hidden ? 'none' : 'grid';
-    $('lockForgot').innerHTML = 'ลืม PIN? เจ้าของร้านเปิดไฟล์ <code>data/settings.json</code> ' +
+    $('lockForgot').innerHTML = '<details><summary>ลืม PIN? 🤔</summary>พนักงาน: ติดต่อเจ้าของร้าน<br>เจ้าของร้าน: เปิดไฟล์ <code>data/settings.json</code> ' +
       (syncOn() ? 'ใน <a href="https://github.com/' + esc(SY.cfg.owner) + '/' + esc(SY.cfg.repo) + '/blob/HEAD/data/settings.json" target="_blank" rel="noopener">repo บน GitHub</a>' : 'ใน repo บน GitHub') +
-      ' กดแก้ไข แล้วลบส่วน <code>"lock"</code> ออก';
+      ' กดแก้ไข แล้วลบส่วน <code>"lock"</code> ออก</details>';
     $('lockModal').hidden = false; document.body.style.overflow = 'hidden';
     setTimeout(function () { $('lockPin').focus(); }, 50);
   }
   function closeLock() { $('lockModal').hidden = true; lockCb = null; if ($('settings').hidden) document.body.style.overflow = ''; }
   function tryUnlock() {
     var err = $('lockErr');
-    if (Date.now() < lockWait) { err.textContent = 'ใส่ผิดหลายครั้ง รออีก ' + Math.ceil((lockWait - Date.now()) / 1000) + ' วินาที'; err.hidden = false; return; }
+    if (Date.now() < lockWait) { err.textContent = '⏳ ใส่ผิดหลายครั้ง รออีก ' + Math.ceil((lockWait - Date.now()) / 1000) + ' วินาที'; err.hidden = false; return; }
     if (checkPin($('lockPin').value)) {
       lockFails = 0; unlockUntil = Date.now() + 10 * 60000;
       if (viewOnly()) { var dv0 = devInfo(); dv0.role = 'full'; rawSet(DKEY, dv0); applyRole(); toast('เปลี่ยนเครื่องนี้เป็นเครื่องใช้งานเต็มแล้ว'); }
@@ -5154,7 +5159,7 @@
     }
     lockFails++;
     if (lockFails >= 5) { lockFails = 0; lockWait = Date.now() + 30000; }
-    err.textContent = 'PIN ไม่ถูกต้อง'; err.hidden = false;
+    err.textContent = '❌ PIN ไม่ถูกต้อง ลองใหม่อีกครั้ง'; err.hidden = false;
     $('lockPin').value = ''; $('lockPin').focus();
   }
   $('lockGo').addEventListener('click', tryUnlock);
@@ -5398,7 +5403,8 @@
       if (isDate && inp.hasAttribute('data-quick')) {
         quick = document.createElement('div'); quick.className = 'qchips';
         quick.innerHTML = [['0', 'วันนี้'], ['1', 'พรุ่งนี้'], ['sat', 'เสาร์นี้'], ['sun', 'อาทิตย์นี้'], ['7', '+1 สัปดาห์']].map(function (q) { return '<button type="button" class="qchip" data-q="' + q[0] + '">' + q[1] + '</button>'; }).join('');
-        box.parentNode.insertBefore(quick, box.nextSibling);
+        var slot = document.querySelector('[data-qfor="' + id + '"]');
+        if (slot) { quick.classList.add('qchips-wide'); slot.appendChild(quick); } else box.parentNode.insertBefore(quick, box.nextSibling);
       }
       var lbl = document.querySelector('label[for="' + id + '"]'); if (lbl) lbl.htmlFor = id + '__d';
       inp.type = 'hidden';
@@ -5686,7 +5692,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'f91f59e67b2a';
+  var BUILD = '03ddf960b07d';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
