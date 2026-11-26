@@ -1105,6 +1105,10 @@
   .lb-result.err { border-color: rgba(229,72,77,.45); background: rgba(229,72,77,.07); }
   .lb-result.busy { border-color: rgba(47,123,246,.45); }
   .lb-result a { color: #2f7bf6; }
+  .lb-preview { margin: 0; white-space: pre-wrap; font: inherit; font-size: 0.88rem; line-height: 1.55; background: #06c75514; border: 1px solid #06c75555; border-radius: 14px 14px 14px 4px; padding: 10px 12px; }
+  .lb-tpl > summary { cursor: pointer; font-weight: 600; padding: 10px 0; }
+  .lb-tpl[open] > summary { margin-bottom: 6px; }
+  .lb-reset { display: flex; justify-content: flex-end; margin: -4px 0 8px; }
   .lb-qr { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
   .lb-qr-img { background: #fff; padding: 8px; border-radius: 12px; flex: none; line-height: 0; }
   .lb-qr-img svg { width: 132px; height: 132px; }
@@ -2028,7 +2032,12 @@
       msgEn: 'Dear {customer},\nPlease find attached {doc} No. {no} from {company}.\nEvent: {eventDate} {eventTime}\nVenue: {venue}\nTotal: THB {total}\nDeposit {depPct}%: THB {deposit}\nFor any questions, please call {phone}. Thank you.'
     },
     sheetL: {}, sheetLEn: {}, ui: {}, delivDays: '14',
-    lineBot: { on: true, newJob: true, morning: true, hour: 8, deliv: true, empty: false, oaId: '@155foeqj' },
+    lineBot: { on: true, newJob: true, change: true, morning: true, hour: 8, deliv: true, empty: false, oaId: '@155foeqj',
+      showVenue: true, showTeam: true, showPhone: false, showNote: false, showBy: true,
+      tplNew: '🆕 งานใหม่ {จำนวน} งาน', tplCancel: '❌ ยกเลิกงาน {จำนวน} งาน', tplMove: '🔁 เลื่อนวัน/เวลา {จำนวน} งาน',
+      tplMorning: '☀️ อรุณสวัสดิ์ {ร้าน}\n{วันนี้}',
+      tplJob: '📸 {งาน}\n📅 {วัน} · {เวลา}\n📍 {สถานที่}\n👥 ทีม: {ทีม}\n📞 {เบอร์}\n📝 {หมายเหตุ}\n⏳ {สถานะ}\n✍️ เพิ่มโดย {คนเพิ่ม}',
+      tplFoot: '' },
     msgs: {
       confirm: 'สวัสดีครับ {customer}\n{company} ขอยืนยันนัด{job} ครับ\n📅 {date}\n⏰ {time}\n📍 {venue}\nทีมงานจะไปถึงก่อนเวลาเล็กน้อยเพื่อเตรียมอุปกรณ์\nหากมีการเปลี่ยนแปลง แจ้งได้ตลอดเลยครับ\nโทร {phone}',
       due: 'สวัสดีครับ {customer}\n{company} ขอแจ้งยอดงาน{job} ({date}) ครับ\nยอดรวม ฿{total}\nชำระแล้ว ฿{paid}\nยอดคงเหลือ ฿{due}\nโอนแล้วรบกวนส่งสลิปในแชทนี้ได้เลยครับ ขอบคุณครับ 🙏',
@@ -4640,6 +4649,7 @@
         val = (dirty || first) && Array.isArray(local) && local.length ? merge3(name, local, rem, first ? {} : (SY.base[name] || {})) : rem;
       }
       SY.sha[name] = r.sha; SY.base[name] = baseOf(name, r.data);
+      if (name === 'jobs') lastJobs = Array.isArray(r.data) ? r.data : null;
       SY.dirty[name] = JSON.stringify(val) === JSON.stringify(r.data) ? 0 : Math.max(1, SY.dirty[name] || 0);
       var changed = JSON.stringify(val) !== JSON.stringify(local);
       if (changed && name === 'jobs' && !first) noteJobChanges(Array.isArray(local) ? local : [], val);
@@ -4656,9 +4666,28 @@
     var b = SY.base.jobs || {};
     return val.filter(function (x) { return x && x.id && !Object.prototype.hasOwnProperty.call(b, x.id) && x.status !== 'cancel'; }).length;
   }
+  // last jobs.json known to be on GitHub (memory only): lets the label say which upcoming jobs were cancelled, deleted or moved
+  var lastJobs = null;
+  function jobChangeCounts(val) {
+    var c = { cancel: 0, move: 0 }, today = todayISO(), up = function (j) { return !j.evDate || j.evDate >= today; };
+    if (!Array.isArray(lastJobs) || !Array.isArray(val)) return c;
+    var now = {};
+    val.forEach(function (j) { if (j && j.id) now[j.id] = j; });
+    lastJobs.forEach(function (o) {
+      if (!o || !o.id || o.status === 'cancel') return;
+      var j = now[o.id];
+      if (!j || j.status === 'cancel') { if (up(o)) c.cancel++; return; }
+      if ((o.evDate || '') + '|' + (o.evStart || '') + '|' + (o.evEnd || '') !== (j.evDate || '') + '|' + (j.evStart || '') + '|' + (j.evEnd || '') && (up(o) || up(j))) c.move++;
+    });
+    return c;
+  }
   function commitMsg(name, val) {
-    var n = name === 'jobs' ? newJobCount(val) : 0;
-    return n ? 'เพิ่มงานใหม่ ' + n + ' งาน จาก' + device() : 'อัปเดต' + SYNC_LABEL[name] + ' จาก' + device();
+    if (name !== 'jobs') return 'อัปเดต' + SYNC_LABEL[name] + ' จาก' + device();
+    var n = newJobCount(val), c = jobChangeCounts(val), parts = [];
+    if (n) parts.push('เพิ่มงานใหม่ ' + n + ' งาน');
+    if (c.cancel) parts.push('ยกเลิกงาน ' + c.cancel);
+    if (c.move) parts.push('เลื่อนงาน ' + c.move);
+    return (parts.length ? parts.join(' · ') : 'อัปเดตงาน') + ' จาก' + device();
   }
   function pushKey(name, retry) {
     var ver = SY.dirty[name], val = syncVal(name);
@@ -4668,6 +4697,7 @@
       sha: SY.sha[name] || undefined
     }).then(function (j) {
       SY.sha[name] = j.content.sha; SY.base[name] = baseOf(name, val);
+      if (name === 'jobs') lastJobs = val;
       // our own commit sits right on top of what we already had: no need to re-download it
       var cm = j.commit, par = cm && cm.parents && cm.parents[0] && cm.parents[0].sha;
       if (cm && cm.sha && headSha && par === headSha && !pendingHead) headSha = cm.sha;
@@ -5226,12 +5256,24 @@
     return fCheck('เปิดบอท LINE แจ้งเตือน', 'lineBot.on', 'ปิดแล้วบอทจะไม่ส่งข้อความอัตโนมัติเลย') +
       sub('ส่งอะไรบ้าง') +
       fCheck('🆕 แจ้งเมื่อมีงานใหม่', 'lineBot.newJob', 'ส่งภายในประมาณ 1 นาทีหลังมีคนเพิ่มงาน') +
+      fCheck('🔁 แจ้งเมื่องานถูกยกเลิกหรือเลื่อนวัน/เวลา', 'lineBot.change', 'รวมถึงงานที่ถูกลบ เฉพาะงานที่ยังไม่ผ่านไป') +
       fCheck('☀️ สรุปงานตอนเช้า', 'lineBot.morning', 'งานวันนี้และพรุ่งนี้') +
       '<div class="field"><label>เวลาส่งสรุปเช้า</label><div class="seg" id="lbHour" role="group" aria-label="เวลาส่งสรุปเช้า" style="--n:3">' +
         [7, 8, 9].map(function (h) { return '<button type="button" data-h="' + h + '" aria-pressed="' + (c.hour === h) + '">' + h + ' โมง</button>'; }).join('') +
       '</div><div class="hint">GitHub อาจเริ่มช้าได้ 5–30 นาที</div></div>' +
       fCheck('ส่งสรุปแม้วันนั้นไม่มีงาน', 'lineBot.empty', 'ปิดไว้จะประหยัดโควตาข้อความ') +
       fCheck('📷 เตือนส่งรูปลูกค้าในสรุปเช้า', 'lineBot.deliv', 'งานที่ใกล้ถึงหรือเลยกำหนดส่งรูป') +
+      sub('ข้อมูลที่แสดงในข้อความ') +
+      fCheck('📍 สถานที่', 'lineBot.showVenue') + fCheck('👥 ทีมงาน', 'lineBot.showTeam') + fCheck('✍️ คนที่เพิ่มงาน', 'lineBot.showBy') +
+      fCheck('📞 เบอร์ลูกค้า', 'lineBot.showPhone', 'ทุกคนที่แอดบอทจะเห็นเบอร์') + fCheck('📝 หมายเหตุงาน', 'lineBot.showNote', 'บรรทัดแรกของหมายเหตุ') +
+      sub('แก้ข้อความบอท') +
+      '<div class="field"><label>ตัวอย่างข้อความงานใหม่</label><pre class="lb-preview" id="lbPreview"></pre></div>' +
+      '<details class="lb-tpl"><summary>✏️ แก้คำพูดของบอท</summary>' +
+        '<p class="set-note">ใส่ช่องเติมอัตโนมัติได้: {งาน} {ลูกค้า} {วัน} {เวลา} {สถานที่} {ทีม} {เบอร์} {หมายเหตุ} {สถานะ} {คนเพิ่ม} · หัวข้อใช้ {จำนวน} {ร้าน} {วันนี้} · บรรทัดที่ไม่มีข้อมูลจะถูกซ่อนเอง</p>' +
+        [['tplJob', 'รายละเอียดแต่ละงาน', 8], ['tplNew', 'หัวข้องานใหม่', 2], ['tplCancel', 'หัวข้องานยกเลิก', 2], ['tplMove', 'หัวข้องานเลื่อนวัน/เวลา', 2], ['tplMorning', 'หัวข้อสรุปเช้า', 2], ['tplFoot', 'ข้อความลงท้าย (ไม่ใส่ก็ได้)', 2]].map(function (t) {
+          return fText(t[1], 'lineBot.' + t[0], { area: true, rows: t[2] }) + '<div class="lb-reset"><button type="button" class="mini" data-lbreset="' + t[0] + '">↺ คืนค่าเดิม</button></div>';
+        }).join('') +
+      '</details>' +
       sub('ทดสอบบอท') +
       '<div class="btnrow"><button class="btn primary" type="button" id="lbTest">📨 ส่งข้อความทดสอบ</button><button class="btn" type="button" id="lbMorningNow">☀️ ส่งสรุปเช้าตอนนี้</button></div>' +
       '<div class="lb-result" id="lbResult" aria-live="polite"></div>' +
@@ -5241,7 +5283,29 @@
         '<span>ส่งให้ทีมงานเท่านั้น ใครแอดเพื่อนจะได้รับข้อความงานของร้าน</span></div></div>' +
       '<p class="set-note">📊 แพ็กเกจฟรีของ LINE ส่งได้ 300 ข้อความต่อเดือน นับตามจำนวนคนที่ได้รับ เช่น ทีม 5 คน 1 ครั้ง = 5 ข้อความ ถ้าหมดบอทจะหยุดส่งจนถึงเดือนใหม่ ไม่มีค่าใช้จ่าย · บอทไม่ส่งราคาหรือยอดเงิน</p>';
   }
+  function lbRender(tpl, vars) {
+    var out = [];
+    String(tpl || '').split('\n').forEach(function (line) {
+      var names = [], re = /\{([^{}]+)\}/g, m;
+      while ((m = re.exec(line))) names.push(m[1]);
+      if (names.length && names.every(function (n) { return (n in vars) && !String(vars[n] || '').trim(); })) return;
+      var x = line.replace(/\{([^{}]+)\}/g, function (all, n) { return n in vars ? (String(vars[n] || '').trim() || '\u0000') : all; });
+      out.push(x.replace(/\s*·\s*\u0000/g, '').replace(/\u0000\s*·\s*/g, '').replace(/\u0000/g, '').replace(/\s+$/, ''));
+    });
+    return out.join('\n').replace(/^\n+|\n+$/g, '');
+  }
+  function lbPreviewText() {
+    var c = lineCfg(), d = new Date(); d.setDate(d.getDate() + 2);
+    var iso = isoOf(d), p = isoParts(iso), shop = (S.company && S.company.name) || 'ทีมงาน';
+    var job = { 'งาน': 'งานแต่ง · คุณเอ', 'ลูกค้า': 'คุณเอ', 'วัน': ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'][d.getDay()] + ' ' + p.d + ' ' + MSHORT[p.m - 1] + ' ' + String(p.y + 543).slice(2),
+      'เวลา': '10:00–14:00 น.', 'สถานที่': c.showVenue ? 'โรงแรมเอ ห้องบอลรูม' : '', 'ทีม': c.showTeam ? (staffNames().slice(0, 2).join(', ') || 'ปีโป้') : '',
+      'เบอร์': c.showPhone ? '081 234 5678' : '', 'หมายเหตุ': c.showNote ? 'เอาโดรนไปด้วย' : '', 'สถานะ': '', 'คนเพิ่ม': c.showBy ? meName() : '' };
+    var head = { 'ร้าน': shop, 'จำนวน': '1', 'วันนี้': eventDate(todayISO(), false) };
+    var foot = lbRender(c.tplFoot, head);
+    return lbRender(c.tplNew, head) + '\n\n' + (lbRender(c.tplJob, job) || 'งานแต่ง · คุณเอ') + (foot ? '\n\n' + foot : '');
+  }
   function lbPaint() {
+    var pv = $('lbPreview'); if (pv) pv.textContent = lbPreviewText();
     var box = $('lbResult'); if (!box) return;
     var on = syncOn(), c = lineCfg();
     ['lbTest', 'lbMorningNow'].forEach(function (id) { var b = $(id); if (b) b.disabled = !on || !!lbBusy; });
@@ -5300,6 +5364,8 @@
   setBody.addEventListener('click', function (e) {
     var h = e.target.closest('#lbHour [data-h]');
     if (h && !h.disabled) { if (!S.lineBot) S.lineBot = clone(DEFAULTS.lineBot); S.lineBot.hour = +h.getAttribute('data-h'); saveS(); lbPaint(); return; }
+    var rs = e.target.closest('[data-lbreset]');
+    if (rs) { var k = rs.getAttribute('data-lbreset'), ta = setBody.querySelector('[data-p="lineBot.' + k + '"]'); if (ta) { ta.value = DEFAULTS.lineBot[k]; ta.dispatchEvent(new Event('input', { bubbles: true })); } toast('คืนข้อความเดิมแล้ว'); return; }
     if (e.target.closest('#lbTest')) { lineRun('test'); return; }
     if (e.target.closest('#lbMorningNow')) lineRun('morning');
   });
@@ -5878,7 +5944,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'a5dd244d05a3';
+  var BUILD = '191d4106fafa';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
