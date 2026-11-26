@@ -4987,7 +4987,7 @@
     devAgain = !!again;
     $('devBody').innerHTML = roleSeg() +
       (again ? '<div class="sy-on" style="background:rgba(47,123,246,.08)"><b style="color:inherit">🔑 ใส่รหัสร้านเพื่อสร้างลิงก์ใหม่</b><span>เครื่องนี้ยังไม่ได้จำรหัสร้านไว้ ใส่ครั้งเดียว ครั้งต่อไประบบสร้างลิงก์ให้เองเมื่อลิงก์หมดอายุหรือมีคนเข้าครบ</span></div>'
-        : '<div class="sy-on" style="background:rgba(47,123,246,.08)"><b style="color:inherit">🔑 ตั้งรหัสร้าน (ทำครั้งเดียว)</b><span>พนักงานใช้รหัสนี้ตอนเชื่อมเครื่องครั้งแรก ตั้งให้จำง่าย อย่างน้อย 6 ตัว เช่น 33photo ลิงก์เข้าร้านจะหมดอายุใน 24 ชม. หรือเมื่อมีคนเข้าครบตามจำนวนที่ตั้ง</span></div>') +
+        : '<div class="sy-on" style="background:rgba(47,123,246,.08)"><b style="color:inherit">🔑 ตั้งรหัสร้าน (ทำครั้งเดียว)</b><span>พนักงานใช้รหัสนี้ตอนเชื่อมเครื่องครั้งแรก ตั้งให้จำง่าย อย่างน้อย 4 ตัว (แนะนำ 6 ตัวขึ้นไป) เช่น 33photo ลิงก์เข้าร้านจะหมดอายุใน 24 ชม. หรือเมื่อมีคนเข้าครบตามจำนวนที่ตั้ง</span></div>') +
       limitSeg(devMax) +
       '<div class="field"><label for="devPass">รหัสร้าน</label><div class="pw-wrap"><input id="devPass" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false"><button type="button" class="pw-eye" data-eye="devPass" aria-label="แสดงรหัส">👁</button></div></div>' +
       (again ? '' : '<div class="field"><label for="devPass2">พิมพ์อีกครั้ง</label><input id="devPass2" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false"></div>') +
@@ -5028,12 +5028,17 @@
     }, function () { $('devBody').innerHTML = '<p class="set-note center" style="padding:30px 0">โหลดไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่</p>'; });
   }
   function closeDevice() { clearInterval(invPoll); $('devModal').hidden = true; $('devBody').innerHTML = ''; if ($('settings').hidden) document.body.style.overflow = ''; }
-  var devAgain = false;
+  var devAgain = false, devShortOK = '';
   function makeDevice() {
     var p = $('devPass').value, p2 = devAgain ? p : $('devPass2').value, err = $('devErr'), btn = $('devMake');
     function fail(m) { err.textContent = m; err.hidden = false; }
-    if (p.length < 6) { fail('รหัสร้านต้องยาวอย่างน้อย 6 ตัว'); return; }
+    if (p.length < 4) { fail('รหัสร้านต้องยาวอย่างน้อย 4 ตัว'); return; }
     if (p !== p2) { fail('รหัสสองช่องไม่ตรงกัน'); return; }
+    if (p.length < 6 && devShortOK !== p) {
+      devShortOK = p; btn.textContent = '✅ ใช้รหัสนี้เลย';
+      fail('⚠️ รหัสนี้สั้น คนที่ได้ลิงก์ไปอาจเดาได้ แนะนำ 6 ตัวขึ้นไป ถ้าจะใช้รหัสนี้ กดปุ่มอีกครั้ง');
+      return;
+    }
     err.hidden = true; btn.disabled = true; btn.textContent = 'กำลังสร้าง…';
     makeInvite(p, true, devMax).then(function () {
       renderInvite(); pollInvite();
@@ -6034,7 +6039,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '5f9bb5c22992';
+  var BUILD = '4db1ff553402';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
