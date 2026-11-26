@@ -4633,10 +4633,20 @@
       return changed;
     });
   }
+  // a commit that adds a job says "เพิ่มงานใหม่": the LINE bot on GitHub only starts for those (saves GitHub minutes)
+  function newJobCount(val) {
+    if (!SY.sha.jobs || !Array.isArray(val)) return 0;
+    var b = SY.base.jobs || {};
+    return val.filter(function (x) { return x && x.id && !Object.prototype.hasOwnProperty.call(b, x.id) && x.status !== 'cancel'; }).length;
+  }
+  function commitMsg(name, val) {
+    var n = name === 'jobs' ? newJobCount(val) : 0;
+    return n ? 'เพิ่มงานใหม่ ' + n + ' งาน จาก' + device() : 'อัปเดต' + SYNC_LABEL[name] + ' จาก' + device();
+  }
   function pushKey(name, retry) {
     var ver = SY.dirty[name], val = syncVal(name);
     return ghReq('PUT', ghPath(name), {
-      message: 'อัปเดต' + SYNC_LABEL[name] + ' จาก' + device(),
+      message: commitMsg(name, val),
       content: b64enc(JSON.stringify(val, null, 1)),
       sha: SY.sha[name] || undefined
     }).then(function (j) {
@@ -5759,7 +5769,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'ba115c32b336';
+  var BUILD = '942303b2b57a';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
