@@ -1810,6 +1810,7 @@
       </div>
       <div class="time-warn" id="jTimeWarn" hidden></div>
       <div class="field"><label for="j_evVenue">สถานที่</label><textarea id="j_evVenue" rows="2" placeholder="เช่น โรงแรม... ห้องบอลรูม ชั้น 2"></textarea></div>
+      <div class="field"><label for="j_mapUrl">🗺️ ลิงก์ Google Maps</label><input id="j_mapUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="วางลิงก์ที่ลูกค้าส่งมา เช่น https://maps.app.goo.gl/…"><div class="hint">บอท LINE จะส่งลิงก์นี้ให้ทีม · ถ้าวางลิงก์ไว้ในที่อยู่ลูกค้า ระบบย้ายมาใส่ช่องนี้ให้ (บิลจะได้ไม่มีลิงก์)</div></div>
       <div class="job-sec">ลูกค้า</div>
       <div class="field"><label for="j_cName">ชื่อลูกค้า / บริษัท</label><input id="j_cName" type="text" list="custList" autocomplete="off" placeholder="เช่น คุณสมชาย ใจดี"><div id="jCustHint"></div></div>
       <div class="grid2">
@@ -4196,7 +4197,18 @@
   $('jobsNew').addEventListener('click', function () { openJob(null); });
 
   // ---------- job editor ----------
-  var JF = ['title', 'evDate', 'evStart', 'evEnd', 'evVenue', 'cName', 'cPhone', 'price', 'cAddr', 'note'];
+  var JF = ['title', 'evDate', 'evStart', 'evEnd', 'evVenue', 'mapUrl', 'cName', 'cPhone', 'price', 'cAddr', 'note'];
+  // Google Maps links (same list as the LINE bot's MAPS_RE)
+  var MAPS_RE = /https?:\/\/(?:maps\.app\.goo\.gl|goo\.gl\/maps|(?:www\.)?google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|g\.co\/kgs)\S*/i;
+  function tidyMap(j) {
+    var u = String(j.mapUrl || '').trim();
+    if (u && !/^https?:\/\//i.test(u) && /^[\w.-]+\.[a-z]{2,}\//i.test(u)) u = 'https://' + u;
+    // a link pasted in the customer address would print on bills: move it into the map field
+    var m = MAPS_RE.exec(String(j.cAddr || ''));
+    if (m) { if (!u) u = m[0]; j.cAddr = String(j.cAddr).replace(m[0], '').replace(/[ \t]+\n/g, '\n').replace(/\n{2,}/g, '\n').trim(); }
+    if (!u) { var v = MAPS_RE.exec(String(j.evVenue || '')) || MAPS_RE.exec(String(j.note || '')); if (v) u = v[0]; }
+    if (u) j.mapUrl = u; else delete j.mapUrl;
+  }
   var jEdit = null;
   function openJob(id, preset) {
     if (!id && viewOnly()) { toast('เครื่องนี้ใช้ดูตารางอย่างเดียว เพิ่มงานไม่ได้'); return; }
@@ -4495,6 +4507,7 @@
       return null;
     }
     if (String(j.price).trim()) j.price = money(num(j.price));
+    tidyMap(j);
     if (j.deliv && j.deliv.stage === 'sent' && j.status === 'booked' && dayDiff(j.evDate) < 0) j.status = 'done';
     ['evDate'].forEach(function (k) { var p = isoParts(j[k]); if (p && p.y > 2400) j[k] = (p.y - 543) + j[k].slice(4); });
     if (j.deliv && j.deliv.due) { var dp = isoParts(j.deliv.due); if (dp && dp.y > 2400) j.deliv.due = (dp.y - 543) + j.deliv.due.slice(4); }
@@ -6170,7 +6183,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '7f711ca89f3b';
+  var BUILD = 'ef540c187ac7';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
