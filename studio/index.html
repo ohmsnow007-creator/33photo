@@ -1091,6 +1091,15 @@
 
   /* ===== photo delivery ===== */
   .dv-card { border-color: rgba(139,92,246,.45); }
+  .past-card { border-color: rgba(229,160,26,.45); }
+  .past-card h2 small { font-family: var(--font-body); font-weight: 400; font-size: 0.85rem; color: var(--muted); margin-left: 6px; }
+  .past-row { display: flex; gap: 8px; align-items: stretch; }
+  .past-row .job-row { flex: 1; min-width: 0; }
+  .past-done { flex: none; min-height: 44px; padding: 0 12px; font-size: 0.85rem; white-space: nowrap; }
+  @media (max-width: 640px) { .past-row { flex-direction: column; gap: 6px; } .past-done { min-height: 42px; } }
+  .job-chips .jc.warn { white-space: normal; max-width: 100%; line-height: 1.35; }
+  .staff-warn { font-size: 0.8rem; color: #b06d00; background: rgba(229,160,26,.1); border: 1px solid rgba(229,160,26,.35); border-radius: 10px; padding: 8px 10px; margin-top: 6px; line-height: 1.5; }
+  body.viewonly .past-done, body.viewonly #homePastAll { display: none !important; }
   .dv-card h2 small { font-family: var(--font-body); font-weight: 400; font-size: 0.85rem; color: var(--muted); margin-left: 6px; }
   .dv-card h2 small.late { color: #c92a2a; font-weight: 500; }
   .jc.done { background: rgba(124,92,214,.12); border-color: rgba(124,92,214,.38); color: #6a4cc4; }
@@ -1425,6 +1434,11 @@
     <p id="homeImportTx"></p>
     <div><button class="btn" type="button" id="homeImportBtn">สร้างงานจากบิลเก่า</button></div>
   </section>
+  <section class="card past-card" id="homePast" hidden>
+    <div class="card-h"><h2 id="homePastH">งานผ่านไปแล้ว ยังไม่ปิด</h2><button class="mini" type="button" id="homePastAll">✓ ปิดทั้งหมด</button></div>
+    <p class="set-note" style="margin:0 0 8px">วันงานผ่านไปแล้วแต่สถานะยังเป็น "จองแล้ว" ถ้างานจบแล้วกด ✓ เสร็จแล้ว</p>
+    <div class="job-list" id="homePastList"></div>
+  </section>
   <section class="card dv-card" id="homeDeliv" hidden>
     <div class="card-h"><h2 id="homeDelivH">ต้องส่งรูปลูกค้า</h2><button class="mini" type="button" id="homeDelivAll">ดูทั้งหมด</button></div>
     <div class="job-list" id="homeDelivList"></div>
@@ -1734,6 +1748,7 @@
       <div class="field">
         <span class="lbl">ทีมงาน</span>
         <div class="staff-chips" id="jStaff"></div>
+        <div class="staff-warn" id="jStaffWarn" hidden></div>
         <div class="hint">กดชื่อเพื่อมอบหมายงาน คนที่ถูกเลือกจะเห็นงานนี้ในปุ่ม "งานของฉัน" และได้รับแจ้งเตือน</div>
       </div>
       <div class="field">
@@ -3937,7 +3952,7 @@
     $('homeMine').hidden = !mine.length;
     $('homeMineList').innerHTML = mine.slice(0, 4).map(function (j) { return jobRow(j); }).join('') +
       (mine.length > 4 ? '<button class="btn dashed" type="button" data-gomine="1">ดูอีก ' + (mine.length - 4) + ' งาน</button>' : '');
-    renderAlert(); renderInstall(); renderDay(all);
+    renderAlert(); renderInstall(); renderDay(all); renderPast(live);
     var dvl = live.map(function (j) { return { j: j, d: delivOf(j) }; }).filter(function (x) { return x.d && !x.d.done; })
       .sort(function (a, b) { return a.d.due < b.d.due ? -1 : 1; });
     var late = dvl.filter(function (x) { return x.d.late; }).length;
@@ -3953,6 +3968,32 @@
     if (orphan.length) $('homeImportTx').textContent = 'พบ ' + orphan.length + ' บิลที่มีวันงาน แต่ยังไม่อยู่ในหน้างาน กดปุ่มด้านล่างเพื่อสร้างงานจากบิลเหล่านี้ให้อัตโนมัติ บิลของลูกค้าคนเดียวกันในวันเดียวกันจะรวมเป็นงานเดียว';
     updateNavDot();
   }
+  function pastOpen(list) { return (list || jobs()).filter(function (j) { var d = dayDiff(j.evDate); return j.status === 'booked' && d != null && d < 0; }).sort(byDate); }
+  function renderPast(live) {
+    var pl = pastOpen(live);
+    $('homePast').hidden = !pl.length;
+    if (!pl.length) return;
+    $('homePastH').innerHTML = '<span class="em">⏳</span>งานผ่านไปแล้ว ยังไม่ปิด<small>' + pl.length + ' งาน</small>';
+    $('homePastAll').hidden = pl.length < 2;
+    $('homePastList').innerHTML = pl.slice(0, 6).map(function (j) { return '<div class="past-row">' + jobRow(j) + '<button class="btn past-done" type="button" data-pastdone="' + esc(j.id) + '">✓ เสร็จแล้ว</button></div>'; }).join('') +
+      (pl.length > 6 ? '<div class="hint" style="text-align:center">และอีก ' + (pl.length - 6) + ' งาน</div>' : '');
+  }
+  function markDone(ids) {
+    if (viewOnly() || !ids.length) return;
+    var arr = jobs(), n = 0, now = Date.now();
+    arr.forEach(function (j) { if (ids.indexOf(j.id) >= 0 && j.status === 'booked') { j.status = 'done'; j.ts = now; j.by = meName(); j.byId = devId(); n++; } });
+    if (!n) return;
+    jobsSave(arr); refreshPages();
+    toast(n > 1 ? 'ปิดงานแล้ว ' + n + ' งาน ✓' : 'เปลี่ยนเป็นเสร็จแล้ว ✓');
+  }
+  $('homePast').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-pastdone]');
+    if (b) { markDone([b.getAttribute('data-pastdone')]); return; }
+    if (e.target.closest('#homePastAll')) {
+      var ids = pastOpen().map(function (j) { return j.id; });
+      confirmBox('ปิดงานที่ผ่านไปแล้ว ' + ids.length + ' งาน?', 'เปลี่ยนสถานะเป็น "เสร็จแล้ว" ทุกงานในรายการ ยอดเงินที่ยังค้างจะยังอยู่ในรายการต้องตามเก็บเงินตามเดิม', '✓ ปิดทั้งหมด', function () { markDone(ids); });
+    }
+  });
   function orphanBills() { return hist().filter(function (h) { return !jobIdOf(h) && (h.evDate || (h.state && h.state.evDate)); }); }
   function jobFromState(s, status) {
     var it = s.items && s.items[0], title = '';
@@ -4295,15 +4336,30 @@
     return j;
   }
   function refreshPages() { if (page === 'home') renderHome(); if (page === 'jobs') renderJobs(); if (page === 'report') renderReport(); if (page === 'bill') { renderJobSel(); updateEvHint(); } updateNavDot(); }
+  var PRICE_ODD = 1000000;
+  function jobChecks(cb) {
+    // asks about values that are almost always a slip of the finger, one question at a time
+    var qs = [], pr = num($('j_price').value), d = dayDiff($('j_evDate').value);
+    if (pr >= PRICE_ODD) qs.push(['ราคา ฿' + money(pr) + ' ถูกต้องไหม?', 'ราคานี้สูงผิดปกติ อาจพิมพ์เลข 0 เกิน ถ้าถูกต้องกด "ใช่ ราคานี้"', 'ใช่ ราคานี้', function () { $('j_price').focus(); }]);
+    if (jEdit && jEdit.status === 'done' && d != null && d > 0) qs.push(['งานนี้ยังไม่ถึงวัน', 'วันงานคือ ' + eventDate($('j_evDate').value, false) + ' (' + whenText(d) + ') แต่ตั้งสถานะเป็น "เสร็จแล้ว" ถูกต้องไหม?', 'ใช่ เสร็จแล้ว', null]);
+    (function next(i) {
+      if (i >= qs.length) { cb(); return; }
+      var q = qs[i];
+      openModal(q[0], q[1], false, '', q[2], function (ok) { if (ok) next(i + 1); else if (q[3]) setTimeout(q[3], 60); }, 'กลับไปแก้');
+    })(0);
+  }
   $('jSave').addEventListener('click', function () {
-    if (viewOnly()) return;
+    if (viewOnly() || !jEdit) return;
+    jobChecks(function () { if (jEdit && !$('jobModal').hidden) doJobSave(); });
+  });
+  function doJobSave() {
     var wasSent = !!(jEdit.id && ((jobById(jEdit.id) || {}).deliv || {}).stage === 'sent');
     var isNew = !jEdit.id, j = saveJob();
     if (j && !wasSent && (j.deliv || {}).stage === 'sent') { closeJob(); refreshPages(); confetti(); toast('ส่งรูปให้ลูกค้าแล้ว: เก่งมาก 🎉 งานนี้เสร็จสมบูรณ์'); return; }
     if (!j) return;
     closeJob(); refreshPages();
     toast(isNew ? 'เพิ่มงานแล้ว' : 'บันทึกงานแล้ว');
-  });
+  }
   var jSnap = '';
   function jobSnap() { return JSON.stringify(JF.map(function (k) { return $('j_' + k).value; }).concat([jEdit ? jEdit.status : '', jEdit ? (jEdit.staff || []).join('|') : '', jEdit ? ((jEdit.deliv || {}).stage || '') : '', $('j_dvDue').value, $('j_dvLink').value])); }
   function jobDirty() { return !!jEdit && jobSnap() !== jSnap; }
@@ -5282,7 +5338,8 @@
   function staffChip(j) {
     var st = j.staff || [];
     if (!st.length) return '';
-    return jc('ทีม: ' + st.join(', '), isMine(j) ? 'wait' : '');
+    var tn = staffNames(), miss = st.filter(function (n) { return tn.indexOf(n) < 0; });
+    return jc('ทีม: ' + st.join(', '), isMine(j) ? 'wait' : '') + (miss.length ? jc('⚠️ ' + miss.join(', ') + ' ไม่มีในทีม', 'warn') : '');
   }
   function renderJStaff() {
     var cur = jEdit.staff || [], names = staffNames().slice(), gone = {};
@@ -5293,6 +5350,9 @@
       return '<button type="button" class="staff-chip' + (gone[n] ? ' gone' : '') + '" data-staff="' + esc(n) + '" aria-pressed="' + on + '"' + (gone[n] ? ' title="ไม่อยู่ในรายชื่อทีมงานแล้ว กดเพื่อเอาออกจากงานนี้"' : '') + '>' + (on ? '✓ ' : '') + esc(n) + (n === meRaw() ? ' (ฉัน)' : '') + (gone[n] ? ' · ไม่อยู่ในทีมแล้ว' : '') + '</button>';
     }).join('') + '<button type="button" class="staff-chip add" data-staffadd="1">+ เพิ่มชื่อ</button>' +
       (names.length ? '' : '<span class="hint" style="align-self:center">ยังไม่มีรายชื่อทีมงาน เพิ่มได้ที่ปุ่ม "+ เพิ่มชื่อ" หรือ ตั้งค่า → ทีมงาน</span>');
+    var gl = Object.keys(gone), w = $('jStaffWarn');
+    w.hidden = !gl.length;
+    if (gl.length) w.innerHTML = '⚠️ <b>' + esc(gl.join(', ')) + '</b> ไม่มีในรายชื่อทีมงานของร้าน คนนี้จึงไม่เห็นงานในปุ่ม "งานของฉัน"<br>กดชื่อที่ขีดฆ่าเพื่อเอาออก แล้วเลือกชื่อที่ถูกต้องแทน หรือให้เขาตั้งชื่อในเครื่องให้ตรงกัน';
   }
   $('jStaff').addEventListener('click', function (e) {
     if (viewOnly()) return;
@@ -5692,7 +5752,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '03ddf960b07d';
+  var BUILD = '50f38756cffd';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
