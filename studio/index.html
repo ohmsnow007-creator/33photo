@@ -2068,7 +2068,7 @@
       tplNew: '🆕 งานใหม่ {จำนวน} งาน', tplCancel: '❌ ยกเลิกงาน {จำนวน} งาน', tplMove: '🔁 เลื่อนวัน/เวลา {จำนวน} งาน',
       tplMorning: '☀️ อรุณสวัสดิ์ {ร้าน}\n{วันนี้}',
       tplJob: '📸 {งาน}\n📅 {วัน} · {เวลา}\n📍 {สถานที่}\n👥 ทีม: {ทีม}\n📞 {เบอร์}\n📝 {หมายเหตุ}\n⏳ {สถานะ}\n✍️ เพิ่มโดย {คนเพิ่ม}',
-      showMap: true, showAddr: true, crew: true, week: true, pastOpen: true, tplMorningEnd: '💪 ขอให้วันนี้ราบรื่นนะครับ',
+      showMap: true, showAddr: true, week: true, pastOpen: true, tplMorningEnd: '💪 ขอให้วันนี้ราบรื่นนะครับ',
       tplFoot: '' },
     msgs: {
       confirm: 'สวัสดีครับ {customer}\n{company} ขอยืนยันนัด{job} ครับ\n📅 {date}\n⏰ {time}\n📍 {venue}\nทีมงานจะไปถึงก่อนเวลาเล็กน้อยเพื่อเตรียมอุปกรณ์\nหากมีการเปลี่ยนแปลง แจ้งได้ตลอดเลยครับ\nโทร {phone}',
@@ -5426,7 +5426,7 @@
       sub('ส่งอะไรบ้าง') +
       fCheck('🆕 แจ้งเมื่อมีงานใหม่', 'lineBot.newJob', 'ส่งภายในประมาณ 1 นาทีหลังมีคนเพิ่มงาน') +
       fCheck('🔁 แจ้งเมื่องานถูกยกเลิกหรือเลื่อนวัน/เวลา', 'lineBot.change', 'รวมถึงงานที่ถูกลบ เฉพาะงานที่ยังไม่ผ่านไป') +
-      fCheck('☀️ สรุปงานตอนเช้า', 'lineBot.morning', 'รายละเอียดเต็มของงานวันนี้ถึงอีก 3 วัน และรายการงาน 7 วันข้างหน้า') +
+      fCheck('☀️ สรุปงานตอนเช้า', 'lineBot.morning', 'รายละเอียดเต็มของงานวันนี้ พรุ่งนี้ มะรืนนี้ และรายการงาน 7 วันข้างหน้า') +
       '<div class="field"><label>เวลาส่งสรุปเช้า</label><div class="seg" id="lbHour" role="group" aria-label="เวลาส่งสรุปเช้า" style="--n:3">' +
         [7, 8, 9].map(function (h) { return '<button type="button" data-h="' + h + '" aria-pressed="' + (c.hour === h) + '">' + h + ' โมง</button>'; }).join('') +
       '</div><div class="hint">GitHub อาจเริ่มช้าได้ 5–30 นาที</div></div>' +
@@ -5434,7 +5434,6 @@
       fCheck('📷 เตือนส่งรูปลูกค้าในสรุปเช้า', 'lineBot.deliv', 'งานที่ใกล้ถึงหรือเลยกำหนดส่งรูป') +
       fCheck('💸 เตือนงานที่ยังเก็บเงินไม่ครบในสรุปเช้า', 'lineBot.unpaid', 'งานที่ผ่านวันงานไปแล้ว บอกแค่ชื่องาน ไม่บอกยอดเงิน') +
       fCheck('🗺️ ลิงก์แผนที่ของงานวันนี้', 'lineBot.showMap', 'กดแล้วเปิด Google Maps ถ้าช่องสถานที่มีลิงก์แผนที่อยู่แล้ว จะใช้ลิงก์นั้น') +
-      fCheck('👷 ทีมวันนี้ ใครทำกี่งาน และใครว่าง', 'lineBot.crew') +
       fCheck('📅 งานอีก 7 วันข้างหน้า', 'lineBot.week', 'รวมงานรอยืนยันที่ต้องตามลูกค้า') +
       fCheck('⏳ งานผ่านไปแล้วที่ยังไม่กดเสร็จ', 'lineBot.pastOpen') +
       sub('ข้อมูลที่แสดงในข้อความ') +
@@ -6170,7 +6169,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'd3940f813f46';
+  var BUILD = 'd265d6e302b0';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
