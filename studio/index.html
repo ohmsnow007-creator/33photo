@@ -960,6 +960,18 @@
   .pay-acts .btn { min-height: 42px; font-size: 0.9rem; }
   .pay-acts .btn.ok { background: #2f9e44; border-color: #2f9e44; color: #fff; font-weight: 500; }
   .pay-list { display: grid; gap: 6px; }
+  .kit-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+  .kit-head .lbl { margin: 0; }
+  .kit-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+  .kit-item { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 10px; border-radius: 10px; background: rgba(127,127,127,.08); cursor: pointer; font-size: 0.92rem; }
+  .kit-item input[type=checkbox] { -webkit-appearance: checkbox; appearance: auto; width: 22px; height: 22px; min-height: 0; min-width: 0; padding: 0; margin: 0; border: 0; box-shadow: none; background: none; flex-shrink: 0; accent-color: #2f9e44; }
+  .kit-item.on { background: rgba(47,158,68,.14); }
+  .kit-item.on span { text-decoration: line-through; opacity: .7; }
+  .kit-item span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .kit-item .kit-x { min-width: 32px; min-height: 32px; padding: 0; border: 0; background: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; }
+  .kit-add { display: flex; gap: 6px; margin-top: 8px; }
+  .kit-add input { flex: 1; min-width: 0; font-size: 16px; }
+  .kit-add .mini, .kit-head .mini { min-height: 40px; }
   .line-send { width: 100%; margin-top: 14px; min-height: 44px; border-color: #06c75566; color: inherit; background: #06c75514; }
   .trash-link { display: flex; justify-content: center; margin-top: 14px; }
   .trash-row { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: var(--card2, rgba(127,127,127,.08)); }
@@ -1799,6 +1811,11 @@
         <div class="staff-warn" id="jStaffWarn" hidden></div>
         <div class="hint">กดชื่อเพื่อมอบหมายงาน คนที่ถูกเลือกจะเห็นงานนี้ในปุ่ม "งานของฉัน" และได้รับแจ้งเตือน</div>
       </div>
+      <div class="field kit-wrap" id="jKitWrap">
+        <div class="kit-head"><span class="lbl">🎒 ของที่ต้องเอาไป <b id="jKitN"></b></span><button class="mini" id="jKitAll" type="button">✓ ติ๊กทั้งหมด</button></div>
+        <div class="kit-list" id="jKit"></div>
+        <div class="kit-add"><input id="jKitNew" type="text" autocomplete="off" placeholder="+ ของเฉพาะงานนี้ เช่น โดรน" aria-label="เพิ่มของเฉพาะงานนี้"><button class="mini" id="jKitAdd" type="button">เพิ่ม</button></div>
+      </div>
       <div class="field">
         <label for="j_evDate">วันงาน</label>
         <input id="j_evDate" type="date" data-quick="1">
@@ -2039,6 +2056,7 @@
       { id: 'invoice', on: false, th: 'ใบแจ้งหนี้', en: 'INVOICE', grand: 'ยอดที่ต้องชำระ', grandEn: 'Amount due', prefix: 'INV-' },
       { id: 'receipt', on: false, th: 'ใบเสร็จรับเงิน', en: 'RECEIPT', grand: 'ยอดรับชำระ', grandEn: 'Amount received', prefix: 'RC-' }
     ],
+    kit: ['กล้อง', 'คอมพิวเตอร์', 'จอคอมพิวเตอร์', 'เครื่องปริ้น', 'กระดาษสำรอง', 'ซองใส่รูป', 'ปลั๊กไฟ', 'สายไฟ', 'ผ้าปูโต๊ะ', 'ขาฉาก', 'ขาไฟ', 'ฉาก', 'ไฟ ซ้ายขวา', 'ไฟกลาง', 'ซอฟต์บ็อกซ์', 'กล่องแว่น', 'พร็อพ'],
     services: [
       { name: 'งานถ่ายภาพ', price: '', hours: '', details: [] },
       { name: 'PHOTOBOOTH', price: '', hours: '', details: [] },
@@ -3204,16 +3222,17 @@
     theme: '<path d="M12 2a10 10 0 0 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2h2.4A5.6 5.6 0 0 0 22 10c0-4.4-4.5-8-10-8z"/><circle cx="7.5" cy="11.5" r="1.3"/><circle cx="10.5" cy="7" r="1.3"/><circle cx="15.5" cy="7.5" r="1.3"/>',
     custs: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
     staff: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>',
+    kit: '<path d="M9 5V4a3 3 0 0 1 6 0v1"/><rect x="4" y="5" width="16" height="16" rx="4"/><path d="M4 12h16"/><path d="M10 12v3h4v-3"/>',
     lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
     linebot: '<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4"/><circle cx="12" cy="3" r="1"/><path d="M9 13h.01M15 13h.01"/><path d="M10 17h4"/>',
     backup: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.7-4 3-9 3s-9-1.3-9-3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/>'
   };
-  var SEC_COLOR = { sync: '#2f7bf6', company: '#2f7bf6', brand: '#8b5cf6', theme: '#e0558a', docs: '#0f9d8a', services: '#e08a16', pays: '#2f9e44', tax: '#e5484d', sheetL: '#2f7bf6', share: '#06c755', ui: '#7c8594', custs: '#8b5cf6', backup: '#7c8594', staff: '#0f9d8a', lock: '#e5484d', linebot: '#06c755' };
+  var SEC_COLOR = { sync: '#2f7bf6', company: '#2f7bf6', brand: '#8b5cf6', theme: '#e0558a', docs: '#0f9d8a', services: '#e08a16', pays: '#2f9e44', tax: '#e5484d', sheetL: '#2f7bf6', share: '#06c755', ui: '#7c8594', custs: '#8b5cf6', backup: '#7c8594', staff: '#0f9d8a', kit: '#e08a16', lock: '#e5484d', linebot: '#06c755' };
   var GROUPS = [
     ['🏪 ร้านของคุณ', ['company', 'brand', 'theme']],
     ['🧾 เอกสารและการคิดเงิน', ['docs', 'services', 'pays', 'tax']],
     ['💬 ข้อความและการส่ง', ['sheetL', 'share', 'linebot', 'ui']],
-    ['🗂️ ข้อมูลและทีมงาน', ['sync', 'staff', 'lock', 'custs', 'backup']]
+    ['🗂️ ข้อมูลและทีมงาน', ['sync', 'staff', 'kit', 'lock', 'custs', 'backup']]
   ];
   var SL_GROUPS = [
     ['ข้อมูลลูกค้าและเอกสาร', ['customer', 'address', 'phone', 'tax', 'no', 'date', 'pay', 'contact', 'coTax']],
@@ -3400,6 +3419,10 @@
       fText('ส่งรูปภายในกี่วันหลังวันงาน', 'delivDays', { mode: 'numeric', note: 'ใช้เป็นกำหนดส่งเริ่มต้นของทุกงาน แก้เป็นรายงานได้ในหน้ารายละเอียดงาน' }) +
       sub('เครื่องนี้') +
       '<div class="field"><label for="stMe">ชื่อของคุณในเครื่องนี้</label><input id="stMe" type="text" autocomplete="off" placeholder="เช่น พี่โอ" value="' + esc(meRaw()) + '"><div class="hint">ใช้เฉพาะเครื่องนี้ · เครื่องอื่นจะเห็นว่าใครเพิ่มหรือแก้งาน</div></div>');
+    sec('kit', 'เช็กลิสต์ของก่อนออกงาน', (S.kit || []).length + ' รายการ · ติ๊กได้ในแต่ละงาน',
+      fText('ของที่ต้องเอาไปทุกงาน (บรรทัดละ 1 อย่าง)', 'kit', { lines: true, rows: 12, ph: 'เช่น กล้อง' }) +
+      '<p class="set-note">เปิดงานไหนก็จะเห็นรายการนี้ให้ติ๊ก ติ๊กแล้วบันทึกทันที ทุกเครื่องเห็นตรงกัน · ของที่ใช้เฉพาะบางงาน เพิ่มในหน้างานนั้นได้</p>');
+
     sec('lock', 'ล็อกหน้าตั้งค่า (PIN เจ้าของ)', lockOn() ? 'ล็อกอยู่ · ต้องใส่ PIN ก่อนเข้า' : 'ยังไม่ล็อก · ทุกเครื่องเข้าได้', lockSectionHTML());
 
     sec('sync', 'เก็บข้อมูลออนไลน์ (GitHub)', syncOn() ? 'เชื่อมกับ ' + SY.cfg.owner + '/' + SY.cfg.repo : 'ยังไม่เชื่อม · ข้อมูลอยู่ในเครื่องนี้', syncSectionHTML());
@@ -3954,7 +3977,7 @@
       '<div class="job-date' + (d === 0 ? ' today' : '') + '">' + (p ? '<small>' + ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'][dt.getDay()] + '.</small><b>' + p.d + '</b><small>' + MSHORT[p.m - 1] + '</small>' : '<b>–</b><small>ไม่มีวัน</small>') + '</div>' +
       '<div class="job-main"><div class="job-t">' + esc(jobName(j)) + (j.title && j.cName ? ' · ' + esc(j.cName) : '') + '</div>' +
         (sub ? '<div class="job-sub">' + esc(sub) + '</div>' : '') +
-        '<div class="job-chips">' + unseenChip(j.id) + staffChip(j) + delivChip(j) + jobChips(j, m) + '</div></div>' +
+        '<div class="job-chips">' + unseenChip(j.id) + staffChip(j) + kitChip(j) + delivChip(j) + jobChips(j, m) + '</div></div>' +
       '<div class="job-amt">' + (amt ? '฿' + money(amt) : viewOnly() ? '' : '<span class="muted">–</span>') +
         '<small class="' + (d != null && d >= 0 && d <= 7 && j.status !== 'cancel' && j.status !== 'done' ? 'soon' : '') + '">' + (opt && opt.due ? 'ค้างรับ' : whenText(d)) + '</small></div>' +
     '</button>';
@@ -4230,7 +4253,7 @@
     $('jDel').hidden = !j.id;
     $('jLine').hidden = !j.id || ro || !syncOn(); $('jLine').disabled = false; $('jLine').textContent = '📤 ส่งงานนี้ให้ทีมทาง LINE';
     $('j_dvDue').value = (j.deliv && j.deliv.due) || ''; $('j_dvLink').value = (j.deliv && j.deliv.link) || '';
-    renderJStatus(); renderJStaff(); renderJDeliv(); updJobHint(); updCustHint(); renderJDocs();
+    renderJStatus(); renderJStaff(); renderJKit(); renderJDeliv(); updJobHint(); updCustHint(); renderJDocs();
     jSnap = jobSnap();
     $('jobModal').hidden = false; document.body.style.overflow = 'hidden';
     $('jobBody').scrollTop = 0;
@@ -5792,6 +5815,64 @@
     var tn = staffNames(), miss = st.filter(function (n) { return tn.indexOf(n) < 0; });
     return jc('ทีม: ' + st.join(', '), isMine(j) ? 'wait' : '') + (miss.length ? jc('⚠️ ' + miss.join(', ') + ' ไม่มีในทีม', 'warn') : '');
   }
+  // ---------- gear checklist (settings list + this job's extras; ticks saved at once) ----------
+  function kitItems(j) {
+    var out = [], seen = {};
+    (S.kit || []).concat(((j && j.kit) || {}).extra || []).forEach(function (n) { n = String(n || '').trim(); if (n && !seen[n]) { seen[n] = 1; out.push(n); } });
+    return out;
+  }
+  function kitDone(j) { var d = ((j && j.kit) || {}).done || []; return kitItems(j).filter(function (n) { return d.indexOf(n) >= 0; }).length; }
+  function kitChip(j) {
+    var d = dayDiff(j.evDate), n = kitItems(j).length;
+    if (!n || j.status === 'cancel' || j.status === 'done' || d == null || d < 0 || d > 1) return '';
+    var k = kitDone(j);
+    return k >= n ? jc('🎒 ครบ ✓', 'ok') : jc('🎒 ' + k + '/' + n, 'warn');
+  }
+  function renderJKit() {
+    var j = jEdit; if (!j) return;
+    var items = kitItems(j), done = (j.kit && j.kit.done) || [], extra = (j.kit && j.kit.extra) || [], ro = viewOnly();
+    $('jKitN').textContent = items.length ? '(' + kitDone(j) + '/' + items.length + ')' : '';
+    $('jKit').innerHTML = items.length ? items.map(function (n) {
+      var on = done.indexOf(n) >= 0;
+      return '<label class="kit-item' + (on ? ' on' : '') + '"><input type="checkbox" data-kit="' + esc(n) + '"' + (on ? ' checked' : '') + (ro ? ' disabled' : '') + '><span>' + esc(n) + '</span>' +
+        (extra.indexOf(n) >= 0 && (S.kit || []).indexOf(n) < 0 && !ro ? '<button type="button" class="kit-x" data-kitdel="' + esc(n) + '" aria-label="เอา ' + esc(n) + ' ออก">×</button>' : '') + '</label>';
+    }).join('') : '<div class="hint">ยังไม่มีรายการ ตั้งได้ที่ ตั้งค่า → เช็กลิสต์ของก่อนออกงาน หรือเพิ่มเฉพาะงานนี้ด้านล่าง</div>';
+    $('jKitAll').hidden = ro || !items.length || kitDone(j) >= items.length;
+    $('jKitNew').disabled = ro; $('jKitAdd').disabled = ro;
+  }
+  // change the checklist; a saved job is written straight away (like payments), a new one waits for "บันทึกงาน"
+  function kitChange(fn) {
+    if (!jEdit || viewOnly()) return;
+    var k = clone(jEdit.kit || {}); k.done = k.done || []; k.extra = k.extra || [];
+    fn(k);
+    if (!k.extra.length) delete k.extra;
+    jEdit.kit = k;
+    if (jEdit.id) {
+      var cur = jobById(jEdit.id);
+      if (cur) { cur.kit = clone(k); cur.ts = Date.now(); cur.by = meName(); cur.byId = devId(); persistJob(cur); jEdit.ts = cur.ts; }
+    }
+    renderJKit();
+  }
+  $('jKit').addEventListener('change', function (e) {
+    var c = e.target.closest('[data-kit]'); if (!c) return;
+    var n = c.getAttribute('data-kit'), on = c.checked;
+    kitChange(function (k) { k.done = k.done.filter(function (x) { return x !== n; }); if (on) k.done.push(n); });
+  });
+  $('jKit').addEventListener('click', function (e) {
+    var x = e.target.closest('[data-kitdel]'); if (!x) return;
+    e.preventDefault();
+    var n = x.getAttribute('data-kitdel');
+    kitChange(function (k) { k.extra = k.extra.filter(function (y) { return y !== n; }); k.done = k.done.filter(function (y) { return y !== n; }); });
+  });
+  $('jKitAll').addEventListener('click', function () { var all = kitItems(jEdit); kitChange(function (k) { k.done = all.slice(); }); });
+  function kitAdd() {
+    var n = $('jKitNew').value.trim(); if (!n) return;
+    $('jKitNew').value = '';
+    if (kitItems(jEdit).indexOf(n) >= 0) { toast('"' + n + '" มีในรายการแล้ว'); return; }
+    kitChange(function (k) { k.extra.push(n.slice(0, 60)); });
+  }
+  $('jKitAdd').addEventListener('click', kitAdd);
+  $('jKitNew').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); kitAdd(); } });
   function renderJStaff() {
     var cur = jEdit.staff || [], names = staffNames().slice(), gone = {};
     // someone removed from the team but still on this job: shown (crossed out) only here, so it can be taken off
@@ -6203,7 +6284,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'e388548a0c05';
+  var BUILD = '3bb932280673';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
