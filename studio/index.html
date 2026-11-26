@@ -960,18 +960,37 @@
   .pay-acts .btn { min-height: 42px; font-size: 0.9rem; }
   .pay-acts .btn.ok { background: #2f9e44; border-color: #2f9e44; color: #fff; font-weight: 500; }
   .pay-list { display: grid; gap: 6px; }
-  .kit-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-  .kit-head .lbl { margin: 0; }
-  .kit-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
-  .kit-item { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 10px; border-radius: 10px; background: rgba(127,127,127,.08); cursor: pointer; font-size: 0.92rem; }
-  .kit-item input[type=checkbox] { -webkit-appearance: checkbox; appearance: auto; width: 22px; height: 22px; min-height: 0; min-width: 0; padding: 0; margin: 0; border: 0; box-shadow: none; background: none; flex-shrink: 0; accent-color: #2f9e44; }
-  .kit-item.on { background: rgba(47,158,68,.14); }
-  .kit-item.on span { text-decoration: line-through; opacity: .7; }
-  .kit-item span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-  .kit-item .kit-x { min-width: 32px; min-height: 32px; padding: 0; border: 0; background: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; }
-  .kit-add { display: flex; gap: 6px; margin-top: 8px; }
+  .kit-card { margin: 4px 0 16px; padding: 14px; border-radius: 16px; background: rgba(127,127,127,.06); border: 1px solid rgba(127,127,127,.18); }
+  .kit-card.full { border-color: rgba(47,158,68,.55); background: rgba(47,158,68,.08); }
+  .kit-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .kit-title { margin: 0; font-size: 1rem; font-weight: 700; }
+  .kit-prog { height: 8px; margin: 10px 0 6px; border-radius: 99px; background: rgba(127,127,127,.22); overflow: hidden; }
+  .kit-prog i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #e08a16, #f2b43c); transform-origin: left; transition: width .3s cubic-bezier(.2,.8,.2,1), background .3s; }
+  .kit-card.full .kit-prog i { background: linear-gradient(90deg, #2f9e44, #51cf66); }
+  .kit-sum { font-size: 0.86rem; color: var(--muted); margin-bottom: 10px; font-variant-numeric: tabular-nums; }
+  .kit-sum b { color: inherit; font-weight: 700; }
+  .kit-card.full .kit-sum { color: #51cf66; font-weight: 600; }
+  .kit-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .kit-item { position: relative; display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 10px; border-radius: 12px; background: rgba(127,127,127,.10); border: 1px solid transparent; cursor: pointer; font-size: 0.95rem; line-height: 1.3; touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: background .15s, border-color .15s, transform .1s; }
+  .kit-item:active { transform: scale(.98); }
+  .kit-item input[type=checkbox] { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+  .kit-box { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(127,127,127,.6); display: grid; place-items: center; transition: background .15s, border-color .15s; }
+  .kit-box svg { width: 14px; height: 14px; opacity: 0; transform: scale(.5); transition: opacity .15s, transform .2s cubic-bezier(.3,1.6,.5,1); }
+  .kit-item.on { background: rgba(47,158,68,.16); border-color: rgba(47,158,68,.45); }
+  .kit-item.on .kit-box { background: #2f9e44; border-color: #2f9e44; color: #fff; }
+  .kit-item.on .kit-box svg { opacity: 1; transform: scale(1); }
+  .kit-item.on .kit-name { opacity: .72; }
+  .kit-item:has(input:focus-visible) { outline: 2px solid #4c8dff; outline-offset: 2px; }
+  .kit-name { flex: 1; min-width: 0; overflow-wrap: anywhere; display: grid; }
+  .kit-name small { font-size: 0.72rem; color: #e08a16; font-weight: 600; }
+  .kit-item.just { animation: kitPop .22s cubic-bezier(.3,1.5,.5,1); }
+  @keyframes kitPop { 0% { transform: scale(.96); } 100% { transform: scale(1); } }
+  .kit-item .kit-x { flex-shrink: 0; width: 36px; height: 36px; margin: -6px -6px -6px 0; padding: 0; border: 0; border-radius: 10px; background: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; }
+  .kit-item .kit-x:hover { background: rgba(229,72,77,.15); color: #e5484d; }
+  .kit-add { display: flex; gap: 8px; margin-top: 10px; }
   .kit-add input { flex: 1; min-width: 0; font-size: 16px; }
-  .kit-add .mini, .kit-head .mini { min-height: 40px; }
+  .kit-add .mini, .kit-head .mini { min-height: 44px; }
+  @media (prefers-reduced-motion: reduce) { .kit-item, .kit-box, .kit-box svg, .kit-prog i { transition: none; } .kit-item.just { animation: none; } .kit-item:active { transform: none; } }
   .line-send { width: 100%; margin-top: 14px; min-height: 44px; border-color: #06c75566; color: inherit; background: #06c75514; }
   .trash-link { display: flex; justify-content: center; margin-top: 14px; }
   .trash-row { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: var(--card2, rgba(127,127,127,.08)); }
@@ -1811,11 +1830,13 @@
         <div class="staff-warn" id="jStaffWarn" hidden></div>
         <div class="hint">กดชื่อเพื่อมอบหมายงาน คนที่ถูกเลือกจะเห็นงานนี้ในปุ่ม "งานของฉัน" และได้รับแจ้งเตือน</div>
       </div>
-      <div class="field kit-wrap" id="jKitWrap">
-        <div class="kit-head"><span class="lbl">🎒 ของที่ต้องเอาไป <b id="jKitN"></b></span><button class="mini" id="jKitAll" type="button">✓ ติ๊กทั้งหมด</button></div>
+      <section class="kit-card" id="jKitWrap" aria-labelledby="jKitTitle">
+        <div class="kit-head"><h4 class="kit-title" id="jKitTitle"><span aria-hidden="true">🎒</span> ของที่ต้องเอาไป</h4><button class="mini" id="jKitAll" type="button">✓ ติ๊กทั้งหมด</button></div>
+        <div class="kit-prog" id="jKitProg" role="progressbar" aria-labelledby="jKitTitle" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"><i id="jKitBar"></i></div>
+        <div class="kit-sum" id="jKitN" aria-live="polite"></div>
         <div class="kit-list" id="jKit"></div>
         <div class="kit-add"><input id="jKitNew" type="text" autocomplete="off" placeholder="+ ของเฉพาะงานนี้ เช่น โดรน" aria-label="เพิ่มของเฉพาะงานนี้"><button class="mini" id="jKitAdd" type="button">เพิ่ม</button></div>
-      </div>
+      </section>
       <div class="field">
         <label for="j_evDate">วันงาน</label>
         <input id="j_evDate" type="date" data-quick="1">
@@ -5828,22 +5849,34 @@
     var k = kitDone(j);
     return k >= n ? jc('🎒 ครบ ✓', 'ok') : jc('🎒 ' + k + '/' + n, 'warn');
   }
+  var kitJust = '';
+  var KIT_TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
   function renderJKit() {
     var j = jEdit; if (!j) return;
     var items = kitItems(j), done = (j.kit && j.kit.done) || [], extra = (j.kit && j.kit.extra) || [], ro = viewOnly();
-    $('jKitN').textContent = items.length ? '(' + kitDone(j) + '/' + items.length + ')' : '';
-    $('jKit').innerHTML = items.length ? items.map(function (n) {
-      var on = done.indexOf(n) >= 0;
-      return '<label class="kit-item' + (on ? ' on' : '') + '"><input type="checkbox" data-kit="' + esc(n) + '"' + (on ? ' checked' : '') + (ro ? ' disabled' : '') + '><span>' + esc(n) + '</span>' +
-        (extra.indexOf(n) >= 0 && (S.kit || []).indexOf(n) < 0 && !ro ? '<button type="button" class="kit-x" data-kitdel="' + esc(n) + '" aria-label="เอา ' + esc(n) + ' ออก">×</button>' : '') + '</label>';
+    var k = kitDone(j), n = items.length, full = n > 0 && k >= n;
+    var focused = document.activeElement && document.activeElement.getAttribute && document.activeElement.getAttribute('data-kit');
+    $('jKitWrap').classList.toggle('full', full);
+    $('jKitProg').hidden = !n;
+    $('jKitProg').setAttribute('aria-valuemax', n); $('jKitProg').setAttribute('aria-valuenow', k);
+    $('jKitBar').style.width = n ? Math.round(k / n * 100) + '%' : '0';
+    $('jKitN').innerHTML = !n ? '' : full ? '<b>' + k + '/' + n + '</b> · ✅ ครบแล้ว พร้อมออกงาน!' : '<b>' + k + '/' + n + '</b> · เหลืออีก ' + (n - k) + ' อย่าง';
+    $('jKit').innerHTML = n ? items.map(function (nm) {
+      var on = done.indexOf(nm) >= 0, own = extra.indexOf(nm) >= 0 && (S.kit || []).indexOf(nm) < 0;
+      return '<label class="kit-item' + (on ? ' on' : '') + (nm === kitJust ? ' just' : '') + '"><input type="checkbox" data-kit="' + esc(nm) + '"' + (on ? ' checked' : '') + (ro ? ' disabled' : '') + '>' +
+        '<span class="kit-box" aria-hidden="true">' + KIT_TICK + '</span><span class="kit-name">' + esc(nm) + (own ? '<small>เฉพาะงานนี้</small>' : '') + '</span>' +
+        (own && !ro ? '<button type="button" class="kit-x" data-kitdel="' + esc(nm) + '" aria-label="เอา ' + esc(nm) + ' ออก">×</button>' : '') + '</label>';
     }).join('') : '<div class="hint">ยังไม่มีรายการ ตั้งได้ที่ ตั้งค่า → เช็กลิสต์ของก่อนออกงาน หรือเพิ่มเฉพาะงานนี้ด้านล่าง</div>';
-    $('jKitAll').hidden = ro || !items.length || kitDone(j) >= items.length;
+    kitJust = '';
+    if (focused) { var f = $('jKit').querySelector('[data-kit="' + (window.CSS && CSS.escape ? CSS.escape(focused) : focused) + '"]'); if (f) f.focus({ preventScroll: true }); }
+    $('jKitAll').hidden = ro || !n || full;
     $('jKitNew').disabled = ro; $('jKitAdd').disabled = ro;
   }
+
   // change the checklist; a saved job is written straight away (like payments), a new one waits for "บันทึกงาน"
   function kitChange(fn) {
     if (!jEdit || viewOnly()) return;
-    var k = clone(jEdit.kit || {}); k.done = k.done || []; k.extra = k.extra || [];
+    var before = kitDone(jEdit), k = clone(jEdit.kit || {}); k.done = k.done || []; k.extra = k.extra || [];
     fn(k);
     if (!k.extra.length) delete k.extra;
     jEdit.kit = k;
@@ -5851,11 +5884,14 @@
       var cur = jobById(jEdit.id);
       if (cur) { cur.kit = clone(k); cur.ts = Date.now(); cur.by = meName(); cur.byId = devId(); persistJob(cur); jEdit.ts = cur.ts; }
     }
+    var n = kitItems(jEdit).length;
+    if (n && before < n && kitDone(jEdit) >= n) { toast('🎒 ของครบแล้ว พร้อมออกงาน! 💪'); try { if (navigator.vibrate) navigator.vibrate(15); } catch (x) {} }
     renderJKit();
   }
   $('jKit').addEventListener('change', function (e) {
     var c = e.target.closest('[data-kit]'); if (!c) return;
     var n = c.getAttribute('data-kit'), on = c.checked;
+    kitJust = n;
     kitChange(function (k) { k.done = k.done.filter(function (x) { return x !== n; }); if (on) k.done.push(n); });
   });
   $('jKit').addEventListener('click', function (e) {
@@ -6284,7 +6320,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '3bb932280673';
+  var BUILD = 'f03df533418e';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
