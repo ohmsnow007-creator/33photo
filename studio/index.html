@@ -1099,6 +1099,18 @@
   /* ===== photo delivery ===== */
   .dv-card { border-color: rgba(139,92,246,.45); }
   .past-card { border-color: rgba(229,160,26,.45); }
+  .lb-result { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; font-size: 0.9rem; line-height: 1.55; background: var(--field); }
+  .lb-result small { display: block; color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+  .lb-result.ok { border-color: rgba(47,158,68,.45); background: rgba(47,158,68,.08); }
+  .lb-result.err { border-color: rgba(229,72,77,.45); background: rgba(229,72,77,.07); }
+  .lb-result.busy { border-color: rgba(47,123,246,.45); }
+  .lb-result a { color: #2f7bf6; }
+  .lb-qr { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .lb-qr-img { background: #fff; padding: 8px; border-radius: 12px; flex: none; line-height: 0; }
+  .lb-qr-img svg { width: 132px; height: 132px; }
+  .lb-qr-tx { display: grid; gap: 4px; min-width: 0; font-size: 0.88rem; }
+  .lb-qr-tx a { color: #06a14a; overflow-wrap: anywhere; }
+  .lb-qr-tx span { color: var(--muted); font-size: 0.8rem; }
   .past-card h2 small { font-family: var(--font-body); font-weight: 400; font-size: 0.85rem; color: var(--muted); margin-left: 6px; }
   .past-row { display: flex; gap: 8px; align-items: stretch; }
   .past-row .job-row { flex: 1; min-width: 0; }
@@ -2016,6 +2028,7 @@
       msgEn: 'Dear {customer},\nPlease find attached {doc} No. {no} from {company}.\nEvent: {eventDate} {eventTime}\nVenue: {venue}\nTotal: THB {total}\nDeposit {depPct}%: THB {deposit}\nFor any questions, please call {phone}. Thank you.'
     },
     sheetL: {}, sheetLEn: {}, ui: {}, delivDays: '14',
+    lineBot: { on: true, newJob: true, morning: true, hour: 8, deliv: true, empty: false, oaId: '@155foeqj' },
     msgs: {
       confirm: 'สวัสดีครับ {customer}\n{company} ขอยืนยันนัด{job} ครับ\n📅 {date}\n⏰ {time}\n📍 {venue}\nทีมงานจะไปถึงก่อนเวลาเล็กน้อยเพื่อเตรียมอุปกรณ์\nหากมีการเปลี่ยนแปลง แจ้งได้ตลอดเลยครับ\nโทร {phone}',
       due: 'สวัสดีครับ {customer}\n{company} ขอแจ้งยอดงาน{job} ({date}) ครับ\nยอดรวม ฿{total}\nชำระแล้ว ฿{paid}\nยอดคงเหลือ ฿{due}\nโอนแล้วรบกวนส่งสลิปในแชทนี้ได้เลยครับ ขอบคุณครับ 🙏',
@@ -3143,13 +3156,14 @@
     custs: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
     staff: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>',
     lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+    linebot: '<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4"/><circle cx="12" cy="3" r="1"/><path d="M9 13h.01M15 13h.01"/><path d="M10 17h4"/>',
     backup: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.7-4 3-9 3s-9-1.3-9-3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/>'
   };
-  var SEC_COLOR = { sync: '#2f7bf6', company: '#2f7bf6', brand: '#8b5cf6', theme: '#e0558a', docs: '#0f9d8a', services: '#e08a16', pays: '#2f9e44', tax: '#e5484d', sheetL: '#2f7bf6', share: '#06c755', ui: '#7c8594', custs: '#8b5cf6', backup: '#7c8594', staff: '#0f9d8a', lock: '#e5484d' };
+  var SEC_COLOR = { sync: '#2f7bf6', company: '#2f7bf6', brand: '#8b5cf6', theme: '#e0558a', docs: '#0f9d8a', services: '#e08a16', pays: '#2f9e44', tax: '#e5484d', sheetL: '#2f7bf6', share: '#06c755', ui: '#7c8594', custs: '#8b5cf6', backup: '#7c8594', staff: '#0f9d8a', lock: '#e5484d', linebot: '#06c755' };
   var GROUPS = [
     ['🏪 ร้านของคุณ', ['company', 'brand', 'theme']],
     ['🧾 เอกสารและการคิดเงิน', ['docs', 'services', 'pays', 'tax']],
-    ['💬 ข้อความและการส่ง', ['sheetL', 'share', 'ui']],
+    ['💬 ข้อความและการส่ง', ['sheetL', 'share', 'linebot', 'ui']],
     ['🗂️ ข้อมูลและทีมงาน', ['sync', 'staff', 'lock', 'custs', 'backup']]
   ];
   var SL_GROUPS = [
@@ -3287,6 +3301,8 @@
       fSelect('ภาษาเริ่มต้นของบิลใหม่', 'layout.lang', [['th', 'ไทย'], ['en', 'English']], 'สลับภาษาของแต่ละบิลได้ที่ปุ่ม ไทย / English ในหน้ากรอกข้อมูล') +
       '<p class="set-note">{rate} {pct} {name} {phone} {doc} {no} คือช่องที่ระบบเติมให้อัตโนมัติ</p>' + lblRows(SHEET_LABELS, SL_GROUPS, true));
 
+    var lbc = lineCfg();
+    sec('linebot', 'บอท LINE แจ้งเตือน', !lbc.on ? 'ปิดอยู่' : [lbc.newJob ? 'แจ้งงานใหม่' : '', lbc.morning ? 'สรุปเช้า ' + lbc.hour + ' โมง' : ''].filter(Boolean).join(' · ') || 'เปิดอยู่ แต่ไม่ได้เลือกให้ส่งอะไร', lineSectionHTML());
     sec('share', 'ส่งให้ลูกค้า (LINE)', 'ส่งเป็น ' + (S.share.format === 'png' ? 'รูปภาพ' : 'PDF') + ' · ข้อความสำเร็จรูป',
       fSelect('ส่งเป็นอะไรโดยปกติ', 'share.format', [['pdf', 'PDF'], ['png', 'รูปภาพ']]) +
       fText('ข้อความถึงลูกค้า (บิลภาษาไทย)', 'share.msg', { area: true, rows: 7 }) +
@@ -3354,6 +3370,7 @@
     applySearch();
     enhanceDT(setBody);
     renderSetNav(); applyWide();
+    lbPaint();
   }
 
   // ---------- settings search ----------
@@ -5196,6 +5213,98 @@
   function unlocked() { return !lockOn() || Date.now() < unlockUntil; }
   function checkPin(pin) { return lockOn() && pinHash(S.lock.salt, String(pin)) === S.lock.hash; }
   function setPin(pin) { var salt = uid() + uid(); S.lock = { salt: salt, hash: pinHash(salt, String(pin)), by: meName(), at: Date.now() }; lsSet(SKEY, S); unlockUntil = Date.now() + 10 * 60000; }
+  // ================= LINE bot (settings + test buttons) =================
+  // The bot itself runs on GitHub (repo .github/line-bot/notify.mjs) and reads S.lineBot from settings.json.
+  // The LINE token is a GitHub secret only; the app just asks GitHub to run the bot and reads the result.
+  var LB_WF = '/actions/workflows/line-notify.yml', lbBusy = null, lbLast = lsGet('bill33suite.lbLast', null);
+  function lineCfg() { var c = merge(DEFAULTS.lineBot, S.lineBot); c.hour = [7, 8, 9].indexOf(+c.hour) >= 0 ? +c.hour : 8; return c; }
+  function lbFriendUrl() { return 'https://line.me/R/ti/p/' + encodeURIComponent(lineCfg().oaId || '@155foeqj').replace('%40', '@'); }
+  function lbActionsUrl() { return syncOn() ? 'https://github.com/' + esc(SY.cfg.owner) + '/' + esc(SY.cfg.repo) + '/actions/workflows/line-notify.yml' : ''; }
+  function lineSectionHTML() {
+    var c = lineCfg(), qr = '';
+    if (window.qrcode) { try { var q = qrcode(0, 'M'); q.addData(lbFriendUrl()); q.make(); qr = q.createSvgTag(4, 0); } catch (x) { qr = ''; } }
+    return fCheck('เปิดบอท LINE แจ้งเตือน', 'lineBot.on', 'ปิดแล้วบอทจะไม่ส่งข้อความอัตโนมัติเลย') +
+      sub('ส่งอะไรบ้าง') +
+      fCheck('🆕 แจ้งเมื่อมีงานใหม่', 'lineBot.newJob', 'ส่งภายในประมาณ 1 นาทีหลังมีคนเพิ่มงาน') +
+      fCheck('☀️ สรุปงานตอนเช้า', 'lineBot.morning', 'งานวันนี้และพรุ่งนี้') +
+      '<div class="field"><label>เวลาส่งสรุปเช้า</label><div class="seg" id="lbHour" role="group" aria-label="เวลาส่งสรุปเช้า" style="--n:3">' +
+        [7, 8, 9].map(function (h) { return '<button type="button" data-h="' + h + '" aria-pressed="' + (c.hour === h) + '">' + h + ' โมง</button>'; }).join('') +
+      '</div><div class="hint">GitHub อาจเริ่มช้าได้ 5–30 นาที</div></div>' +
+      fCheck('ส่งสรุปแม้วันนั้นไม่มีงาน', 'lineBot.empty', 'ปิดไว้จะประหยัดโควตาข้อความ') +
+      fCheck('📷 เตือนส่งรูปลูกค้าในสรุปเช้า', 'lineBot.deliv', 'งานที่ใกล้ถึงหรือเลยกำหนดส่งรูป') +
+      sub('ทดสอบบอท') +
+      '<div class="btnrow"><button class="btn primary" type="button" id="lbTest">📨 ส่งข้อความทดสอบ</button><button class="btn" type="button" id="lbMorningNow">☀️ ส่งสรุปเช้าตอนนี้</button></div>' +
+      '<div class="lb-result" id="lbResult" aria-live="polite"></div>' +
+      sub('ให้ทีมแอดเพื่อนบอท') +
+      '<div class="lb-qr"><div id="lbQR" class="lb-qr-img">' + qr + '</div><div class="lb-qr-tx"><b>สแกนแล้วกด "เพิ่มเพื่อน"</b>' +
+        '<a href="' + esc(lbFriendUrl()) + '" target="_blank" rel="noopener">' + esc(lbFriendUrl().replace('https://', '')) + '</a>' +
+        '<span>ส่งให้ทีมงานเท่านั้น ใครแอดเพื่อนจะได้รับข้อความงานของร้าน</span></div></div>' +
+      '<p class="set-note">📊 แพ็กเกจฟรีของ LINE ส่งได้ 300 ข้อความต่อเดือน นับตามจำนวนคนที่ได้รับ เช่น ทีม 5 คน 1 ครั้ง = 5 ข้อความ ถ้าหมดบอทจะหยุดส่งจนถึงเดือนใหม่ ไม่มีค่าใช้จ่าย · บอทไม่ส่งราคาหรือยอดเงิน</p>';
+  }
+  function lbPaint() {
+    var box = $('lbResult'); if (!box) return;
+    var on = syncOn(), c = lineCfg();
+    ['lbTest', 'lbMorningNow'].forEach(function (id) { var b = $(id); if (b) b.disabled = !on || !!lbBusy; });
+    Array.prototype.forEach.call(setBody.querySelectorAll('[data-p^="lineBot."]:not([data-p="lineBot.on"]), #lbHour button'), function (x) { x.disabled = !c.on; });
+    Array.prototype.forEach.call(setBody.querySelectorAll('#lbHour button'), function (x) { x.setAttribute('aria-pressed', String(+x.getAttribute('data-h') === c.hour)); });
+    var r = lbLast, t = function (ts) { var d = new Date(ts); return thaiShort(isoOf(d)) + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ' น.'; };
+    var link = function (u, tx) { return u ? ' <a href="' + esc(u) + '" target="_blank" rel="noopener">' + tx + '</a>' : ''; };
+    var what = function (m) { return m === 'morning' ? 'สรุปเช้า' : 'ข้อความทดสอบ'; };
+    box.className = 'lb-result';
+    if (!on) { box.innerHTML = '☁️ เชื่อมข้อมูลออนไลน์ก่อน (ตั้งค่า → เก็บข้อมูลออนไลน์) จึงจะสั่งบอทจากแอปได้'; return; }
+    if (lbBusy) { box.className += ' busy'; box.innerHTML = '⏳ กำลังสั่งบอทส่ง' + what(lbBusy) + '… รอประมาณ 30 วินาที–1 นาที'; return; }
+    if (!r) { box.innerHTML = 'กดปุ่มด้านบนเพื่อเช็กว่าบอทส่งข้อความเข้า LINE ได้'; return; }
+    if (r.ok) { box.className += ' ok'; box.innerHTML = '✅ ส่งสำเร็จ · ' + what(r.mode) + ' · ' + t(r.at) + '<small>ดูใน LINE ได้เลย (ต้องแอดเพื่อนบอทไว้ก่อน)</small>'; return; }
+    box.className += ' err';
+    box.innerHTML = r.why === 'perm' ? '❌ รหัส GitHub ของร้านไม่มีสิทธิ์สั่งบอท<small>ทดสอบแทนได้ที่' + link(r.url, 'หน้า GitHub ของบอท') + ' (กด Run workflow) หรือสร้างรหัส GitHub ใหม่ที่เปิดสิทธิ์ Actions: Read and write</small>'
+      : r.why === 'timeout' ? '⌛ ยังไม่เห็นผลจาก GitHub ภายใน 2 นาที<small>บอทอาจยังทำงานอยู่ ดูผลได้ที่' + link(r.url, 'หน้า GitHub ของบอท') + '</small>'
+      : r.why === 'cancel' ? '⏹️ งานของบอทรอบนี้ถูกยกเลิก<small>ลองกดใหม่อีกครั้ง ดูรายละเอียดได้ที่' + link(r.url, 'หน้า GitHub ของบอท') + '</small>'
+      : r.why === 'fail' ? '❌ บอทส่งไม่สำเร็จ · ' + t(r.at) + '<small>เช็กว่ารหัส LINE_TOKEN ใน GitHub ถูกต้อง หรือโควตาข้อความเดือนนี้หมดหรือยัง' + link(r.url, 'ดูรายละเอียด') + '</small>'
+      : '❌ ติดต่อ GitHub ไม่ได้<small>เช็กอินเทอร์เน็ตแล้วลองใหม่</small>';
+  }
+  function lineRun(mode) {
+    if (!syncOn() || lbBusy) return Promise.resolve(null);
+    lbBusy = mode; lbPaint();
+    var t0 = Date.now(), limit = window.__lbTimeout || 120000, every = window.__lbPoll || 3000, url = lbActionsUrl(), maxId = 0;
+    var listRuns = function () { return ghReq('GET', '/actions/runs?event=workflow_dispatch&per_page=5'); };
+    return new Promise(function (res) {
+      var over = false, finish = function (r) { if (!over) { over = true; clearTimeout(guard); res(r); } };
+      // hard limit even if a request to GitHub never answers
+      var guard = setTimeout(function () { finish({ ok: false, why: 'timeout', url: url }); }, limit);
+      var runId = 0, tick = function () {
+        if (over) return;
+        (runId ? ghReq('GET', '/actions/runs/' + runId) : listRuns()).then(function (j) {
+          try {
+            if (!runId) { var r = (j && j.workflow_runs || []).filter(function (x) { return x.id > maxId; })[0]; if (r) runId = r.id; }
+            else if (j && j.status === 'completed') {
+              finish(j.conclusion === 'success' ? { ok: true, url: j.html_url } : { ok: false, why: j.conclusion === 'cancelled' ? 'cancel' : 'fail', url: j.html_url });
+              return;
+            }
+          } catch (x) {}
+          setTimeout(tick, every);
+        }, function () { setTimeout(tick, every); });
+      };
+      listRuns().then(function (j) {
+        (j && j.workflow_runs || []).forEach(function (x) { if (x.id > maxId) maxId = x.id; });
+        return ghReq('POST', LB_WF + '/dispatches', { ref: 'main', inputs: { mode: mode } });
+      }).then(tick, function (e) { finish({ ok: false, why: e && (e.status === 403 || e.status === 404) ? 'perm' : 'net', url: url }); });
+    }).then(function (r) {
+      r.mode = mode; r.at = Date.now();
+      lbBusy = null; lbLast = r;
+      try { localStorage.setItem('bill33suite.lbLast', JSON.stringify(r)); } catch (x) {}
+      lbPaint();
+      if (r.ok) toast('✅ บอทส่ง' + (mode === 'morning' ? 'สรุปเช้า' : 'ข้อความทดสอบ') + 'แล้ว ดูใน LINE ได้เลย');
+      return r;
+    });
+  }
+  setBody.addEventListener('click', function (e) {
+    var h = e.target.closest('#lbHour [data-h]');
+    if (h && !h.disabled) { if (!S.lineBot) S.lineBot = clone(DEFAULTS.lineBot); S.lineBot.hour = +h.getAttribute('data-h'); saveS(); lbPaint(); return; }
+    if (e.target.closest('#lbTest')) { lineRun('test'); return; }
+    if (e.target.closest('#lbMorningNow')) lineRun('morning');
+  });
+  setBody.addEventListener('input', function (e) { var p = e.target.getAttribute && e.target.getAttribute('data-p'); if (p && /^lineBot\./.test(p)) lbPaint(); });
+
   function lockSectionHTML() {
     return (lockOn() ? '<div class="sy-on"><b>ล็อกอยู่</b><span>ทุกเครื่องต้องใส่ PIN ก่อนเข้าหน้าตั้งค่า พนักงานยังเพิ่มงาน ออกบิล และรับเงินได้ตามปกติ</span></div>'
       : '<p class="set-note">ตั้ง PIN แล้ว ทุกเครื่องที่เชื่อมกับร้านต้องใส่ PIN ก่อนเข้าหน้าตั้งค่า กันพนักงานเผลอแก้ข้อมูลร้าน ราคา หรือกดตัดการเชื่อม พนักงานยังใช้งานอื่นได้ตามปกติ</p>') +
@@ -5562,7 +5671,7 @@
     if (id === 'staff') return !teamNames().length || !meRaw();
     return false;
   }
-  var NAV_SHORT = { sync: 'ข้อมูลออนไลน์ (GitHub)', lock: 'PIN เจ้าของร้าน', staff: 'ทีมงานและการส่งงาน', sheetL: 'ข้อความบนบิล', ui: 'ปุ่มและข้อความแอป', custs: 'ลูกค้าที่บันทึกไว้', backup: 'สำรองและกู้คืน' };
+  var NAV_SHORT = { linebot: 'บอท LINE แจ้งเตือน', sync: 'ข้อมูลออนไลน์ (GitHub)', lock: 'PIN เจ้าของร้าน', staff: 'ทีมงานและการส่งงาน', sheetL: 'ข้อความบนบิล', ui: 'ปุ่มและข้อความแอป', custs: 'ลูกค้าที่บันทึกไว้', backup: 'สำรองและกู้คืน' };
   function renderSetNav() {
     var c = setupCount(), html = '<button type="button" class="sn-it' + (curSec === 'home' ? ' on' : '') + '" data-nav="home" style="--c:#2f7bf6"><span class="ic e">🚀</span><span class="tx">ภาพรวม</span>' + (c[0] < c[1] ? '<span class="dot" title="ยังตั้งค่าไม่ครบ"></span>' : '') + '</button>' +
       '<div class="sn-prog" title="ตั้งค่าแล้ว ' + c[0] + ' จาก ' + c[1] + '"><i style="width:' + Math.round(c[0] / c[1] * 100) + '%"></i></div>';
@@ -5769,7 +5878,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '942303b2b57a';
+  var BUILD = 'a5dd244d05a3';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
