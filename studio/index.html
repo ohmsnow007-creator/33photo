@@ -960,6 +960,13 @@
   .pay-acts .btn { min-height: 42px; font-size: 0.9rem; }
   .pay-acts .btn.ok { background: #2f9e44; border-color: #2f9e44; color: #fff; font-weight: 500; }
   .pay-list { display: grid; gap: 6px; }
+  .trash-link { display: flex; justify-content: center; margin-top: 14px; }
+  .trash-row { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: var(--card2, rgba(127,127,127,.08)); }
+  .trash-row .grow { flex: 1; min-width: 0; display: grid; gap: 2px; }
+  .trash-row .grow b { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+  .trash-row small { color: var(--muted); font-size: 0.75rem; }
+  .trash-row .acts { display: flex; gap: 6px; flex-shrink: 0; }
+  .trash-row .acts .mini { min-height: 40px; }
   .pay-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: rgba(47,158,68,.1); font-size: 0.86rem; }
   .pay-row .grow { flex: 1; min-width: 0; display: grid; }
   .pay-row b { color: #2b8a3e; font-family: var(--font-display); font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -1519,6 +1526,7 @@
     </div>
   </div>
   <div class="job-list" id="jobsList"></div>
+  <div class="trash-link"><button class="btn dashed" id="jobsTrash" type="button" hidden>🗑️ ถังขยะ</button></div>
 </main>
 
 <main class="page" id="pageReport" hidden>
@@ -1733,6 +1741,7 @@
       <h3 id="histTitle">ประวัติบิล</h3>
       <div style="display:flex;gap:6px">
         <button class="mini" id="histCsv" type="button">ส่งออก Excel</button>
+        <button class="mini" id="histTrash" type="button" hidden>🗑️ ถังขยะ</button>
         <button class="mini danger" id="histClear" type="button">ล้าง</button>
         <button class="mini" id="histClose" type="button">ปิด</button>
       </div>
@@ -1836,6 +1845,13 @@
       <button class="btn" id="jCancel" type="button">ยกเลิก</button>
       <button class="btn primary" id="jSave" type="button">บันทึกงาน</button>
     </div>
+  </div>
+</div>
+
+<div class="hist-modal" id="trashModal" hidden>
+  <div class="hist-sheet job-sheet" role="dialog" aria-modal="true" aria-labelledby="trashTitle">
+    <div class="hist-sheet-head"><h3 id="trashTitle">🗑️ ถังขยะ</h3><button class="mini" id="trashClose" type="button">ปิด</button></div>
+    <div class="job-body" id="trashBody" style="padding-bottom:16px"></div>
   </div>
 </div>
 
@@ -1958,9 +1974,9 @@
   var JKEY = 'bill33suite.jobs', PKEY = 'bill33suite.page', YKEY = 'bill33suite.sync';
   var SY = (function () { var o; try { o = JSON.parse(localStorage.getItem(YKEY)) || {}; } catch (e) { o = {}; } ['sha', 'base', 'dirty'].forEach(function (k) { if (!o[k] || typeof o[k] !== 'object') o[k] = {}; }); return o; })();
   var TKEY = 'bill33suite.team';
-  var SYNC_KEYS = { settings: 'bill33suite.settings', history: 'bill33suite.history', customers: 'bill33suite.customers', jobs: 'bill33suite.jobs', team: TKEY };
+  var SYNC_KEYS = { settings: 'bill33suite.settings', history: 'bill33suite.history', customers: 'bill33suite.customers', jobs: 'bill33suite.jobs', team: TKEY, trash: 'bill33suite.trash' };
   var SYNC_OF = {}; Object.keys(SYNC_KEYS).forEach(function (n) { SYNC_OF[SYNC_KEYS[n]] = n; });
-  var SYNC_LABEL = { settings: 'ตั้งค่า', history: 'ประวัติบิล', customers: 'ลูกค้า', jobs: 'งาน', team: 'ทีมงาน' };
+  var SYNC_LABEL = { settings: 'ตั้งค่า', history: 'ประวัติบิล', customers: 'ลูกค้า', jobs: 'งาน', team: 'ทีมงาน', trash: 'ถังขยะ' };
   var SKEY = 'bill33suite.settings', KEY = 'bill33suite.bill', HKEY = 'bill33suite.history', CKEY = 'bill33suite.customers', BKEY = 'bill33suite.lastBackup';
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -3032,7 +3048,7 @@
     }).join('');
     docSel.value = dv; mSel.value = months[mv] ? mv : '';
     openId = null;
-    renderHist();
+    renderHist(); paintTrashBtns();
     $('histModal').hidden = false;
     document.body.style.overflow = 'hidden';
   }
@@ -3086,8 +3102,10 @@
     if (!h) return;
     if (a === 'toggle') { openId = openId === id ? null : id; renderHist(); return; }
     if (a === 'del') {
-      confirmBox('ลบ ' + h.no + '?', 'ลบรายการนี้ออกจากประวัติ ไฟล์ PDF ที่บันทึกไว้แล้วจะไม่หาย', 'ลบ', function () {
-        histSave(hist().filter(function (x) { return x.id !== id; })); renderHist(); draw();
+      confirmBox('ลบ ' + h.no + '?', 'ลบรายการนี้ออกจากประวัติ ไฟล์ PDF ที่บันทึกไว้แล้วจะไม่หาย · กู้คืนได้จากถังขยะภายใน 30 วัน', 'ลบ', function () {
+        histSave(hist().filter(function (x) { return x.id !== id; }));
+        trashPut('bill', h, billLabel(h));
+        renderHist(); draw(); toast('ลบ ' + h.no + ' แล้ว · กู้คืนได้ในถังขยะ 30 วัน');
       });
       return;
     }
@@ -3121,7 +3139,9 @@
   $('histModal').addEventListener('click', function (e) { if (e.target === this) closeHist(); });
   $('histClear').addEventListener('click', function () {
     confirmBox('ล้างประวัติทั้งหมด?', 'ประวัติทั้งหมดจะหายไป แนะนำให้สำรองข้อมูลในหน้าตั้งค่าก่อน', 'ล้างประวัติ', function () {
-      histSave([]); renderHist(); draw(); toast('ล้างประวัติแล้ว');
+      var old = hist(); histSave([]);
+      old.slice().reverse().forEach(function (x) { trashPut('bill', x, billLabel(x), null, true); });
+      trashSave(); renderHist(); draw(); toast('ล้างประวัติแล้ว · กู้คืนได้ในถังขยะ 30 วัน');
     });
   });
   $('histCsv').addEventListener('click', function () {
@@ -4084,7 +4104,7 @@
   // ---------- jobs page ----------
   var jobsF = 'up', jobsV = lsGet('bill33suite.jview', 'list') === 'cal' ? 'cal' : 'list', calM = todayISO().slice(0, 7), calSel = todayISO();
   function renderJobs() {
-    renderNoti();
+    renderNoti(); paintTrashBtns();
     Array.prototype.forEach.call($('jobsView').children, function (x) { x.setAttribute('aria-pressed', String(x.getAttribute('data-v') === jobsV)); });
     $('jobsCal').hidden = jobsV !== 'cal';
     $('jobsTools').hidden = $('jobsList').hidden = jobsV === 'cal';
@@ -4264,6 +4284,109 @@
   }
   function depPct() { var dp = 50; for (var i = 0; i < S.pays.length; i++) if (num(S.pays[i].dep)) { dp = num(S.pays[i].dep); break; } return dp; }
 
+  // ---------- trash bin: deleted jobs/bills kept 30 days (synced as data/trash.json) ----------
+  var TRKEY = 'bill33suite.trash', TRASH_DAYS = 30, trBuf = null;
+  function trash() { return trBuf || lsGet(TRKEY, []); }
+  function trashSave(arr) { if (arr) trBuf = arr; if (trBuf) { lsSet(TRKEY, trBuf); trBuf = null; } paintTrashBtns(); }
+  function billLabel(h) { var d = docById(h.docType) || { th: h.docType || 'บิล' }; return d.th + ' ' + (h.no || '') + (h.cName || (h.state && h.state.cName) ? ' · ' + (h.cName || h.state.cName) : ''); }
+  // batch=true collects into a buffer; call trashSave() once at the end
+  function trashPut(kind, data, name, extra, batch) {
+    var arr = trash().slice(), now = Date.now();
+    var e = { id: uid() + uid(), kind: kind, name: String(name || '').slice(0, 120), at: now, ts: now, by: meName(), data: clone(data) };
+    if (extra) Object.keys(extra).forEach(function (k) { e[k] = extra[k]; });
+    arr.unshift(e);
+    if (batch) trBuf = arr; else trashSave(arr);
+  }
+  function trashLeft(e) { return Math.max(0, Math.ceil((e.at + TRASH_DAYS * 86400000 - Date.now()) / 86400000)); }
+  function trashPurge() {
+    var arr = lsGet(TRKEY, []);
+    if (!Array.isArray(arr)) return;
+    var keep = arr.filter(function (e) { return e && e.at && trashLeft(e) > 0; });
+    if (keep.length !== arr.length) lsSet(TRKEY, keep);
+  }
+  function paintTrashBtns() {
+    var t = trash(), n = Array.isArray(t) ? t.length : 0, vo = viewOnly();
+    var jb = $('jobsTrash'), hb = $('histTrash');
+    if (jb) { jb.hidden = vo || !n; jb.textContent = '🗑️ ถังขยะ (' + n + ')'; }
+    if (hb) { hb.hidden = vo || !n; hb.textContent = '🗑️ ถังขยะ (' + n + ')'; }
+  }
+  function openTrash() {
+    if (viewOnly()) return;
+    trashPurge(); renderTrash();
+    $('trashModal').hidden = false; document.body.style.overflow = 'hidden';
+    $('trashBody').scrollTop = 0;
+  }
+  function closeTrash() {
+    $('trashModal').hidden = true;
+    if ($('histModal').hidden && $('jobModal').hidden) document.body.style.overflow = '';
+    paintTrashBtns();
+  }
+  function renderTrash() {
+    var t = trash(), html = '<p class="set-note">งานและบิลที่ลบไป เก็บไว้ ' + TRASH_DAYS + ' วัน แล้วระบบลบถาวรให้เอง กด "↩️ กู้คืน" เพื่อเอากลับมา ใช้ได้ทุกเครื่องในร้าน</p>';
+    if (!t.length) html += '<div class="list-empty"><span class="big">✨</span>ถังขยะว่าง ไม่มีอะไรที่ถูกลบ</div>';
+    else {
+      html += '<div class="pay-list">' + t.map(function (e) {
+        var left = trashLeft(e);
+        return '<div class="trash-row"><span style="font-size:1.3rem" aria-hidden="true">' + (e.kind === 'job' ? '📸' : '🧾') + '</span><span class="grow"><b>' + esc(e.name || (e.kind === 'job' ? 'งาน' : 'บิล')) + '</b>' +
+          '<small>' + esc(['ลบเมื่อ ' + thaiShort(isoOf(new Date(e.at))), e.by ? 'โดย ' + e.by : ''].filter(Boolean).join(' · ')) + '</small>' +
+          '<small' + (left <= 3 ? ' style="color:#c27a00"' : '') + '>เหลือ ' + left + ' วัน</small></span>' +
+          '<span class="acts"><button type="button" class="mini" data-trest="' + esc(e.id) + '">↩️ กู้คืน</button><button type="button" class="mini danger" data-tkill="' + esc(e.id) + '" aria-label="ลบถาวร">ลบถาวร</button></span></div>';
+      }).join('') + '</div>';
+      html += '<div class="trash-link"><button type="button" class="btn dashed" id="trashEmpty">ล้างถังขยะทั้งหมด</button></div>';
+    }
+    $('trashBody').innerHTML = html;
+  }
+  function restoreTrash(id) {
+    var t = trash(), e = t.filter(function (x) { return x.id === id; })[0];
+    if (!e) return;
+    var now = Date.now(), msg;
+    if (e.kind === 'job') {
+      var arr = jobs();
+      if (!arr.some(function (x) { return x.id === e.data.id; })) {
+        var j = clone(e.data); j.ts = now; j.by = meName(); j.byId = devId();
+        arr.unshift(j); jobsSave(arr);
+      }
+      if (e.bills && e.bills.length) {
+        var h = hist(), ch = false;
+        h.forEach(function (b) { if (e.bills.indexOf(b.id) >= 0 && !jobIdOf(b)) { b.jobId = e.data.id; if (b.state) b.state.jobId = e.data.id; ch = true; } });
+        if (ch) histSave(h);
+      }
+      msg = 'กู้คืนงานแล้ว ✓';
+    } else {
+      var hh = hist();
+      if (!hh.some(function (x) { return x.id === e.data.id; })) {
+        var b2 = clone(e.data); b2.ts = now;
+        hh.unshift(b2); histSave(hh);
+      }
+      msg = 'กู้คืนบิลแล้ว ✓';
+    }
+    trashSave(trash().filter(function (x) { return x.id !== id; }));
+    renderTrash(); refreshPages(); if (!$('histModal').hidden) renderHist();
+    toast(msg);
+  }
+  $('trashBody').addEventListener('click', function (e) {
+    var r = e.target.closest('[data-trest]'), k = e.target.closest('[data-tkill]');
+    if (r) { restoreTrash(r.getAttribute('data-trest')); return; }
+    if (k) {
+      var id = k.getAttribute('data-tkill'), it = trash().filter(function (x) { return x.id === id; })[0];
+      if (!it) return;
+      confirmBox('ลบถาวร?', 'ลบ "' + (it.name || '') + '" ถาวร กู้คืนไม่ได้อีก', 'ลบถาวร', function () {
+        trashSave(trash().filter(function (x) { return x.id !== id; })); renderTrash(); toast('ลบถาวรแล้ว');
+      });
+      return;
+    }
+    if (e.target.closest('#trashEmpty')) {
+      confirmBox('ล้างถังขยะทั้งหมด?', 'ทุกอย่างในถังขยะ ' + trash().length + ' รายการจะหายถาวร กู้คืนไม่ได้อีก', 'ล้างทั้งหมด', function () {
+        trashSave([]); renderTrash(); toast('ล้างถังขยะแล้ว');
+      });
+    }
+  });
+  $('trashClose').addEventListener('click', closeTrash);
+  $('trashModal').addEventListener('click', function (e) { if (e.target === this) closeTrash(); });
+  $('jobsTrash').addEventListener('click', openTrash);
+  $('histTrash').addEventListener('click', openTrash);
+  trashPurge();
+
   // ---------- payment window (money only) ----------
   var payId = null;
   function openPay(id) {
@@ -4424,13 +4547,14 @@
   });
   $('jDel').addEventListener('click', function () {
     var j = jEdit, n = jobBills(j.id).length;
-    confirmBox('ลบงานนี้?', 'ลบ "' + jobName(j) + '" ออกจากหน้างาน' + (n ? ' บิล ' + n + ' ใบของงานนี้ยังอยู่ในประวัติบิล' : ''), 'ลบงาน', function () {
+    confirmBox('ลบงานนี้?', 'ลบ "' + jobName(j) + '" ออกจากหน้างาน' + (n ? ' บิล ' + n + ' ใบของงานนี้ยังอยู่ในประวัติบิล' : '') + ' · ถ้าลบผิด กู้คืนได้จากถังขยะภายใน 30 วัน', 'ลบงาน', function () {
+      var saved = jobById(j.id) || j, h = hist(), linked = [];
       jobsSave(jobs().filter(function (x) { return x.id !== j.id; }));
-      var h = hist();
-      h.forEach(function (e) { if (jobIdOf(e) === j.id) { e.jobId = ''; if (e.state) e.state.jobId = ''; } });
+      h.forEach(function (e) { if (jobIdOf(e) === j.id) { linked.push(e.id); e.jobId = ''; if (e.state) e.state.jobId = ''; } });
       histSave(h);
+      trashPut('job', saved, jobName(saved) + (saved.title && saved.cName ? ' · ' + saved.cName : ''), linked.length ? { bills: linked } : null);
       if (state.jobId === j.id) { state.jobId = ''; persist(); }
-      closeJob(); refreshPages(); toast('ลบงานแล้ว');
+      closeJob(); refreshPages(); toast('ลบงานแล้ว · กู้คืนได้ในถังขยะ 30 วัน');
     });
   });
   $('jDocs').addEventListener('click', function (e) {
@@ -6004,7 +6128,7 @@
     if (!syncOn() || !kickedIds()[devId()]) return false;
     var shop = S.company.name || 'ร้าน', name = meRaw();
     KICKED = true; SY = { sha: {}, base: {}, dirty: {} }; clearTimeout(pushT);
-    [SKEY, KEY, HKEY, CKEY, BKEY, JKEY, PKEY, YKEY, UKEY, TKEY, DKEY, 'bill33suite.mine'].forEach(function (k) { localStorage.removeItem(k); });
+    [SKEY, KEY, HKEY, CKEY, BKEY, JKEY, PKEY, YKEY, UKEY, TKEY, DKEY, 'bill33suite.mine', 'bill33suite.trash'].forEach(function (k) { localStorage.removeItem(k); });
     try { localStorage.setItem('bill33suite.kickedMsg', JSON.stringify({ shop: shop, name: name, at: Date.now() })); } catch (e) {}
     var ov = document.createElement('div'); ov.style.cssText = 'position:fixed;inset:0;z-index:999;background:var(--bg);color:var(--fg);display:flex;align-items:center;justify-content:center;font-size:1.1rem;padding:24px;text-align:center';
     ov.textContent = '🚪 เครื่องนี้ถูกนำออกจากร้านแล้ว…'; document.body.appendChild(ov);
@@ -6039,7 +6163,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '4db1ff553402';
+  var BUILD = 'fb334878084d';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
@@ -6520,7 +6644,7 @@
     sheetHTML: sheetHTML, applySheetVars: applySheetVars, fitA4: fitA4,
     goPage: goPage, jobs: jobs, jobMoney: jobMoney, openJob: openJob, openPay: openPay,
     mergeSettings: mergeSettings, invite: function () { return INV; }, teamRaw: teamRaw, openDevice: openDevice, BUILD: function () { return BUILD; }, teamNames: teamNames, staffNames: staffNames, syncNow: syncNow, sync: function () { return { state: syncState, err: syncErr, SY: SY }; },
-    delivOf: delivOf, openMsg: openMsg, confetti: confetti, quickISO: quickISO, openCust: openCust, viewOnly: viewOnly, yearReport: yearReport, reportCSV: reportCSV, openSearch: openSearch, openSettings: openSettings, setMe: setMe, merge3: merge3 };
+    delivOf: delivOf, openMsg: openMsg, confetti: confetti, quickISO: quickISO, openCust: openCust, viewOnly: viewOnly, yearReport: yearReport, reportCSV: reportCSV, openSearch: openSearch, openSettings: openSettings, setMe: setMe, merge3: merge3, syncKeys: function () { return SYNC_KEYS; } };
 })();
 </script>
 </body>
