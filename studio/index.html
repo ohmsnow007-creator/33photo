@@ -2068,6 +2068,7 @@
       tplNew: '🆕 งานใหม่ {จำนวน} งาน', tplCancel: '❌ ยกเลิกงาน {จำนวน} งาน', tplMove: '🔁 เลื่อนวัน/เวลา {จำนวน} งาน',
       tplMorning: '☀️ อรุณสวัสดิ์ {ร้าน}\n{วันนี้}',
       tplJob: '📸 {งาน}\n📅 {วัน} · {เวลา}\n📍 {สถานที่}\n👥 ทีม: {ทีม}\n📞 {เบอร์}\n📝 {หมายเหตุ}\n⏳ {สถานะ}\n✍️ เพิ่มโดย {คนเพิ่ม}',
+      showMap: true, crew: true, week: true, pastOpen: true, tplMorningEnd: '💪 ขอให้วันนี้ราบรื่นนะครับ',
       tplFoot: '' },
     msgs: {
       confirm: 'สวัสดีครับ {customer}\n{company} ขอยืนยันนัด{job} ครับ\n📅 {date}\n⏰ {time}\n📍 {venue}\nทีมงานจะไปถึงก่อนเวลาเล็กน้อยเพื่อเตรียมอุปกรณ์\nหากมีการเปลี่ยนแปลง แจ้งได้ตลอดเลยครับ\nโทร {phone}',
@@ -5432,6 +5433,10 @@
       fCheck('ส่งสรุปแม้วันนั้นไม่มีงาน', 'lineBot.empty', 'ปิดไว้จะประหยัดโควตาข้อความ') +
       fCheck('📷 เตือนส่งรูปลูกค้าในสรุปเช้า', 'lineBot.deliv', 'งานที่ใกล้ถึงหรือเลยกำหนดส่งรูป') +
       fCheck('💸 เตือนงานที่ยังเก็บเงินไม่ครบในสรุปเช้า', 'lineBot.unpaid', 'งานที่ผ่านวันงานไปแล้ว บอกแค่ชื่องาน ไม่บอกยอดเงิน') +
+      fCheck('🗺️ ลิงก์แผนที่ของงานวันนี้', 'lineBot.showMap', 'กดแล้วเปิด Google Maps ถ้าช่องสถานที่มีลิงก์แผนที่อยู่แล้ว จะใช้ลิงก์นั้น') +
+      fCheck('👷 ทีมวันนี้ ใครทำกี่งาน และใครว่าง', 'lineBot.crew') +
+      fCheck('📅 งานอีก 7 วันข้างหน้า', 'lineBot.week', 'รวมงานรอยืนยันที่ต้องตามลูกค้า') +
+      fCheck('⏳ งานผ่านไปแล้วที่ยังไม่กดเสร็จ', 'lineBot.pastOpen') +
       sub('ข้อมูลที่แสดงในข้อความ') +
       fCheck('📍 สถานที่', 'lineBot.showVenue') + fCheck('👥 ทีมงาน', 'lineBot.showTeam') + fCheck('✍️ คนที่เพิ่มงาน', 'lineBot.showBy') +
       fCheck('📞 เบอร์ลูกค้า', 'lineBot.showPhone', 'ทุกคนที่แอดบอทจะเห็นเบอร์') + fCheck('📝 หมายเหตุงาน', 'lineBot.showNote', 'บรรทัดแรกของหมายเหตุ') +
@@ -5439,7 +5444,7 @@
       '<div class="field"><label>ตัวอย่างข้อความงานใหม่</label><pre class="lb-preview" id="lbPreview"></pre></div>' +
       '<details class="lb-tpl"><summary>✏️ แก้คำพูดของบอท</summary>' +
         '<p class="set-note">ใส่ช่องเติมอัตโนมัติได้: {งาน} {ลูกค้า} {วัน} {เวลา} {สถานที่} {ทีม} {เบอร์} {หมายเหตุ} {สถานะ} {คนเพิ่ม} · หัวข้อใช้ {จำนวน} {ร้าน} {วันนี้} · บรรทัดที่ไม่มีข้อมูลจะถูกซ่อนเอง</p>' +
-        [['tplJob', 'รายละเอียดแต่ละงาน', 8], ['tplNew', 'หัวข้องานใหม่', 2], ['tplCancel', 'หัวข้องานยกเลิก', 2], ['tplMove', 'หัวข้องานเลื่อนวัน/เวลา', 2], ['tplMorning', 'หัวข้อสรุปเช้า', 2], ['tplFoot', 'ข้อความลงท้าย (ไม่ใส่ก็ได้)', 2]].map(function (t) {
+        [['tplJob', 'รายละเอียดแต่ละงาน', 8], ['tplNew', 'หัวข้องานใหม่', 2], ['tplCancel', 'หัวข้องานยกเลิก', 2], ['tplMove', 'หัวข้องานเลื่อนวัน/เวลา', 2], ['tplMorning', 'หัวข้อสรุปเช้า', 2], ['tplMorningEnd', 'คำลงท้ายสรุปเช้า (ไม่ใส่ก็ได้)', 2], ['tplFoot', 'ข้อความลงท้ายทุกข้อความ (ไม่ใส่ก็ได้)', 2]].map(function (t) {
           return fText(t[1], 'lineBot.' + t[0], { area: true, rows: t[2] }) + '<div class="lb-reset"><button type="button" class="mini" data-lbreset="' + t[0] + '">↺ คืนค่าเดิม</button></div>';
         }).join('') +
       '</details>' +
@@ -6164,7 +6169,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '1a117051fbd7';
+  var BUILD = 'cf0c17cd28c6';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
