@@ -907,6 +907,19 @@
   .cal-day.today .cal-n { background: var(--ink); color: var(--ink-fg); }
   .cal-day.sel { outline: 2px solid var(--ink); outline-offset: -1px; }
   .cal-day.clash { border-color: #e5a01a; background: rgba(229,160,26,.07); }
+  .cal-day.off { border-color: rgba(229,72,77,.65); background: rgba(229,72,77,.16); }
+  .cal-day.off .cal-n { color: #ff6b6f; font-weight: 700; }
+  .cal-day.off.today .cal-n { background: #e5484d; color: #fff; }
+  .cal-off { display: block; font-size: 0.66rem; line-height: 1.2; color: #ff8a8d; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .off-banner { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 14px; margin-bottom: 12px; border-radius: 12px; background: rgba(229,72,77,.14); border: 1px solid rgba(229,72,77,.5); color: #ff8a8d; }
+  .off-banner b { color: #ff6b6f; }
+  .off-banner .grow { flex: 1; min-width: 160px; }
+  .off-form { display: grid; gap: 10px; padding: 12px 14px; margin-bottom: 12px; border-radius: 12px; background: rgba(229,72,77,.08); border: 1px dashed rgba(229,72,77,.5); }
+  .off-form .btnrow { display: flex; gap: 8px; justify-content: flex-end; }
+  .off-form input { font-size: 16px; }
+  .off-warn { margin-top: 8px; padding: 10px 12px; border-radius: 10px; background: rgba(229,72,77,.14); border: 1px solid rgba(229,72,77,.55); color: #ff8a8d; font-size: 0.9rem; }
+  .off-warn b { color: #ff6b6f; }
+  .btn.off-btn { color: #ff6b6f; border-color: rgba(229,72,77,.55); }
   .cal-n { font-family: var(--font-display); font-size: 0.85rem; min-width: 24px; height: 24px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; flex: none; padding: 0 4px; align-self: flex-start; }
   .cal-ev { font-size: 0.72rem; line-height: 1.3; padding: 2px 5px; border-radius: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: rgba(47,158,68,.15); color: #2b8a3e; }
   .cal-ev:hover { filter: brightness(.95); text-decoration: underline; }
@@ -1842,6 +1855,7 @@
         <input id="j_evDate" type="date" data-quick="1">
         <div class="hint" id="jDateHint"></div>
         <div class="ev-clash" id="jClash" hidden></div>
+        <div class="off-warn" id="jOffWarn" role="status" hidden></div>
       </div>
       <div class="grid2">
         <div class="field"><label for="j_evStart">เริ่ม</label><input id="j_evStart" type="time"></div>
@@ -2077,6 +2091,7 @@
       { id: 'invoice', on: false, th: 'ใบแจ้งหนี้', en: 'INVOICE', grand: 'ยอดที่ต้องชำระ', grandEn: 'Amount due', prefix: 'INV-' },
       { id: 'receipt', on: false, th: 'ใบเสร็จรับเงิน', en: 'RECEIPT', grand: 'ยอดรับชำระ', grandEn: 'Amount received', prefix: 'RC-' }
     ],
+    offDays: [],
     kit: ['กล้อง', 'คอมพิวเตอร์', 'จอคอมพิวเตอร์', 'เครื่องปริ้น', 'กระดาษสำรอง', 'ซองใส่รูป', 'ปลั๊กไฟ', 'สายไฟ', 'ผ้าปูโต๊ะ', 'ขาฉาก', 'ขาไฟ', 'ฉาก', 'ไฟ ซ้ายขวา', 'ไฟกลาง', 'ซอฟต์บ็อกซ์', 'กล่องแว่น', 'พร็อพ'],
     services: [
       { name: 'งานถ่ายภาพ', price: '', hours: '', details: [] },
@@ -4193,6 +4208,11 @@
     var b = e.target.closest('button'); if (!b) return;
     jobsV = b.getAttribute('data-v'); lsSet('bill33suite.jview', jobsV); renderJobs();
   });
+  // ---------- days off (whole shop) ----------
+  function offList() { return Array.isArray(S.offDays) ? S.offDays : []; }
+  function offOf(iso) { if (!iso) return null; var l = offList(); for (var i = 0; i < l.length; i++) if (l[i] && iso >= l[i].from && iso <= (l[i].to || l[i].from)) return l[i]; return null; }
+  function offRange(o) { return o.to && o.to !== o.from ? thaiShort(o.from) + ' – ' + thaiShort(o.to) : thaiShort(o.from); }
+  var offForm = false;
   function renderCal() {
     var y = +calM.slice(0, 4), m = +calM.slice(5, 7), start = new Date(y, m - 1, 1).getDay(), days = new Date(y, m, 0).getDate();
     var all = jobs(), byDay = {}, today = todayISO(), n = 0;
@@ -4205,8 +4225,9 @@
       var dt = new Date(y, m - 1, 1 - start + i);
       var iso = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
       var list = byDay[iso] || [], live = list.filter(function (j) { return j.status !== 'cancel'; });
-      var cls = 'cal-day' + (dt.getMonth() !== m - 1 ? ' out' : '') + (dt.getDay() === 0 ? ' sun' : '') + (iso === today ? ' today' : '') + (iso === calSel ? ' sel' : '') + (live.length > 1 ? ' clash' : '');
-      cells += '<button type="button" class="' + cls + '" data-day="' + iso + '" aria-label="' + esc(eventDate(iso, false) + (list.length ? ' มี ' + list.length + ' งาน' : '')) + '"><span class="cal-n">' + dt.getDate() + '</span>' +
+      var cls = 'cal-day' + (dt.getMonth() !== m - 1 ? ' out' : '') + (dt.getDay() === 0 ? ' sun' : '') + (iso === today ? ' today' : '') + (iso === calSel ? ' sel' : '') + (live.length > 1 ? ' clash' : '') + (offOf(iso) ? ' off' : '');
+      cells += '<button type="button" class="' + cls + '" data-day="' + iso + '" aria-label="' + esc(eventDate(iso, false) + (offOf(iso) ? ' ปิดรับงาน' + (offOf(iso).why ? ' ' + offOf(iso).why : '') : '') + (list.length ? ' มี ' + list.length + ' งาน' : '')) + '"><span class="cal-n">' + dt.getDate() + '</span>' +
+        (offOf(iso) ? '<span class="cal-off" aria-hidden="true">🚫 ' + esc(offOf(iso).why || 'ปิด') + '</span>' : '') +
         list.slice(0, 3).map(function (j) { return '<span class="cal-ev ' + esc(j.status || 'booked') + (unseenOf(j.id) ? ' unseen' : '') + '" data-job="' + esc(j.id) + '">' + esc((j.evStart ? j.evStart + ' ' : '') + jobName(j)) + '</span>'; }).join('') +
         (list.length > 3 ? '<span class="cal-more">+' + (list.length - 3) + ' งาน</span>' : '') +
         (live.length ? '<span class="cal-dots">' + live.slice(0, 4).map(function (j) { return '<i class="' + esc(j.status || 'booked') + '"></i>'; }).join('') + '</span>' : '') + '</button>';
@@ -4216,11 +4237,44 @@
       '<div class="cal-head"><h2>' + MONTHS[m - 1] + ' ' + (y + 543) + '<small>' + n + ' งาน</small></h2>' +
         '<button class="btn" type="button" data-cal="prev" aria-label="เดือนก่อน">‹</button><button class="btn" type="button" data-cal="today">วันนี้</button><button class="btn" type="button" data-cal="next" aria-label="เดือนถัดไป">›</button></div>' +
       '<div class="cal-grid">' + ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'].map(function (d) { return '<div class="cal-dow">' + d + '</div>'; }).join('') + cells + '</div>' +
-      '<div class="cal-legend"><span><i style="background:rgba(47,158,68,.5)"></i>จองแล้ว</span><span><i style="background:rgba(47,123,246,.5)"></i>รอยืนยัน</span><span><i style="background:rgba(124,92,214,.55)"></i>เสร็จแล้ว</span><span><i style="background:rgba(229,160,26,.6)"></i>กรอบส้ม = วันที่มีมากกว่า 1 งาน</span></div>' +
-      '<section class="card cal-daybox"><div class="card-h"><h2>' + esc(eventDate(calSel, false)) + '</h2><button class="btn" type="button" data-newday="' + calSel + '">+ เพิ่มงาน</button></div>' +
+      '<div class="cal-legend"><span><i style="background:rgba(47,158,68,.5)"></i>จองแล้ว</span><span><i style="background:rgba(47,123,246,.5)"></i>รอยืนยัน</span><span><i style="background:rgba(124,92,214,.55)"></i>เสร็จแล้ว</span><span><i style="background:rgba(229,160,26,.6)"></i>กรอบส้ม = วันที่มีมากกว่า 1 งาน</span><span><i style="background:rgba(229,72,77,.75)"></i>🚫 แดง = ปิดรับงาน</span></div>' +
+      '<section class="card cal-daybox"><div class="card-h"><h2>' + esc(eventDate(calSel, false)) + '</h2><button class="btn" type="button" data-newday="' + calSel + '">+ เพิ่มงาน</button></div>' + offBox() +
         (sel.length ? '<div class="job-list">' + sel.map(function (j) { return jobRow(j); }).join('') + '</div>' : '<div class="list-empty">วันนี้ยังว่าง ไม่มีงาน</div>') + '</section>';
   }
+  function offBox() {
+    var o = offOf(calSel), vo = viewOnly();
+    if (o) return '<div class="off-banner" role="status"><span class="grow">🚫 <b>ปิดรับงาน</b>' + (o.why ? ' · ' + esc(o.why) : '') + '<br><small>' + esc(offRange(o)) + '</small></span>' +
+      (vo ? '' : '<button class="btn" type="button" data-offdel="' + esc(o.id) + '">✅ เปิดรับงานอีกครั้ง</button>') + '</div>';
+    if (vo) return '';
+    if (offForm) return '<div class="off-form"><b>🚫 ปิดรับงานทั้งร้าน</b>' +
+      '<div class="hint">ตั้งแต่ <b>' + esc(eventDate(calSel, false)) + '</b></div>' +
+      '<div class="field"><label for="offTo">ถึงวันที่ (ปิดวันเดียว ไม่ต้องแก้)</label><input id="offTo" type="date" value="' + calSel + '"></div>' +
+      '<div class="field"><label for="offWhy">เหตุผล (ไม่ใส่ก็ได้)</label><input id="offWhy" type="text" maxlength="40" placeholder="เช่น หยุดร้าน, ลาพักร้อน, ไปต่างจังหวัด"></div>' +
+      '<div class="btnrow"><button class="btn" type="button" data-offcancel="1">ยกเลิก</button><button class="btn primary" type="button" id="offSave">🚫 ปิดรับงาน</button></div></div>';
+    return '<div class="btnrow" style="margin-bottom:10px"><button class="btn off-btn" type="button" data-offadd="1">🚫 ปิดรับงานวันนี้</button></div>';
+  }
   $('jobsCal').addEventListener('click', function (e) {
+    if (e.target.closest('[data-offadd]')) { offForm = true; renderCal(); enhanceDT($('jobsCal')); setTimeout(function () { if ($('offWhy')) $('offWhy').focus(); }, 30); return; }
+    if (e.target.closest('[data-offcancel]')) { offForm = false; renderCal(); return; }
+    if (e.target.closest('#offSave')) {
+      var a = calSel, b = ($('offTo') && $('offTo').value) || calSel;
+      if (!isoParts(b)) b = a;
+      if (b < a) { var t = a; a = b; b = t; }
+      S.offDays = offList().concat([{ id: uid(), from: a, to: b, why: String(($('offWhy') || {}).value || '').trim().slice(0, 40), by: meName(), at: Date.now() }]);
+      saveS(); offForm = false; renderCal(); updateNavDot();
+      toast('🚫 ปิดรับงาน ' + offRange({ from: a, to: b }) + ' แล้ว');
+      return;
+    }
+    var od = e.target.closest('[data-offdel]');
+    if (od) {
+      var id = od.getAttribute('data-offdel'), o = offList().filter(function (x) { return x.id === id; })[0];
+      if (!o) return;
+      confirmBox('เปิดรับงานอีกครั้ง?', 'ยกเลิกวันปิดรับงาน ' + offRange(o) + (o.why ? ' (' + o.why + ')' : '') + ' ทั้งช่วง', '✅ เปิดรับงาน', function () {
+        S.offDays = offList().filter(function (x) { return x.id !== id; }); saveS(); renderCal(); toast('เปิดรับงานแล้ว');
+      });
+      return;
+    }
+    if (e.target.closest('.off-form')) return;
     if (e.target.closest('[data-job]')) return;
     var nd = e.target.closest('[data-newday]');
     if (nd) { openJob(null, { evDate: nd.getAttribute('data-newday') }); return; }
@@ -4232,7 +4286,7 @@
       renderCal(); return;
     }
     var d = e.target.closest('[data-day]');
-    if (d) { calSel = d.getAttribute('data-day'); calM = calSel.slice(0, 7); renderCal(); }
+    if (d) { calSel = d.getAttribute('data-day'); calM = calSel.slice(0, 7); offForm = false; renderCal(); }
   });
   $('jobsFilter').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
@@ -4298,6 +4352,9 @@
     var s0 = $('j_evStart').value, e0 = $('j_evEnd').value, tw = $('jTimeWarn');
     tw.textContent = s0 && e0 && e0 <= s0 ? '🌙 เวลาจบน้อยกว่าเวลาเริ่ม ระบบเข้าใจว่าเลิกหลังเที่ยงคืน (จบ ' + e0 + ' น. ของวันถัดไป) ถ้าไม่ใช่ ให้แก้เวลา' : '';
     tw.hidden = !tw.textContent;
+    var ow = $('jOffWarn'), oo = offOf(v);
+    ow.hidden = !oo;
+    if (oo) ow.innerHTML = '🚫 <b>วันนี้ร้านปิดรับงาน</b>' + (oo.why ? ' · ' + esc(oo.why) : '') + ' (' + esc(offRange(oo)) + ')';
     var c = v ? eventClashes({ evDate: v, cName: $('j_cName').value, jobId: jEdit.id }) : [], box = $('jClash');
     box.hidden = !c.length;
     if (c.length) box.innerHTML = '<b>⚠ วันนี้มีงานอยู่แล้ว</b><br>' + c.map(function (h) {
@@ -4573,6 +4630,8 @@
   function jobChecks(cb) {
     // asks about values that are almost always a slip of the finger, one question at a time
     var qs = [], pr = num($('j_price').value), d = dayDiff($('j_evDate').value);
+    var oo = offOf($('j_evDate').value), was = jEdit && jEdit.id ? (jobById(jEdit.id) || {}).evDate : '';
+    if (oo && was !== $('j_evDate').value) qs.push(['🚫 วันนี้ร้านปิดรับงาน', eventDate($('j_evDate').value, false) + ' อยู่ในช่วงปิดรับงาน' + (oo.why ? ' (' + oo.why + ')' : '') + ' ยังจะลงงานวันนี้ไหม?', 'ลงงานวันนี้', function () { $('j_evDate').focus(); }]);
     if (pr >= PRICE_ODD) qs.push(['ราคา ฿' + money(pr) + ' ถูกต้องไหม?', 'ราคานี้สูงผิดปกติ อาจพิมพ์เลข 0 เกิน ถ้าถูกต้องกด "ใช่ ราคานี้"', 'ใช่ ราคานี้', function () { $('j_price').focus(); }]);
     if (jEdit && jEdit.status === 'done' && d != null && d > 0) qs.push(['งานนี้ยังไม่ถึงวัน', 'วันงานคือ ' + eventDate($('j_evDate').value, false) + ' (' + whenText(d) + ') แต่ตั้งสถานะเป็น "เสร็จแล้ว" ถูกต้องไหม?', 'ใช่ เสร็จแล้ว', null]);
     (function next(i) {
@@ -6320,7 +6379,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'f03df533418e';
+  var BUILD = '117bad761334';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
