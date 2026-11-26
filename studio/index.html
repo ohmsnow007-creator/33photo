@@ -2067,7 +2067,7 @@
       showVenue: true, showTeam: true, showPhone: false, showNote: false, showBy: true,
       tplNew: '🆕 งานใหม่ {จำนวน} งาน', tplCancel: '❌ ยกเลิกงาน {จำนวน} งาน', tplMove: '🔁 เลื่อนวัน/เวลา {จำนวน} งาน',
       tplMorning: '☀️ อรุณสวัสดิ์ {ร้าน}\n{วันนี้}',
-      tplJob: '📸 {งาน}\n📅 {วัน} · {เวลา}\n📍 {สถานที่}\n👥 ทีม: {ทีม}\n📞 {เบอร์}\n📝 {หมายเหตุ}\n⏳ {สถานะ}\n✍️ เพิ่มโดย {คนเพิ่ม}',
+      tplJob: '👤 {ลูกค้า}\n📞 {เบอร์}\n🕐 {วัน} · {เวลา}\n📍 {สถานที่}\n📸 {ชื่องาน}\n👥 ทีม: {ทีม}\n📝 {หมายเหตุ}\n⏳ {สถานะ}\n✍️ เพิ่มโดย {คนเพิ่ม}',
       showMap: true, showAddr: true, week: true, pastOpen: true, tplMorningEnd: '💪 ขอให้วันนี้ราบรื่นนะครับ',
       tplFoot: '' },
     msgs: {
@@ -2132,6 +2132,7 @@
   }
 
   var S = merge(DEFAULTS, lsGet(SKEY, {}));
+  if (S.lineBot && S.lineBot.tplJob === '📸 {งาน}\n📅 {วัน} · {เวลา}\n📍 {สถานที่}\n👥 ทีม: {ทีม}\n📞 {เบอร์}\n📝 {หมายเหตุ}\n⏳ {สถานะ}\n✍️ เพิ่มโดย {คนเพิ่ม}') S.lineBot.tplJob = DEFAULTS.lineBot.tplJob; // old default order -> customer, phone, time, venue
   if (!S.docs.some(function (d) { return d.on; })) S.docs[0].on = true;
   var sTimer;
   function saveS() { clearTimeout(sTimer); sTimer = setTimeout(function () { if (lsSet(SKEY, S) && typeof flashSaved === 'function') flashSaved(); }, 200); }
@@ -5443,7 +5444,7 @@
       sub('แก้ข้อความบอท') +
       '<div class="field"><label>ตัวอย่างข้อความงานใหม่</label><pre class="lb-preview" id="lbPreview"></pre></div>' +
       '<details class="lb-tpl"><summary>✏️ แก้คำพูดของบอท</summary>' +
-        '<p class="set-note">ใส่ช่องเติมอัตโนมัติได้: {งาน} {ลูกค้า} {วัน} {เวลา} {สถานที่} {ทีม} {เบอร์} {หมายเหตุ} {สถานะ} {คนเพิ่ม} · หัวข้อใช้ {จำนวน} {ร้าน} {วันนี้} · บรรทัดที่ไม่มีข้อมูลจะถูกซ่อนเอง</p>' +
+        '<p class="set-note">ใส่ช่องเติมอัตโนมัติได้: {ลูกค้า} {เบอร์} {วัน} {เวลา} {สถานที่} {ชื่องาน} {ทีม} {หมายเหตุ} {สถานะ} {คนเพิ่ม} · {งาน} = ชื่องาน · ลูกค้า · หัวข้อใช้ {จำนวน} {ร้าน} {วันนี้} · บรรทัดที่ไม่มีข้อมูลจะถูกซ่อนเอง</p>' +
         [['tplJob', 'รายละเอียดแต่ละงาน', 8], ['tplNew', 'หัวข้องานใหม่', 2], ['tplCancel', 'หัวข้องานยกเลิก', 2], ['tplMove', 'หัวข้องานเลื่อนวัน/เวลา', 2], ['tplMorning', 'หัวข้อสรุปเช้า', 2], ['tplMorningEnd', 'คำลงท้ายสรุปเช้า (ไม่ใส่ก็ได้)', 2], ['tplFoot', 'ข้อความลงท้ายทุกข้อความ (ไม่ใส่ก็ได้)', 2]].map(function (t) {
           return fText(t[1], 'lineBot.' + t[0], { area: true, rows: t[2] }) + '<div class="lb-reset"><button type="button" class="mini" data-lbreset="' + t[0] + '">↺ คืนค่าเดิม</button></div>';
         }).join('') +
@@ -5477,7 +5478,7 @@
   function lbPreviewText() {
     var c = lineCfg(), d = new Date(); d.setDate(d.getDate() + 2);
     var iso = isoOf(d), p = isoParts(iso), shop = (S.company && S.company.name) || 'ทีมงาน';
-    var job = { 'งาน': 'งานแต่ง · คุณเอ', 'ลูกค้า': 'คุณเอ', 'วัน': ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'][d.getDay()] + ' ' + p.d + ' ' + MSHORT[p.m - 1] + ' ' + String(p.y + 543).slice(2),
+    var job = { 'งาน': 'งานแต่ง · คุณเอ', 'ชื่องาน': 'งานแต่ง', 'ลูกค้า': 'คุณเอ', 'วัน': ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'][d.getDay()] + ' ' + p.d + ' ' + MSHORT[p.m - 1] + ' ' + String(p.y + 543).slice(2),
       'เวลา': '10:00–14:00 น.', 'สถานที่': c.showVenue ? 'โรงแรมเอ ห้องบอลรูม' : '', 'ทีม': c.showTeam ? (staffNames().slice(0, 2).join(', ') || 'ปีโป้') : '',
       'เบอร์': c.showPhone ? '081 234 5678' : '', 'หมายเหตุ': c.showNote ? 'เอาโดรนไปด้วย' : '', 'สถานะ': '', 'คนเพิ่ม': c.showBy ? meName() : '' };
     var head = { 'ร้าน': shop, 'จำนวน': '1', 'วันนี้': eventDate(todayISO(), false) };
@@ -6169,7 +6170,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'd265d6e302b0';
+  var BUILD = '7f711ca89f3b';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
