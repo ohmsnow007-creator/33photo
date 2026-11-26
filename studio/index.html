@@ -4013,7 +4013,7 @@
       '<div class="job-date' + (d === 0 ? ' today' : '') + '">' + (p ? '<small>' + ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'][dt.getDay()] + '.</small><b>' + p.d + '</b><small>' + MSHORT[p.m - 1] + '</small>' : '<b>–</b><small>ไม่มีวัน</small>') + '</div>' +
       '<div class="job-main"><div class="job-t">' + esc(jobName(j)) + (j.title && j.cName ? ' · ' + esc(j.cName) : '') + '</div>' +
         (sub ? '<div class="job-sub">' + esc(sub) + '</div>' : '') +
-        '<div class="job-chips">' + unseenChip(j.id) + staffChip(j) + kitChip(j) + delivChip(j) + jobChips(j, m) + '</div></div>' +
+        '<div class="job-chips">' + unseenChip(j.id) + (j.status !== 'cancel' && offOf(j.evDate) ? jc('🚫 ตรงวันปิดรับงาน', 'bad') : '') + staffChip(j) + kitChip(j) + delivChip(j) + jobChips(j, m) + '</div></div>' +
       '<div class="job-amt">' + (amt ? '฿' + money(amt) : viewOnly() ? '' : '<span class="muted">–</span>') +
         '<small class="' + (d != null && d >= 0 && d <= 7 && j.status !== 'cancel' && j.status !== 'done' ? 'soon' : '') + '">' + (opt && opt.due ? 'ค้างรับ' : whenText(d)) + '</small></div>' +
     '</button>';
@@ -4210,7 +4210,13 @@
   });
   // ---------- days off (whole shop) ----------
   function offList() { return Array.isArray(S.offDays) ? S.offDays : []; }
-  function offOf(iso) { if (!iso) return null; var l = offList(); for (var i = 0; i < l.length; i++) if (l[i] && iso >= l[i].from && iso <= (l[i].to || l[i].from)) return l[i]; return null; }
+  function offOf(iso) { if (!iso) return null; var l = offList(); for (var i = 0; i < l.length; i++) if (l[i] && !l[i].del && l[i].from && iso >= l[i].from && iso <= (l[i].to || l[i].from)) return l[i]; return null; }
+  // two phones closing / reopening days at the same time: keep every range, a reopen (del) always wins
+  function mergeOff(a, b) {
+    var by = {}, order = [];
+    a.concat(b).forEach(function (o) { if (!o || !o.id) return; if (!by[o.id]) { by[o.id] = o; order.push(o.id); } else if (o.del) by[o.id] = { id: o.id, del: 1 }; });
+    return order.map(function (id) { return by[id]; });
+  }
   function offRange(o) { return o.to && o.to !== o.from ? thaiShort(o.from) + ' – ' + thaiShort(o.to) : thaiShort(o.from); }
   var offForm = false;
   function renderCal() {
@@ -4262,7 +4268,8 @@
       if (b < a) { var t = a; a = b; b = t; }
       S.offDays = offList().concat([{ id: uid(), from: a, to: b, why: String(($('offWhy') || {}).value || '').trim().slice(0, 40), by: meName(), at: Date.now() }]);
       saveS(); offForm = false; renderCal(); updateNavDot();
-      toast('🚫 ปิดรับงาน ' + offRange({ from: a, to: b }) + ' แล้ว');
+      var had = jobs().filter(function (j) { return j.status !== 'cancel' && j.evDate && j.evDate >= a && j.evDate <= b; }).length;
+      toast('🚫 ปิดรับงาน ' + offRange({ from: a, to: b }) + ' แล้ว' + (had ? ' · ⚠️ ช่วงนี้มีงานอยู่แล้ว ' + had + ' งาน' : ''), had ? 'err' : undefined);
       return;
     }
     var od = e.target.closest('[data-offdel]');
@@ -4270,7 +4277,7 @@
       var id = od.getAttribute('data-offdel'), o = offList().filter(function (x) { return x.id === id; })[0];
       if (!o) return;
       confirmBox('เปิดรับงานอีกครั้ง?', 'ยกเลิกวันปิดรับงาน ' + offRange(o) + (o.why ? ' (' + o.why + ')' : '') + ' ทั้งช่วง', '✅ เปิดรับงาน', function () {
-        S.offDays = offList().filter(function (x) { return x.id !== id; }); saveS(); renderCal(); toast('เปิดรับงานแล้ว');
+        S.offDays = offList().map(function (x) { return x.id === id ? { id: id, del: 1 } : x; }); saveS(); renderCal(); toast('เปิดรับงานแล้ว');
       });
       return;
     }
@@ -4835,6 +4842,7 @@
       if (lh === rh) v = l;
       else if (bh && bh === lh) v = r;
       else if (bh && bh === rh) v = l;
+      else if (k === 'offDays' && Array.isArray(l) && Array.isArray(r)) v = mergeOff(l, r);
       else if (k === 'staff' && Array.isArray(l) && Array.isArray(r)) { v = l.slice(); r.forEach(function (n) { if (v.indexOf(n) < 0) v.push(n); }); }
       else if (bh && isPlainObj(l) && isPlainObj(r)) v = mergeFields(k, l, r, base);
       else if (!bh) v = r === undefined ? l : r;
@@ -4864,7 +4872,7 @@
       if (k == null || seen[k]) return;
       seen[k] = 1;
       var l = L[k], r = R[k];
-      if (l && r) { var w = (r.ts || 0) > (l.ts || 0) ? r : l; out.push(name === 'jobs' ? joinPays(w, l, r) : w); }
+      if (l && r) { var w = (r.ts || 0) > (l.ts || 0) ? r : l; out.push(name === 'jobs' ? joinKit(joinPays(w, l, r), l, r) : w); }
       else if (l) { if (!(k in base) || (l.ts || 0) > base[k]) out.push(l); }
       else if (r) { if (!(k in base) || (r.ts || 0) > base[k]) out.push(r); }
     }
@@ -4889,6 +4897,20 @@
     x.payments = out;
     if (dl.length) x.payDel = dl.slice(-300);
     return x;
+  }
+  // checklist ticks / extra items: per item, the newest change wins (kit.mark / kit.xmark = { name: [on, time] })
+  function joinKit(w, a, b) {
+    var ka = a.kit, kb = b.kit;
+    if (!ka || !kb || (!ka.mark && !kb.mark && !ka.xmark && !kb.xmark)) return w;
+    function pick(ma, mb) { var o = {}; [ma || {}, mb || {}].forEach(function (m) { Object.keys(m).forEach(function (n) { var v = m[n]; if (Array.isArray(v) && (!o[n] || (v[1] || 0) > (o[n][1] || 0))) o[n] = v; }); }); return o; }
+    function apply(list, m) { var out = (list || []).filter(function (n) { return !m[n] || m[n][0]; }); Object.keys(m).forEach(function (n) { if (m[n][0] && out.indexOf(n) < 0) out.push(n); }); return out; }
+    var wk = w.kit || {}, mark = pick(ka.mark, kb.mark), xmark = pick(ka.xmark, kb.xmark);
+    var k = clone(wk);
+    k.mark = mark; k.xmark = xmark;
+    k.done = apply(wk.done, mark);
+    var ex = apply(wk.extra, xmark); if (ex.length) k.extra = ex; else delete k.extra;
+    if (JSON.stringify(k) === JSON.stringify(wk)) return w;
+    var x = clone(w); x.kit = k; return x;
   }
   function b64enc(s) { return btoa(unescape(encodeURIComponent(s))); }
   function b64dec(s) { return decodeURIComponent(escape(atob(String(s).replace(/\s/g, '')))); }
@@ -5936,7 +5958,12 @@
   function kitChange(fn) {
     if (!jEdit || viewOnly()) return;
     var before = kitDone(jEdit), k = clone(jEdit.kit || {}); k.done = k.done || []; k.extra = k.extra || [];
+    var d0 = k.done.slice(), x0 = k.extra.slice(), now = Date.now();
     fn(k);
+    // remember when each item changed, so two phones ticking at once both keep their ticks
+    k.mark = k.mark || {}; k.xmark = k.xmark || {};
+    d0.concat(k.done).forEach(function (n) { var on = k.done.indexOf(n) >= 0; if (on !== (d0.indexOf(n) >= 0)) k.mark[n] = [on ? 1 : 0, now]; });
+    x0.concat(k.extra).forEach(function (n) { var on = k.extra.indexOf(n) >= 0; if (on !== (x0.indexOf(n) >= 0)) k.xmark[n] = [on ? 1 : 0, now]; });
     if (!k.extra.length) delete k.extra;
     jEdit.kit = k;
     if (jEdit.id) {
@@ -6379,7 +6406,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '117bad761334';
+  var BUILD = 'b8b7d909dcdc';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
@@ -6860,7 +6887,7 @@
     sheetHTML: sheetHTML, applySheetVars: applySheetVars, fitA4: fitA4,
     goPage: goPage, jobs: jobs, jobMoney: jobMoney, openJob: openJob, openPay: openPay,
     mergeSettings: mergeSettings, invite: function () { return INV; }, teamRaw: teamRaw, openDevice: openDevice, BUILD: function () { return BUILD; }, teamNames: teamNames, staffNames: staffNames, syncNow: syncNow, sync: function () { return { state: syncState, err: syncErr, SY: SY }; },
-    delivOf: delivOf, openMsg: openMsg, confetti: confetti, quickISO: quickISO, openCust: openCust, viewOnly: viewOnly, yearReport: yearReport, reportCSV: reportCSV, openSearch: openSearch, openSettings: openSettings, setMe: setMe, merge3: merge3, syncKeys: function () { return SYNC_KEYS; } };
+    delivOf: delivOf, openMsg: openMsg, confetti: confetti, quickISO: quickISO, openCust: openCust, viewOnly: viewOnly, yearReport: yearReport, reportCSV: reportCSV, openSearch: openSearch, openSettings: openSettings, setMe: setMe, merge3: merge3, offOf: function (d) { return offOf(d); }, baseOfSettings: function (v) { return baseOf('settings', v); }, syncKeys: function () { return SYNC_KEYS; } };
 })();
 </script>
 </body>
