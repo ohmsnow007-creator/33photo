@@ -960,6 +960,7 @@
   .pay-acts .btn { min-height: 42px; font-size: 0.9rem; }
   .pay-acts .btn.ok { background: #2f9e44; border-color: #2f9e44; color: #fff; font-weight: 500; }
   .pay-list { display: grid; gap: 6px; }
+  .line-send { width: 100%; margin-top: 14px; min-height: 44px; border-color: #06c75566; color: inherit; background: #06c75514; }
   .trash-link { display: flex; justify-content: center; margin-top: 14px; }
   .trash-row { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: var(--card2, rgba(127,127,127,.08)); }
   .trash-row .grow { flex: 1; min-width: 0; display: grid; gap: 2px; }
@@ -1838,6 +1839,7 @@
       </div>
       <div class="job-sec sec-money">การเงินและเอกสาร</div>
       <div id="jDocs" style="display:grid;gap:10px"></div>
+      <button class="btn line-send" id="jLine" type="button" hidden>📤 ส่งงานนี้ให้ทีมทาง LINE</button>
       <div class="err-msg" id="jErr" hidden></div>
     </div>
     <div class="job-foot">
@@ -2069,7 +2071,7 @@
       tplNew: '🆕 งานใหม่ {จำนวน} งาน', tplCancel: '❌ ยกเลิกงาน {จำนวน} งาน', tplMove: '🔁 เลื่อนวัน/เวลา {จำนวน} งาน',
       tplMorning: '☀️ อรุณสวัสดิ์ {ร้าน}\n{วันนี้}',
       tplJob: '👤 {ลูกค้า}\n📞 {เบอร์}\n🕐 {วัน} · {เวลา}\n📍 {สถานที่}\n📸 {ชื่องาน}\n👥 ทีม: {ทีม}\n📝 {หมายเหตุ}\n⏳ {สถานะ}\n✍️ เพิ่มโดย {คนเพิ่ม}',
-      showMap: true, showAddr: true, week: true, pastOpen: true, tplMorningEnd: '💪 ขอให้วันนี้ราบรื่นนะครับ',
+      showMap: true, showAddr: true, week: true, pastOpen: true, missing: true, tplMorningEnd: '💪 ขอให้วันนี้ราบรื่นนะครับ',
       tplFoot: '' },
     msgs: {
       confirm: 'สวัสดีครับ {customer}\n{company} ขอยืนยันนัด{job} ครับ\n📅 {date}\n⏰ {time}\n📍 {venue}\nทีมงานจะไปถึงก่อนเวลาเล็กน้อยเพื่อเตรียมอุปกรณ์\nหากมีการเปลี่ยนแปลง แจ้งได้ตลอดเลยครับ\nโทร {phone}',
@@ -4226,6 +4228,7 @@
     $('svcList').innerHTML = S.services.map(function (s) { return '<option value="' + esc(s.name) + '">'; }).join('');
     $('jErr').hidden = true;
     $('jDel').hidden = !j.id;
+    $('jLine').hidden = !j.id || ro || !syncOn(); $('jLine').disabled = false; $('jLine').textContent = '📤 ส่งงานนี้ให้ทีมทาง LINE';
     $('j_dvDue').value = (j.deliv && j.deliv.due) || ''; $('j_dvLink').value = (j.deliv && j.deliv.link) || '';
     renderJStatus(); renderJStaff(); renderJDeliv(); updJobHint(); updCustHint(); renderJDocs();
     jSnap = jobSnap();
@@ -4559,6 +4562,22 @@
   $('jobModal').addEventListener('click', function (e) {
     if (e.target !== this) return;
     if (jobDirty()) nudge(this.querySelector('.hist-sheet')); else closeJob();
+  });
+  // send this one job to the team: save + sync first so the bot reads the latest version
+  $('jLine').addEventListener('click', function () {
+    if (viewOnly() || !jEdit || !jEdit.id || !syncOn()) return;
+    var btn = this, per = lbStat && lbStat.quota && +lbStat.quota.reach;
+    confirmBox('ส่งงานนี้ให้ทีม?', 'บอท LINE จะส่งรายละเอียดงาน "' + jobName(jEdit) + (jEdit.title && jEdit.cName ? ' · ' + jEdit.cName : '') + '" ทันที ใช้ 1 ข้อความต่อคน' + (per ? ' (ประมาณ ' + per + ' ข้อความ)' : ''), '📤 ส่งเลย', function () {
+      var j = jobDirty() ? saveJob() : jobById(jEdit.id);
+      if (!j) return;
+      jSnap = jobSnap(); refreshPages();
+      btn.disabled = true; btn.textContent = '⏳ กำลังส่ง… (ประมาณ 30 วินาที)';
+      Promise.resolve(syncNow()).then(function () { return lineRun('job', { job: j.id, by: meName() }); }, function () { return { ok: false, why: 'net' }; }).then(function (r) {
+        if ($('jLine')) { $('jLine').disabled = false; $('jLine').textContent = '📤 ส่งงานนี้ให้ทีมทาง LINE'; }
+        if (!r) toast('บอทกำลังทำงานอื่นอยู่ ลองใหม่อีกครั้ง');
+        else if (!r.ok) toast(r.why === 'perm' ? '❌ รหัส GitHub ของร้านไม่มีสิทธิ์สั่งบอท' : r.why === 'net' ? '❌ ส่งไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่' : '❌ บอทส่งไม่สำเร็จ ดูรายละเอียดในตั้งค่า → บอท LINE', 'err');
+      });
+    });
   });
   $('jDel').addEventListener('click', function () {
     var j = jEdit, n = jobBills(j.id).length;
@@ -5450,6 +5469,7 @@
       fCheck('🗺️ ลิงก์แผนที่ของงานวันนี้', 'lineBot.showMap', 'กดแล้วเปิด Google Maps ถ้าช่องสถานที่มีลิงก์แผนที่อยู่แล้ว จะใช้ลิงก์นั้น') +
       fCheck('📅 งานอีก 7 วันข้างหน้า', 'lineBot.week', 'รวมงานรอยืนยันที่ต้องตามลูกค้า') +
       fCheck('⏳ งานผ่านไปแล้วที่ยังไม่กดเสร็จ', 'lineBot.pastOpen') +
+      fCheck('⚠️ เตือนงานที่ข้อมูลยังไม่ครบ', 'lineBot.missing', 'งานวันนี้ถึงมะรืนที่ยังไม่มีเวลา สถานที่ หรือเบอร์ลูกค้า') +
       sub('ข้อมูลที่แสดงในข้อความ') +
       fCheck('📍 สถานที่', 'lineBot.showVenue') + fCheck('👥 ทีมงาน', 'lineBot.showTeam') + fCheck('✍️ คนที่เพิ่มงาน', 'lineBot.showBy') +
       fCheck('📞 เบอร์ลูกค้า', 'lineBot.showPhone', 'ทุกคนที่แอดบอทจะเห็นเบอร์') + fCheck('📝 หมายเหตุงาน', 'lineBot.showNote', 'หมายเหตุทั้งหมดของงาน') +
@@ -5499,7 +5519,7 @@
     return lbRender(c.tplNew, head) + '\n\n' + (lbRender(c.tplJob, job) || 'งานแต่ง · คุณเอ') + (foot ? '\n\n' + foot : '');
   }
   var lbStat = null, lbStatAt = 0, lbStatErr = '';
-  var LB_KIND = { jobs: '🆕 งานเข้า/เปลี่ยน', morning: '☀️ สรุปเช้า', test: '📨 ทดสอบ', announce: '📢 ประกาศ', 'new': '🆕 งานเข้า/เปลี่ยน', schedule: '☀️ สรุปเช้า' };
+  var LB_KIND = { jobs: '🆕 งานเข้า/เปลี่ยน', morning: '☀️ สรุปเช้า', test: '📨 ทดสอบ', announce: '📢 ประกาศ', job: '📤 ส่งงาน', 'new': '🆕 งานเข้า/เปลี่ยน', schedule: '☀️ สรุปเช้า' };
   // data/linebot-status.json is written by the bot after every send (quota used + last 20 sends)
   function lbLoadStatus(force) {
     if (!syncOn() || (!force && Date.now() - lbStatAt < 60000)) return Promise.resolve(lbStat);
@@ -5586,7 +5606,7 @@
       lbBusy = null; lbLast = r;
       try { localStorage.setItem('bill33suite.lbLast', JSON.stringify(r)); } catch (x) {}
       lbPaint();
-      if (r.ok) toast(mode === 'status' ? '✅ อัปเดตโควตาแล้ว' : '✅ บอทส่ง' + (mode === 'morning' ? 'สรุปเช้า' : mode === 'announce' ? 'ประกาศ' : 'ข้อความทดสอบ') + 'แล้ว ดูใน LINE ได้เลย');
+      if (r.ok) toast(mode === 'status' ? '✅ อัปเดตโควตาแล้ว' : '✅ บอทส่ง' + (mode === 'morning' ? 'สรุปเช้า' : mode === 'announce' ? 'ประกาศ' : mode === 'job' ? 'งานนี้' : 'ข้อความทดสอบ') + 'แล้ว ดูใน LINE ได้เลย');
       if (r.ok && mode === 'announce' && $('lbAnn')) $('lbAnn').value = '';
       lbLoadStatus(true);
       return r;
@@ -6183,7 +6203,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'ef540c187ac7';
+  var BUILD = 'e388548a0c05';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
