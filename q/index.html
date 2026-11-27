@@ -137,7 +137,7 @@
     var sl = (A.slots && A.slots[d]) || [], slotsH = '';
     if ((s === 'part' || s === 'full') && sl.length) slotsH = '<div class="slots"><b>🕐 ช่วงเวลาที่มีงานแล้ว</b><ul>' +
       sl.map(function (x) { return '<li>' + (x ? esc(x.replace('-', '–')) + ' น.' : 'มีงาน (ยังไม่ระบุเวลา)') + '</li>'; }).join('') + '</ul>' +
-      (s === 'part' ? '<small>ช่วงเวลาอื่นยังรับงานได้</small>' : '') + '</div>';
+      '</div>';
     box.innerHTML = '<h3>' + esc(thai(d)) + '</h3><span class="st ' + s + '">' + esc(ST[s]) + '</span>' + slotsH +
       '<p>' + (s === 'free' ? 'วันนี้ยังไม่มีงาน จองได้เลย' : s === 'part' ? 'มีงานอยู่แล้ว แต่ช่วงเวลาอื่นยังรับเพิ่มได้' : s === 'full' ? 'วันนี้คิวเต็มแล้ว ลองเลือกวันอื่น' : 'ร้านปิดรับงานวันนี้') + '</p>' +
       (acts ? '<div class="acts">' + acts + '</div>' : '');
