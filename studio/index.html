@@ -1331,6 +1331,7 @@
     .past-done { min-height: 0 !important; padding: 0 10px; }
     #pageJobs .home-head { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 8px; }
     #jobsMine .cl { display: none; }
+    #jobsSell { padding: 0 12px; }
     #jobsMine { min-width: 44px; justify-content: center; }
   }
   .day-it { padding: 8px 10px !important; grid-template-columns: 56px minmax(0, 1fr) auto !important; align-items: center !important; }
@@ -1359,6 +1360,15 @@
   .day-foot .mini.bad { color: #c92a2a; border-color: rgba(229,72,77,.5); }
   /* ===== messages to customers ===== */
   .msg-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sell-btn { font-weight: 600; }
+  .sell-pane { display: grid; gap: 12px; }
+  .sell-step { margin: 0; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
+  .sell-found { display: grid; gap: 4px; font-size: 0.88rem; }
+  .sell-found:empty { display: none; }
+  .sell-found .sf { display: flex; gap: 8px; padding: 6px 10px; border-radius: 8px; background: var(--field); }
+  .sell-found .sf b { flex: none; min-width: 72px; color: var(--muted); font-weight: 500; }
+  .sell-found .sf span { min-width: 0; overflow-wrap: anywhere; }
+  .sell-found .sf.miss span { color: #c27a00; }
   .msg-btns .btn { min-height: 40px; font-size: 0.88rem; }
   .btn.line { background: #06c755; border-color: #06c755; color: #fff; font-weight: 600; }
   .btn.line:hover { filter: brightness(1.05); }
@@ -1691,6 +1701,9 @@
         <button type="button" data-v="list" aria-pressed="true">รายการ</button>
         <button type="button" data-v="cal" aria-pressed="false">ปฏิทิน</button>
       </div>
+      <button class="chipbtn sell-btn" type="button" id="jobsSell" title="ข้อความขายงาน: ฟอร์มจอง ราคา และลงงานจากข้อความลูกค้า">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg><span>ขายงาน</span>
+      </button>
       <button class="chipbtn" type="button" id="jobsMine" aria-pressed="false" title="แสดงเฉพาะงานที่มอบหมายให้คุณ" aria-label="งานของฉัน">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg><span class="cl">งานของฉัน</span>
       </button>
@@ -2030,6 +2043,7 @@
       </div>
       <div class="job-sec sec-msg">ส่งข้อความถึงลูกค้า</div>
       <div class="msg-btns" id="jMsgs">
+        <button type="button" class="btn" data-msg="accept">✅ รับงาน · ทวนรายละเอียด</button>
         <button type="button" class="btn" data-msg="confirm">📅 ยืนยันนัด</button>
         <button type="button" class="btn" data-msg="due">💰 แจ้งยอดคงเหลือ</button>
         <button type="button" class="btn" data-msg="photos">📷 ส่งลิงก์รูป</button>
@@ -2096,7 +2110,8 @@
   <div class="hist-sheet job-sheet" role="dialog" aria-modal="true" aria-labelledby="msgTitle">
     <div class="hist-sheet-head"><h3 id="msgTitle">ส่งข้อความถึงลูกค้า</h3><button class="mini" id="msgClose" type="button">ปิด</button></div>
     <div class="job-body" style="padding-bottom:16px">
-      <div class="seg" id="msgKind" role="group" aria-label="แบบข้อความ" style="--n:4">
+      <div class="seg" id="msgKind" role="group" aria-label="แบบข้อความ" style="--n:5">
+        <button type="button" data-k="accept">รับงาน</button>
         <button type="button" data-k="confirm">ยืนยันนัด</button>
         <button type="button" data-k="due">ยอดคงเหลือ</button>
         <button type="button" data-k="photos">ลิงก์รูป</button>
@@ -2109,6 +2124,35 @@
         <button class="btn" id="msgShare" type="button" hidden>แชร์ไปแอปอื่น</button>
       </div>
       <p class="set-note">แก้ข้อความแบบถาวรได้ที่ ตั้งค่า → ส่งให้ลูกค้า (LINE)</p>
+    </div>
+  </div>
+</div>
+
+<div class="hist-modal" id="sellModal" hidden>
+  <div class="hist-sheet job-sheet" role="dialog" aria-modal="true" aria-labelledby="sellTitle">
+    <div class="hist-sheet-head"><h3 id="sellTitle">💬 ขายงาน</h3><button class="mini" id="sellClose" type="button">ปิด</button></div>
+    <div class="job-body" style="padding-bottom:16px">
+      <div class="seg" id="sellKind" role="group" aria-label="ข้อความขายงาน" style="--n:3">
+        <button type="button" data-k="form">📝 ฟอร์มจอง</button>
+        <button type="button" data-k="price">💰 ราคา</button>
+        <button type="button" data-k="paste">📥 ลงงาน</button>
+      </div>
+      <div id="sellSend" class="sell-pane">
+        <p class="sell-step" id="sellStep"></p>
+        <div class="field"><label for="sellText">ข้อความ (แก้ได้ก่อนส่ง)</label><textarea id="sellText" rows="12"></textarea></div>
+        <div class="btnrow" style="margin:0">
+          <button class="btn line" id="sellLine" type="button">ส่งทาง LINE</button>
+          <button class="btn" id="sellCopy" type="button">คัดลอกข้อความ</button>
+          <button class="btn" id="sellShare" type="button" hidden>แชร์ไปแอปอื่น</button>
+        </div>
+      </div>
+      <div id="sellPaste" class="sell-pane" hidden>
+        <p class="sell-step">ลูกค้ากรอกฟอร์มส่งกลับมาแล้ว คัดลอกข้อความของลูกค้ามาวางที่นี่ แอปจะกรอกงานใหม่ให้</p>
+        <div class="field"><label for="sellIn">ข้อความจากลูกค้า</label><textarea id="sellIn" rows="10" placeholder="ชื่อ-นามสกุล : คุณเอ&#10;เบอร์โทร : 081 234 5678&#10;วันงาน : 29/11/2569&#10;เวลา : 16.00-22.00&#10;..."></textarea></div>
+        <div class="sell-found" id="sellFound" aria-live="polite"></div>
+        <button class="btn primary" id="sellMake" type="button" disabled>➕ สร้างงานจากข้อความนี้</button>
+      </div>
+      <p class="set-note">แก้ข้อความแบบถาวรได้ที่ ตั้งค่า → ส่งให้ลูกค้า (LINE) · หลังลงงานแล้ว กด "✅ รับงาน · ทวนรายละเอียด" ในหน้างานเพื่อทวนวัน เวลา และราคาให้ลูกค้า</p>
     </div>
   </div>
 </div>
@@ -2291,7 +2335,10 @@
       confirm: 'สวัสดีครับ {customer}\n{company} ขอยืนยันนัด{job} ครับ\n📅 {date}\n⏰ {time}\n📍 {venue}\nทีมงานจะไปถึงก่อนเวลาเล็กน้อยเพื่อเตรียมอุปกรณ์\nหากมีการเปลี่ยนแปลง แจ้งได้ตลอดเลยครับ\nโทร {phone}',
       due: 'สวัสดีครับ {customer}\n{company} ขอแจ้งยอดงาน{job} ({date}) ครับ\nยอดรวม ฿{total}\nชำระแล้ว ฿{paid}\nยอดคงเหลือ ฿{due}\nโอนแล้วรบกวนส่งสลิปในแชทนี้ได้เลยครับ ขอบคุณครับ 🙏',
       photos: 'สวัสดีครับ {customer}\nรูปงาน{job} ({date}) เสร็จเรียบร้อยแล้วครับ 🎉\nดาวน์โหลดได้ที่ลิงก์นี้เลยครับ\n{link}\nถ้าชอบผลงาน ฝากรีวิวหรือแนะนำเพื่อนๆ ด้วยนะครับ ขอบคุณที่ใช้บริการ {company} ครับ',
-      thanks: 'สวัสดีครับ {customer}\nขอบคุณที่ไว้วางใจให้ {company} ดูแลงาน{job} นะครับ\nทีมงานกำลังคัดและแต่งรูปให้ คาดว่าส่งได้ภายใน {deliverBy} ครับ\nมีอะไรสอบถามได้ตลอดเลยครับ 🙏'
+      thanks: 'สวัสดีครับ {customer}\nขอบคุณที่ไว้วางใจให้ {company} ดูแลงาน{job} นะครับ\nทีมงานกำลังคัดและแต่งรูปให้ คาดว่าส่งได้ภายใน {deliverBy} ครับ\nมีอะไรสอบถามได้ตลอดเลยครับ 🙏',
+      accept: 'สวัสดีครับ {customer}\n{company} รับงานเรียบร้อยครับ 🙏\nรบกวนตรวจรายละเอียดอีกครั้งนะครับ\n\n📸 งาน: {job}\n📅 วันงาน: {date}\n⏰ เวลา: {time}\n📍 สถานที่: {venue}\n💰 ราคา: ฿{total}\n✅ ชำระแล้ว: ฿{paid}\n💳 คงเหลือ: ฿{due}\n\nถ้ามีอะไรผิดหรืออยากเปลี่ยน แจ้งได้เลยครับ\nโทร {phone}',
+      form: 'สวัสดีครับ ขอบคุณที่สนใจ {company} 🙏\nรบกวนกรอกรายละเอียดด้านล่าง แล้วส่งกลับมาเพื่อจองคิวนะครับ\n\nชื่อ-นามสกุล :\nเบอร์โทร :\nชื่องาน / ประเภทงาน :\nวันงาน :\nเวลา (เริ่ม-จบ) :\nสถานที่จัดงาน :\nลิงก์ Google Maps :\nบริการที่สนใจ :\nจำนวนแขก (โดยประมาณ) :\nหมายเหตุเพิ่มเติม :',
+      price: '📸 ราคาบริการ {company}\n\n{list}\n\n📅 เช็กคิวว่าง: {availLink}\nสนใจวันไหน ทักมาจองได้เลยครับ 🙏'
     }
   };
   SHEET_LABELS.forEach(function (l) { DEFAULTS.sheetL[l[0]] = l[1]; DEFAULTS.sheetLEn[l[0]] = l[2]; });
@@ -3282,6 +3329,7 @@
       else if (!$('calModal').hidden) closeCal();
       else if (!$('searchModal').hidden) closeSearch();
       else if (!$('msgModal').hidden) closeMsg();
+      else if (!$('sellModal').hidden) closeSell();
       else if (!$('custModal').hidden) closeCust();
       else if (!$('lockModal').hidden) closeLock();
       else if (!$('shareModal').hidden) closeShare();
@@ -3615,6 +3663,11 @@
       fText('แจ้งยอดคงเหลือ', 'msgs.due', { area: true, rows: 6 }) +
       fText('ส่งลิงก์รูป', 'msgs.photos', { area: true, rows: 6 }) +
       fText('ขอบคุณหลังงาน', 'msgs.thanks', { area: true, rows: 5 }) +
+      fText('รับงาน · ทวนรายละเอียดและราคา', 'msgs.accept', { area: true, rows: 10 }) +
+      sub('ข้อความขายงาน (หน้างาน → ขายงาน)') +
+      fText('ฟอร์มให้ลูกค้ากรอก', 'msgs.form', { area: true, rows: 12 }) +
+      fText('ราคาบริการ', 'msgs.price', { area: true, rows: 6 }) +
+      '<p class="set-note">ฟอร์มจอง: เขียนหัวข้อแบบ "หัวข้อ :" ตอนลูกค้าส่งกลับ แอปจะอ่านชื่อ เบอร์ ชื่องาน วันงาน เวลา สถานที่ และลิงก์แผนที่ให้เอง · ราคาบริการ: {list} = รายการบริการจากตั้งค่า, {availLink} = ลิงก์เช็กคิวว่าง</p>' +
       '<p class="set-note">ใช้ได้: {customer} {company} {job} {date} {time} {venue} {total} {paid} {due} {link} {deliverBy} {phone} · บรรทัดที่ไม่มีข้อมูลจะถูกตัดออกเอง</p>');
 
     var uiGroups = [];
@@ -6994,7 +7047,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '6520c42cfa61';
+  var BUILD = '9fc15573d74f';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
@@ -7171,7 +7224,7 @@
     $('msgText').value = msgFill(msgs[msgKind] || DEFAULTS.msgs[msgKind], v);
     var warn = '';
     if (msgKind === 'photos' && !v.link) warn = 'งานนี้ยังไม่มีลิงก์รูป ใส่ได้ในช่อง "ลิงก์รูป" ของงาน หรือพิมพ์ลงในข้อความได้เลย';
-    if (msgKind === 'due' && !v.total) warn = 'งานนี้ยังไม่มีราคา ข้อความจะไม่มีบรรทัดยอดเงิน';
+    if ((msgKind === 'due' || msgKind === 'accept') && !v.total) warn = 'งานนี้ยังไม่มีราคา ข้อความจะไม่มีบรรทัดยอดเงิน';
     if (msgQueue.length > 1) warn = (warn ? warn + ' · ' : '') + 'งานพรุ่งนี้ ' + (msgQueue.indexOf(j) + 1) + ' จาก ' + msgQueue.length + ' · ส่งแล้วกด "งานถัดไป"';
     $('msgHint').textContent = warn;
     $('msgTitle').textContent = 'ส่งข้อความถึง ' + (v.customer || 'ลูกค้า');
@@ -7211,6 +7264,118 @@
     toast('เปิด LINE แล้ว: เลือกแชทลูกค้าแล้วกดส่ง (ข้อความถูกคัดลอกไว้ด้วย)');
   });
   $('msgShare').addEventListener('click', function () { if (navigator.share) navigator.share({ text: $('msgText').value }).catch(function () {}); });
+
+  // ================= selling: booking form, price list, job from the customer's reply =================
+  var sellKind = 'form';
+  function sellPrices() {
+    return S.services.filter(function (sv) { return String(sv.name || '').trim(); }).map(function (sv) {
+      var pr = String(sv.price).trim() ? '฿' + money(num(sv.price)).replace(/\.00$/, '') : 'สอบถามราคา';
+      return '• ' + sv.name + ' — ' + pr + (String(sv.hours || '').trim() ? ' (' + sv.hours + ' ชม.)' : '');
+    }).join('\n');
+  }
+  function sellVals() { return { company: S.company.name, phone: S.company.phone, list: sellPrices(), availLink: typeof availPage === 'function' ? availPage() : '' }; }
+  function renderSell() {
+    Array.prototype.forEach.call($('sellKind').children, function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-k') === sellKind)); });
+    var paste = sellKind === 'paste', msgs = S.msgs || DEFAULTS.msgs;
+    $('sellSend').hidden = paste; $('sellPaste').hidden = !paste;
+    if (!paste) {
+      $('sellStep').textContent = sellKind === 'form' ? '① ส่งฟอร์มนี้ให้ลูกค้ากรอก แล้วรอลูกค้าส่งกลับ จากนั้นไปที่ "📥 ลงงาน"' : 'ส่งราคาบริการทั้งหมดให้ลูกค้า (จากรายการบริการในตั้งค่า) พร้อมลิงก์เช็กคิวว่าง';
+      $('sellText').value = msgFill(msgs[sellKind] || DEFAULTS.msgs[sellKind], sellVals());
+      $('sellShare').hidden = !navigator.share;
+    } else sellPreview();
+  }
+  function openSell(kind) { sellKind = kind || 'form'; renderSell(); $('sellModal').hidden = false; document.body.style.overflow = 'hidden'; }
+  function closeSell() { $('sellModal').hidden = true; if ($('jobModal').hidden && $('msgModal').hidden && $('settings').hidden) document.body.style.overflow = ''; }
+  // ---- read the customer's filled form ----
+  var TH_MS = ['ม.ค', 'ก.พ', 'มี.ค', 'เม.ย', 'พ.ค', 'มิ.ย', 'ก.ค', 'ส.ค', 'ก.ย', 'ต.ค', 'พ.ย', 'ธ.ค'], EN_MS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  function sellYear(y) {
+    var now = new Date().getFullYear();
+    if (y < 100) { var be = 2500 + y - 543; y = be >= now - 1 ? be : 2000 + y; }
+    else if (y > 2400) y -= 543;
+    return y;
+  }
+  function sellDate(v) {
+    v = String(v || '').trim();
+    var m, y = 0, mo = 0, d = 0, low = v.toLowerCase(), flat = v.replace(/\s+/g, '');
+    if ((m = /(\d{4})-(\d{1,2})-(\d{1,2})/.exec(v))) { y = +m[1]; mo = +m[2]; d = +m[3]; }
+    else if ((m = /(\d{1,2})\s*[\/.\-]\s*(\d{1,2})\s*[\/.\-]\s*(\d{2,4})/.exec(v))) { d = +m[1]; mo = +m[2]; y = +m[3]; }
+    else if ((m = /(\d{1,2})\s*[\/]\s*(\d{1,2})(?!\d)/.exec(v))) { d = +m[1]; mo = +m[2]; }
+    else {
+      MONTHS.forEach(function (n, i) { if (!mo && v.indexOf(n) >= 0) mo = i + 1; });
+      TH_MS.forEach(function (n, i) { if (!mo && flat.indexOf(n) >= 0) mo = i + 1; });
+      EN_MS.forEach(function (n, i) { if (!mo && low.indexOf(n) >= 0) mo = i + 1; });
+      var nums = v.match(/\d+/g) || [];
+      if (!mo || !nums.length) return '';
+      d = +nums[0]; if (nums.length > 1) y = +nums[nums.length - 1];
+    }
+    if (y) y = sellYear(y);
+    else { var t = new Date(), ty = t.getFullYear(); y = ty; if (mo < t.getMonth() + 1 || (mo === t.getMonth() + 1 && d < t.getDate())) y = ty + 1; }
+    if (!(mo >= 1 && mo <= 12 && d >= 1 && d <= new Date(y, mo, 0).getDate())) return '';
+    return y + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+  }
+  function sellTime(v) {
+    v = String(v || '');
+    var out = [], re = /(\d{1,2})\s*[:.]\s*(\d{2})/g, m;
+    while ((m = re.exec(v)) && out.length < 2) if (+m[1] < 24 && +m[2] < 60) out.push(String(+m[1]).padStart(2, '0') + ':' + m[2]);
+    if (!out.length && (m = /(\d{1,2})\s*(?:-|–|ถึง|to)\s*(\d{1,2})(?!\d)/.exec(v)) && +m[1] < 24 && +m[2] < 24) out = [String(+m[1]).padStart(2, '0') + ':00', String(+m[2]).padStart(2, '0') + ':00'];
+    return out;
+  }
+  var SELL_MAPS = /https?:\/\/(?:maps\.app\.goo\.gl|goo\.gl\/maps|(?:www\.)?google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|g\.co\/kgs)\S*/i;
+  function parseBooking(text) {
+    var j = {}, notes = [];
+    String(text || '').split(/\r?\n/).forEach(function (line) {
+      var m = /^\s*([^:：]{1,40}?)\s*[:：]\s*(.*)$/.exec(line);
+      if (!m) return;
+      var k = m[1].replace(/[^\u0E00-\u0E7FA-Za-z]/g, '').toLowerCase(), v = m[2].trim();
+      if (!v || /^[-–.\s]+$/.test(v)) return;
+      if (/google|map|แผนที่|ลิงก์|ลิงค์|link/.test(k)) { var u = SELL_MAPS.exec(v) || /https?:\/\/\S+/.exec(v); if (u) j.mapUrl = u[0]; else notes.push(m[1].trim() + ': ' + v); }
+      else if (/^วัน|date/.test(k) && !/เกิด/.test(k)) { var d = sellDate(v); if (d) j.evDate = d; else notes.push('วันงาน: ' + v); }
+      else if (/เวลา|time/.test(k)) { var t = sellTime(v); if (t[0]) { j.evStart = t[0]; if (t[1]) j.evEnd = t[1]; } else notes.push('เวลา: ' + v); }
+      else if (/ชื่องาน|ประเภท|^งาน$|event/.test(k)) j.title = j.title ? j.title + ' · ' + v : v;
+      else if (/เบอร์|โทร|tel|phone|มือถือ/.test(k)) j.cPhone = v;
+      else if (/ชื่อ|นามสกุล|ลูกค้า|name/.test(k)) j.cName = v;
+      else if (/สถานที่|location|venue|ที่จัด/.test(k)) { var u2 = SELL_MAPS.exec(v); if (u2) { j.mapUrl = j.mapUrl || u2[0]; v = v.replace(u2[0], '').trim(); } if (v) j.evVenue = v; }
+      else if (/บริการ|แพ็กเกจ|แพคเกจ|package|service/.test(k)) { if (!j.title) j.title = v; else notes.push('บริการ: ' + v); }
+      else notes.push(m[1].trim() + ': ' + v);
+    });
+    var all = String(text || '');
+    if (!j.mapUrl) { var mu = SELL_MAPS.exec(all); if (mu) j.mapUrl = mu[0]; }
+    if (!j.cPhone) { var ph = /0\d[\d\s-]{7,11}\d/.exec(all); if (ph) j.cPhone = ph[0].trim(); }
+    if (notes.length) j.note = notes.join('\n');
+    return j;
+  }
+  function sellPreview() {
+    var j = parseBooking($('sellIn').value), rows = [
+      ['ลูกค้า', j.cName], ['เบอร์', j.cPhone], ['ชื่องาน', j.title], ['วันงาน', j.evDate ? eventDate(j.evDate, false) : ''],
+      ['เวลา', j.evStart ? j.evStart + (j.evEnd ? '–' + j.evEnd : '') + ' น.' : ''], ['สถานที่', j.evVenue], ['แผนที่', j.mapUrl ? '✓ มีลิงก์' : ''], ['หมายเหตุ', j.note]
+    ];
+    var any = rows.some(function (r) { return r[1]; });
+    $('sellFound').innerHTML = !String($('sellIn').value).trim() ? '' : any ? '<b>แอปอ่านได้แบบนี้ (แก้ได้อีกทีในหน้างาน)</b>' + rows.map(function (r) {
+      return '<div class="sf' + (r[1] ? '' : ' miss') + '"><b>' + r[0] + '</b><span>' + esc(r[1] || (r[0] === 'หมายเหตุ' || r[0] === 'แผนที่' ? '–' : 'ยังไม่มี')) + '</span></div>';
+    }).join('') : '<div class="sf miss"><span>ยังอ่านข้อมูลไม่ได้ ข้อความควรมีหัวข้อแบบ "ชื่อ : ..." "วันงาน : ..."</span></div>';
+    $('sellMake').disabled = !any;
+    return j;
+  }
+  $('jobsSell').addEventListener('click', function () { openSell('form'); });
+  $('sellClose').addEventListener('click', closeSell);
+  $('sellModal').addEventListener('click', function (e) { if (e.target === this) closeSell(); });
+  $('sellKind').addEventListener('click', function (e) { var b = e.target.closest('[data-k]'); if (!b) return; sellKind = b.getAttribute('data-k'); renderSell(); if (sellKind === 'paste') setTimeout(function () { $('sellIn').focus(); }, 30); });
+  $('sellCopy').addEventListener('click', function () { copyText($('sellText').value).then(function (ok) { toast(ok ? 'คัดลอกข้อความแล้ว: เปิดแชทลูกค้าแล้ววางได้เลย' : 'คัดลอกไม่ได้ ลองกดค้างที่ข้อความแล้วคัดลอกเอง'); }); });
+  $('sellLine').addEventListener('click', function () {
+    var tx = $('sellText').value; copyText(tx);
+    window.open('https://line.me/R/share?text=' + encodeURIComponent(tx), '_blank', 'noopener');
+    toast('เปิด LINE แล้ว: เลือกแชทลูกค้าแล้วกดส่ง (ข้อความถูกคัดลอกไว้ด้วย)');
+  });
+  $('sellShare').addEventListener('click', function () { if (navigator.share) navigator.share({ text: $('sellText').value }).catch(function () {}); });
+  $('sellIn').addEventListener('input', sellPreview);
+  $('sellMake').addEventListener('click', function () {
+    var j = sellPreview();
+    if (viewOnly()) { toast('เครื่องนี้ใช้ดูตารางอย่างเดียว เพิ่มงานไม่ได้'); return; }
+    j.status = 'tentative';
+    closeSell(); $('sellIn').value = ''; $('sellFound').innerHTML = ''; $('sellMake').disabled = true;
+    openJob(null, j);
+    toast('กรอกงานจากข้อความลูกค้าแล้ว ตรวจแล้วกดบันทึก · สถานะ "รอยืนยัน" จนกว่าลูกค้าจ่ายมัดจำ');
+  });
 
   // ================= new bills from other devices =================
   function noteBillChanges(oldArr, newArr) {
@@ -7476,7 +7641,7 @@
     sheetHTML: sheetHTML, applySheetVars: applySheetVars, fitA4: fitA4,
     goPage: goPage, jobs: jobs, jobMoney: jobMoney, openJob: openJob, openPay: openPay,
     mergeSettings: mergeSettings, invite: function () { return INV; }, teamRaw: teamRaw, openDevice: openDevice, BUILD: function () { return BUILD; }, teamNames: teamNames, staffNames: staffNames, syncNow: syncNow, sync: function () { return { state: syncState, err: syncErr, SY: SY }; },
-    delivOf: delivOf, openMsg: openMsg, confetti: confetti, quickISO: quickISO, openCust: openCust, viewOnly: viewOnly, yearReport: yearReport, reportCSV: reportCSV, openSearch: openSearch, openSettings: openSettings, setMe: setMe, merge3: merge3, calSpan: function (j) { return calSpan(j); }, restoreFile: function (f) { restore(f); }, renderCalPage: function () { renderCalPage(); }, renderSettings: function () { renderSettings(); }, gcalLink: function (j) { return gcalLink(j); }, icsOf: function (j) { return icsOf(j); }, calShouldAsk: function (j, o) { return calShouldAsk(j, o); }, bkCheck: function (d) { return bkCheck(d); }, offOf: function (d) { return offOf(d); }, baseOfSettings: function (v) { return baseOf('settings', v); }, syncKeys: function () { return SYNC_KEYS; } };
+    delivOf: delivOf, openMsg: openMsg, confetti: confetti, quickISO: quickISO, openCust: openCust, viewOnly: viewOnly, yearReport: yearReport, reportCSV: reportCSV, openSearch: openSearch, openSettings: openSettings, setMe: setMe, merge3: merge3, calSpan: function (j) { return calSpan(j); }, parseBooking: function (t) { return parseBooking(t); }, sellDate: function (v) { return sellDate(v); }, restoreFile: function (f) { restore(f); }, renderCalPage: function () { renderCalPage(); }, renderSettings: function () { renderSettings(); }, gcalLink: function (j) { return gcalLink(j); }, icsOf: function (j) { return icsOf(j); }, calShouldAsk: function (j, o) { return calShouldAsk(j, o); }, bkCheck: function (d) { return bkCheck(d); }, offOf: function (d) { return offOf(d); }, baseOfSettings: function (v) { return baseOf('settings', v); }, syncKeys: function () { return SYNC_KEYS; } };
 })();
 </script>
 </body>
