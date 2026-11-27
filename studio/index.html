@@ -3123,7 +3123,8 @@
   function confirmBox(title, text, okLabel, cb) { openModal(title, text, false, '', okLabel, function (ok) { if (ok) cb(); }); }
   $('modalOk').addEventListener('click', function () { closeModal(mIsText ? mInput.value : true); });
   $('modalCancel').addEventListener('click', function () { closeModal(mIsText ? null : false); });
-  modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(mIsText ? null : false); });
+  // tapping outside a popup never closes it (too easy to lose what was typed): it just shakes; close with the buttons or Esc
+  modal.addEventListener('click', function (e) { if (e.target === modal) nudge(modal.firstElementChild); });
   mInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); closeModal(mInput.value); } });
 
   function startNew(next) {
@@ -3288,7 +3289,7 @@
   }
   $('shareBtn').addEventListener('click', openShare);
   $('shareClose').addEventListener('click', closeShare);
-  $('shareModal').addEventListener('click', function (e) { if (e.target === this) closeShare(); });
+  $('shareModal').addEventListener('click', function (e) { if (e.target === this) nudge(this.firstElementChild); });
   $('shareFmt').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-fmt]');
     if (!b || b.getAttribute('data-fmt') === shareFmtNow()) return;
@@ -3440,7 +3441,7 @@
   ['histQ', 'histDoc', 'histMonth'].forEach(function (id) { $(id).addEventListener('input', renderHist); });
   $('histBtn').addEventListener('click', openHist);
   $('histClose').addEventListener('click', closeHist);
-  $('histModal').addEventListener('click', function (e) { if (e.target === this) closeHist(); });
+  $('histModal').addEventListener('click', function (e) { if (e.target === this) nudge(this.firstElementChild); });
   $('histClear').addEventListener('click', function () {
     confirmBox('ล้างประวัติทั้งหมด?', 'ประวัติทั้งหมดจะหายไป แนะนำให้สำรองข้อมูลในหน้าตั้งค่าก่อน', 'ล้างประวัติ', function () {
       var old = hist(); histSave([]);
@@ -4829,7 +4830,7 @@
     }
   });
   $('trashClose').addEventListener('click', closeTrash);
-  $('trashModal').addEventListener('click', function (e) { if (e.target === this) closeTrash(); });
+  $('trashModal').addEventListener('click', function (e) { if (e.target === this) nudge(this.firstElementChild); });
   $('jobsTrash').addEventListener('click', openTrash);
   $('histTrash').addEventListener('click', openTrash);
   trashPurge();
@@ -4924,7 +4925,7 @@
     }
   });
   $('payClose').addEventListener('click', closePay);
-  $('payModal').addEventListener('click', function (e) { if (e.target === this) closePay(); });
+  $('payModal').addEventListener('click', function (e) { if (e.target === this) nudge(this.firstElementChild); });
   document.addEventListener('click', function (e) {
     var r = e.target.closest('[data-payjob]');
     if (r) openPay(r.getAttribute('data-payjob'));
@@ -4995,7 +4996,7 @@
   $('jobClose').addEventListener('click', askCloseJob);
   $('jobModal').addEventListener('click', function (e) {
     if (e.target !== this) return;
-    if (jobDirty()) nudge(this.querySelector('.hist-sheet')); else closeJob();
+    nudge(this.querySelector('.hist-sheet'));
   });
   // send this one job to the team: save + sync first so the bot reads the latest version
   $('jLine').addEventListener('click', function () {
@@ -5332,7 +5333,7 @@
   }
   function closeCal() { $('calModal').hidden = true; calJobNow = null; }
   $('calNo').addEventListener('click', closeCal);
-  $('calModal').addEventListener('click', function (e) { if (e.target === this) closeCal(); });
+  $('calModal').addEventListener('click', function (e) { if (e.target === this) nudge(this.firstElementChild); });
   $('calG').addEventListener('click', function () { setTimeout(closeCal, 100); toast('📅 เปิด Google Calendar แล้ว กด "บันทึก" ในหน้านั้น'); });
   $('calI').addEventListener('click', function () {
     var j = calJobNow, tx = j ? icsOf(j) : '';
@@ -6438,7 +6439,7 @@
   $('lockGo').addEventListener('click', tryUnlock);
   $('lockPin').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); tryUnlock(); } });
   $('lockClose').addEventListener('click', closeLock);
-  $('lockModal').addEventListener('click', function (e) { if (e.target === this) closeLock(); });
+  $('lockModal').addEventListener('click', function (e) { if (e.target === this) nudge(this.firstElementChild); });
   $('lockMe').addEventListener('input', function () { setMe(this.value); });
   $('lockMe').addEventListener('change', function () { ensureStaff(meRaw()); });
 
@@ -7047,7 +7048,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '0ed6f8813a73';
+  var BUILD = 'f554d490e810';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
@@ -7147,7 +7148,7 @@
   }
   $('custClose').addEventListener('click', closeCust);
   $('custModal').addEventListener('click', function (e) {
-    if (e.target === this) { closeCust(); return; }
+    if (e.target === this) { nudge(this.firstElementChild); return; }
     var b = e.target.closest('[data-cbill]');
     if (b) { var id = b.getAttribute('data-cbill'); closeCust(); if (!$('jobModal').hidden) closeJob(); openBillEntry(id); return; }
     if (e.target.closest('[data-cnewjob]')) {
@@ -7251,7 +7252,7 @@
   $('msgKind').addEventListener('click', function (e) { var b = e.target.closest('[data-k]'); if (!b) return; msgKind = b.getAttribute('data-k'); renderMsg(); });
   $('msgClose').addEventListener('click', closeMsg);
   $('msgModal').addEventListener('click', function (e) {
-    if (e.target === this) { closeMsg(); return; }
+    if (e.target === this) { nudge(this.firstElementChild); return; }
     if (e.target.closest('#msgNext')) { var i = msgQueue.indexOf(msgJob); if (msgQueue[i + 1]) { msgJob = msgQueue[i + 1]; renderMsg(); } }
   });
   $('msgCopy').addEventListener('click', function () {
@@ -7361,7 +7362,7 @@
   }
   $('jobsSell').addEventListener('click', function () { openSell('form'); });
   $('sellClose').addEventListener('click', closeSell);
-  $('sellModal').addEventListener('click', function (e) { if (e.target === this) closeSell(); });
+  $('sellModal').addEventListener('click', function (e) { if (e.target === this) nudge(this.firstElementChild); });
   $('sellKind').addEventListener('click', function (e) { var b = e.target.closest('[data-k]'); if (!b) return; sellKind = b.getAttribute('data-k'); renderSell(); if (sellKind === 'paste') setTimeout(function () { $('sellIn').focus(); }, 30); });
   $('sellCopy').addEventListener('click', function () { copyText($('sellText').value).then(function (ok) { toast(ok ? 'คัดลอกข้อความแล้ว: เปิดแชทลูกค้าแล้ววางได้เลย' : 'คัดลอกไม่ได้ ลองกดค้างที่ข้อความแล้วคัดลอกเอง'); }); });
   $('sellLine').addEventListener('click', function () {
@@ -7467,7 +7468,7 @@
   }
   $('searchBtn').addEventListener('click', openSearch);
   $('searchClose').addEventListener('click', closeSearch);
-  $('searchModal').addEventListener('click', function (e) { if (e.target === this) closeSearch(); });
+  $('searchModal').addEventListener('click', function (e) { if (e.target === this) nudge(this.firstElementChild); });
   $('sq').addEventListener('input', renderSearch);
   $('sq').addEventListener('keydown', function (e) {
     var first = $('sRes').querySelector('.s-row');
