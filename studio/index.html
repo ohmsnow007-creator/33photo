@@ -5353,7 +5353,7 @@
       (u ? '<span class="cp-pill ok" role="status"><i></i>พร้อมใช้ · อัปเดตอัตโนมัติ</span>' : '<span class="cp-pill warn" role="status"><i></i>ปฏิทินอัตโนมัติยังไม่พร้อม</span>') + '</div></section>';
     var ap = availPage(), mx = availMaxN();
     if (ap) html += '<section class="card">' + cpHead('share', '#06c755', 'ลิงก์เช็กคิวว่าง · ส่งให้ลูกค้า') +
-      '<p class="cp-note" style="margin:0">' + cpSvg('lock', 15) + '<span>ลูกค้าเห็นแค่วันว่าง / มีงานแล้ว / เต็ม / ปิดรับ ไม่เห็นชื่อ เบอร์ หรือสถานที่ กดวันแล้วทักจองทาง LINE ได้เลย</span></p>' +
+      '<p class="cp-note" style="margin:0">' + cpSvg('lock', 15) + '<span>ลูกค้าเห็นแค่วันว่าง / มีงานแล้ว / เต็ม / ปิดรับ และช่วงเวลาที่มีงาน ไม่เห็นชื่อ เบอร์ หรือสถานที่</span></p>' +
       '<div class="cp-acts"><button class="btn primary" type="button" id="avCopy">' + cpSvg('copy', 18) + 'คัดลอกลิงก์เช็กคิวว่าง</button>' +
       '<button class="btn" type="button" id="avShare">' + cpSvg('share', 18) + 'ส่งลิงก์ให้ลูกค้า</button><a class="btn" href="' + esc(ap) + '" target="_blank" rel="noopener">' + cpSvg('eye', 18) + 'เปิดดูหน้าที่ลูกค้าเห็น</a></div>' +
       (viewOnly() ? '' : '<div class="av-max"><span>ขึ้นว่า <b>เต็ม</b> เมื่อวันนั้นมีงาน</span><div class="av-step"><button class="btn" type="button" data-avmax="-1" aria-label="ลด"' + (mx <= 1 ? ' disabled' : '') + '>−</button><b id="avMaxN">' + mx + '</b><button class="btn" type="button" data-avmax="1" aria-label="เพิ่ม"' + (mx >= 10 ? ' disabled' : '') + '>+</button><span>งาน</span></div></div>') +
@@ -6994,7 +6994,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'e80efee4babe';
+  var BUILD = '6520c42cfa61';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());

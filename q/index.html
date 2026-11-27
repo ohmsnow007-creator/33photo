@@ -76,7 +76,7 @@
 <main>
   <header class="head">
     <div class="logo" id="logo" aria-hidden="true">33</div>
-    <div><h1 id="shop">เช็กคิวว่าง</h1><p>แตะวันที่เพื่อดูว่าว่างไหม แล้วจองได้เลย</p></div>
+    <div><h1 id="shop">เช็กคิวว่าง</h1><p>แตะวันที่เพื่อดูว่าว่างไหม</p></div>
   </header>
   <section class="card" aria-label="ปฏิทินคิว">
     <div class="mnav">
@@ -134,17 +134,15 @@
   function pick(d) {
     sel = d; render();
     var s = status(d), box = $('pick'), shop = A.shop || {}, acts = '';
-    var text = 'สวัสดีครับ สนใจจองงาน' + thai(d) + ' ยังว่างไหมครับ';
     if (s !== 'off' && s !== 'full') {
-      if (shop.line) acts += '<a class="btn line" href="https://line.me/R/oaMessage/' + encodeURIComponent(shop.line) + '/?' + encodeURIComponent(text) + '" target="_blank" rel="noopener">💬 จองวันนี้ทาง LINE</a>';
       if (shop.phone) acts += '<a class="btn" href="tel:' + esc(shop.phone.replace(/[^\d+]/g, '')) + '">📞 โทร ' + esc(shop.phone) + '</a>';
-    } else if (shop.line) acts += '<a class="btn" href="https://line.me/R/ti/p/' + encodeURIComponent(shop.line) + '" target="_blank" rel="noopener">💬 สอบถามวันอื่นทาง LINE</a>';
+    }
     var sl = (A.slots && A.slots[d]) || [], slotsH = '';
     if ((s === 'part' || s === 'full') && sl.length) slotsH = '<div class="slots"><b>🕐 ช่วงเวลาที่มีงานแล้ว</b><ul>' +
       sl.map(function (x) { return '<li>' + (x ? esc(x.replace('-', '–')) + ' น.' : 'มีงาน (ยังไม่ระบุเวลา)') + '</li>'; }).join('') + '</ul>' +
-      (s === 'part' ? '<small>ช่วงเวลาอื่นยังรับงานได้ ทักมาเช็กได้เลย</small>' : '') + '</div>';
+      (s === 'part' ? '<small>ช่วงเวลาอื่นยังรับงานได้</small>' : '') + '</div>';
     box.innerHTML = '<h3>' + esc(thai(d)) + '</h3><span class="st ' + s + '">' + esc(ST[s]) + '</span>' + slotsH +
-      '<p>' + (s === 'free' ? 'วันนี้ยังไม่มีงาน จองได้เลย' : s === 'part' ? 'มีงานอยู่แล้ว แต่ยังรับเพิ่มได้ ดูช่วงเวลาด้านบน แล้วทักมาจองได้เลย' : s === 'full' ? 'วันนี้คิวเต็มแล้ว ลองเลือกวันอื่น' : 'ร้านปิดรับงานวันนี้') + '</p>' +
+      '<p>' + (s === 'free' ? 'วันนี้ยังไม่มีงาน จองได้เลย' : s === 'part' ? 'มีงานอยู่แล้ว แต่ช่วงเวลาอื่นยังรับเพิ่มได้' : s === 'full' ? 'วันนี้คิวเต็มแล้ว ลองเลือกวันอื่น' : 'ร้านปิดรับงานวันนี้') + '</p>' +
       (acts ? '<div class="acts">' + acts + '</div>' : '');
     box.hidden = false;
     if (box.scrollIntoView) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
