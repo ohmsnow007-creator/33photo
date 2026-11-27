@@ -6681,6 +6681,8 @@
     if (!j || !j.evDate || j.status === 'cancel' || j.status === 'tentative') return null;
     var dv = j.deliv || {}, st = dv.stage || (j.status === 'done' && !dv.due && !dv.link ? 'sent' : '');
     if (!st && !(dayDiff(j.evDate) < 0)) return null;
+    // before the event, a saved first step (รอแต่งรูป) alone is not a delivery yet (same rule as the job form)
+    if (st === 'shot' && dayDiff(j.evDate) > 0 && !dv.due && !dv.link) return null;
     var due = dv.due || addDaysISO(j.evDate, delivDaysN()), left = dayDiff(due);
     if (st === 'sent') return { stage: 'sent', done: true, due: due, left: left };
     return { stage: st || 'shot', done: false, due: due, left: left, late: left < 0 };
@@ -7041,7 +7043,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '8fb57fdd4087';
+  var BUILD = 'd4f8898e3ae4';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
