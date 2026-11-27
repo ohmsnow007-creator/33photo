@@ -5309,17 +5309,22 @@
     // only a link someone sent (never a search made from the venue name)
     var found = '';
     [j.evVenue, j.cAddr, j.note].some(function (f) { var m = SELL_MAPS.exec(String(f || '')); if (m) found = m[0]; return !!m; });
-    return found;
+    if (found) return found;
+    // no link sent: a map of the customer's address (a full address points to the right place; a venue name is never searched)
+    var a = calAddr(j);
+    return a ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(a) : '';
   }
+  function calAddr(j) { return calOne(String(j.cAddr || '').replace(/https?:\/\/\S+/g, ' ')); }
   function calDesc(j) {
     var d = [], st = calHM(j.evStart) ? calOne(j.evStart) : '', en = calHM(j.evEnd) ? calOne(j.evEnd) : '';
     if (calOne(j.cName)) d.push('👤 ' + calOne(j.cName));
     if (calOne(j.cPhone)) d.push('📞 ' + calOne(j.cPhone));
     d.push('🕐 ' + (st ? st + (en ? '–' + en : '') + ' น.' : 'ทั้งวัน (ยังไม่ใส่เวลา)'));
-    if (calOne(j.evVenue)) d.push('📍 ' + calOne(j.evVenue));
-    if (calMap(j)) d.push('🗺️ ' + calMap(j));
+    var ven = calOne(String(j.evVenue || '').replace(/https?:\/\/\S+/g, ' '));
+    if (ven) d.push('📍 สถานที่จัดงาน: ' + ven);
+    if (calAddr(j)) d.push('🏠 ที่อยู่: ' + calAddr(j));
     if (calOne(j.note)) d.push('📝 ' + String(j.note).trim().slice(0, 500));
-    d.push('— 33PHOTO Studio');
+    if (calMap(j)) d.push('🗺️ แผนที่: ' + calMap(j));
     return d.join('\n');
   }
   function gcalLink(j) {
@@ -7053,7 +7058,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '4c3e1e26bc20';
+  var BUILD = 'c6297f6d0b16';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
