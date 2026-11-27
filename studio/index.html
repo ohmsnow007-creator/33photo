@@ -2633,6 +2633,14 @@
   function curDoc() { return docById(state.docType); }
   function curNo() { return state.nos[state.docType] || ''; }
 
+  // signature title per document: a cash bill / receipt is signed by the one who received the money,
+  // a quote by the one quoting; a title the shop typed itself (not the original default) wins everywhere
+  var SIGN_BY_DOC = { cash: 'ผู้รับเงิน', receipt: 'ผู้รับเงิน', quote: 'ผู้เสนอราคา', invoice: 'ผู้วางบิล' };
+  function signLabel(d) {
+    var own = String(S.signer.label || '').trim();
+    if (own && own !== DEFAULTS.signer.label) return own;
+    return (d && SIGN_BY_DOC[d.id]) || own || 'ผู้รับเงิน';
+  }
   function payText(s) {
     if (s.pay === OTHER) return s.payCustom || (isEn(s) ? 'Other' : 'อื่นๆ');
     var p = payById(s.pay) || S.pays[0];
@@ -2751,7 +2759,7 @@
         '</div>' +
         '<div class="s-tot" data-h="totals">' + tot + '<div class="s-grand" data-h="grand"><span>' + tx(docGrand(d, en)) + '</span><span>฿' + money(t.grand) + '</span></div></div></div>' +
       '<div class="s-bottom"><div data-h="notes"><div class="s-notes-h" data-h="noteslbl">' + tx(L.notes) + '</div><div class="s-notes-v">' + (String(s.notes).trim() ? tx(s.notes) : '-') + '</div></div>' +
-        '<div class="s-sign" data-h="sign"><div class="s-sign-h" data-h="signlabel">' + tx(en ? (sg.labelEn || sg.label) : sg.label) + '</div><div class="s-sign-space" data-h="signimg">' +
+        '<div class="s-sign" data-h="sign"><div class="s-sign-h" data-h="signlabel">' + tx(en ? (sg.labelEn || sg.label) : signLabel(d)) + '</div><div class="s-sign-space" data-h="signimg">' +
           (sg.showSign ? '<img src="' + esc(sg.sign || DEFAULT_SIGN) + '" style="max-width:100%;max-height:90px;display:block;margin:0 auto" alt="">' : '') +
         '</div><div class="s-sign-line"></div>' +
         '<div class="s-sign-name" data-h="signname">(' + tx(en ? (sg.nameEn || sg.name) : sg.name) + ')</div>' +
@@ -3632,7 +3640,7 @@
       fCheck('แสดงลายเซ็น', 'signer.showSign') + fCheck('แสดงวันที่ใต้ลายเซ็น', 'signer.showDate') +
       sub('ผู้ลงนาม') +
       '<div class="grid2">' + fText('ชื่อผู้ลงนาม', 'signer.name') + fText('ชื่อ (English)', 'signer.nameEn') + '</div>' +
-      '<div class="grid2">' + fText('หัวข้อช่องลายเซ็น', 'signer.label') + fText('หัวข้อ (English)', 'signer.labelEn') + '</div>');
+      '<div class="grid2">' + fText('หัวข้อช่องลายเซ็น (ปล่อยเป็น "ผู้เสนอราคา" = บิลเงินสดขึ้น "ผู้รับเงิน" ใบเสนอราคาขึ้น "ผู้เสนอราคา" ให้เอง)', 'signer.label') + fText('หัวข้อ (English)', 'signer.labelEn') + '</div>');
 
     sec('theme', 'สีและธีม', 'สีบิล · ธีมแอป' + ({ auto: 'ตามเครื่อง', light: 'สว่าง', dark: 'มืด' })[S.theme.app],
       sub('ชุดสีสำเร็จรูป') +
@@ -7043,7 +7051,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '598495af3d31';
+  var BUILD = '64173c52cd12';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
