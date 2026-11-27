@@ -1766,6 +1766,40 @@
       </div>
     </section>
 
+    <details class="card more-opts" id="billMore">
+      <summary><span class="mo-t">⚙️ ตัวเลือกเพิ่มเติม</span><small id="billMoreSum"></small></summary>
+      <div class="mo-in">
+      <div class="field">
+        <label for="billNo" data-l="fNo">เลขที่</label>
+        <input id="billNo" type="text" autocomplete="off">
+        <div class="no-hint" id="noHint" hidden>เลขนี้มีในประวัติแล้ว บันทึกครั้งนี้จะอัปเดตรายการเดิม</div>
+      </div>
+      <div class="field">
+        <label for="dD" data-l="fDate">วันที่</label>
+        <div class="date3">
+          <select id="dD" aria-label="วัน"></select>
+          <select id="dM" aria-label="เดือน"></select>
+          <select id="dY" aria-label="ปี พ.ศ."></select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="pay" data-l="fPay">ชำระโดย</label>
+        <div class="item-top">
+          <select id="pay"></select>
+          <button type="button" class="btn" id="payEdit" hidden>แก้ข้อความ</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="lbl" data-l="fLang">ภาษาบนบิล</span>
+        <div class="seg" id="langSeg" role="group" aria-label="ภาษาบนบิล" style="--n:2">
+          <button type="button" data-lang="th" aria-pressed="true">ไทย</button>
+          <button type="button" data-lang="en" aria-pressed="false">English</button>
+        </div>
+      </div>
+      <div class="field"><label for="notes" data-l="secNotes">หมายเหตุ</label><textarea id="notes" rows="3" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)"></textarea></div>
+      </div>
+    </details>
+
     <section class="card step" id="stCust">
       <h2><span class="step-n" aria-hidden="true">1</span><span data-l="secCust">ข้อมูลลูกค้า</span><small class="step-v" id="stCustV"></small></h2>
       <div id="custChipsWrap" hidden>
@@ -1820,39 +1854,6 @@
       <label class="toggle"><input type="checkbox" id="wht"> <span id="whtLbl">หักภาษี ณ ที่จ่าย 3%</span></label>
     </section>
 
-    <details class="card more-opts" id="billMore">
-      <summary><span class="mo-t">⚙️ ตัวเลือกเพิ่มเติม</span><small id="billMoreSum"></small></summary>
-      <div class="mo-in">
-      <div class="field">
-        <label for="billNo" data-l="fNo">เลขที่</label>
-        <input id="billNo" type="text" autocomplete="off">
-        <div class="no-hint" id="noHint" hidden>เลขนี้มีในประวัติแล้ว บันทึกครั้งนี้จะอัปเดตรายการเดิม</div>
-      </div>
-      <div class="field">
-        <label for="dD" data-l="fDate">วันที่</label>
-        <div class="date3">
-          <select id="dD" aria-label="วัน"></select>
-          <select id="dM" aria-label="เดือน"></select>
-          <select id="dY" aria-label="ปี พ.ศ."></select>
-        </div>
-      </div>
-      <div class="field">
-        <label for="pay" data-l="fPay">ชำระโดย</label>
-        <div class="item-top">
-          <select id="pay"></select>
-          <button type="button" class="btn" id="payEdit" hidden>แก้ข้อความ</button>
-        </div>
-      </div>
-      <div class="field">
-        <span class="lbl" data-l="fLang">ภาษาบนบิล</span>
-        <div class="seg" id="langSeg" role="group" aria-label="ภาษาบนบิล" style="--n:2">
-          <button type="button" data-lang="th" aria-pressed="true">ไทย</button>
-          <button type="button" data-lang="en" aria-pressed="false">English</button>
-        </div>
-      </div>
-      <div class="field"><label for="notes" data-l="secNotes">หมายเหตุ</label><textarea id="notes" rows="3" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)"></textarea></div>
-      </div>
-    </details>
   </div>
 
   <div class="preview-col" id="panel-preview" role="tabpanel" aria-labelledby="tab-preview">
@@ -6953,7 +6954,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '6ed9aab0bca1';
+  var BUILD = 'd84d585253bd';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
