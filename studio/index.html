@@ -1448,6 +1448,16 @@
   .stat small .em, .card-h h2 .em, .day-col h2 .em, h2 .em { font-style: normal; margin-right: 4px; }
   .hello-wave { display: inline-block; transform-origin: 70% 70%; animation: wave 1.6s ease-in-out .4s 2; }
   @keyframes wave { 0%, 60%, 100% { transform: rotate(0); } 10%, 30% { transform: rotate(14deg); } 20% { transform: rotate(-8deg); } 40% { transform: rotate(-4deg); } 50% { transform: rotate(10deg); } }
+  .gate { position: fixed; inset: 0; z-index: 28; background: var(--bg); display: flex; align-items: center; justify-content: center;
+    padding: max(24px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
+  .gate[hidden] { display: none; }
+  .gate-card { width: 100%; max-width: 380px; display: grid; gap: 12px; text-align: center; }
+  .gate-logo { width: 72px; height: 72px; margin: 0 auto 4px; border-radius: 20px; background: var(--ink); color: var(--ink-fg); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; }
+  .gate h1 { margin: 0; font-family: var(--font-display); font-size: 1.35rem; font-weight: 600; }
+  .gate p { margin: 0 0 6px; color: var(--muted); line-height: 1.6; }
+  .gate .btn { min-height: 50px; justify-content: center; }
+  .gate small { color: var(--muted); font-size: 0.8rem; line-height: 1.5; }
+  body.gated { overflow: hidden; }
   .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 95; overflow: hidden; }
   .confetti i { position: absolute; top: -12px; width: 9px; height: 14px; border-radius: 2px; opacity: .95; animation: cfall var(--d, 1.6s) cubic-bezier(.25,.6,.5,1) forwards; }
   @keyframes cfall { to { transform: translate(var(--x, 0), 105vh) rotate(var(--r, 540deg)); opacity: .9; } }
@@ -2002,13 +2012,6 @@
         <div class="staff-warn" id="jStaffWarn" hidden></div>
         <div class="hint">กดชื่อเพื่อมอบหมายงาน คนที่ถูกเลือกจะเห็นงานนี้ในปุ่ม "งานของฉัน" และได้รับแจ้งเตือน</div>
       </div>
-      <section class="kit-card" id="jKitWrap" aria-labelledby="jKitTitle">
-        <div class="kit-head"><h4 class="kit-title" id="jKitTitle"><span aria-hidden="true">🎒</span> ของที่ต้องเอาไป</h4><button class="mini" id="jKitAll" type="button">✓ ติ๊กทั้งหมด</button></div>
-        <div class="kit-prog" id="jKitProg" role="progressbar" aria-labelledby="jKitTitle" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"><i id="jKitBar"></i></div>
-        <div class="kit-sum" id="jKitN" aria-live="polite"></div>
-        <div class="kit-list" id="jKit"></div>
-        <div class="kit-add"><input id="jKitNew" type="text" autocomplete="off" placeholder="+ ของเฉพาะงานนี้ เช่น โดรน" aria-label="เพิ่มของเฉพาะงานนี้"><button class="mini" id="jKitAdd" type="button">เพิ่ม</button></div>
-      </section>
       <div class="field">
         <label for="j_evDate">วันงาน</label>
         <input id="j_evDate" type="date" data-quick="1">
@@ -2082,6 +2085,17 @@
   <div class="hist-sheet job-sheet" role="dialog" aria-modal="true" aria-labelledby="devTitle">
     <div class="hist-sheet-head"><h3 id="devTitle">เพิ่มเครื่องอื่น</h3><button class="mini" id="devClose" type="button">ปิด</button></div>
     <div class="job-body" id="devBody" style="padding-bottom:16px"></div>
+  </div>
+</div>
+
+<div class="gate" id="gate" hidden role="dialog" aria-modal="true" aria-labelledby="gateT">
+  <div class="gate-card">
+    <div class="gate-logo" aria-hidden="true">33</div>
+    <h1 id="gateT">33PHOTO Studio</h1>
+    <p>แอปนี้ใช้ได้เฉพาะคนในร้าน<br>เปิดจาก<b>ลิงก์ที่ร้านส่งให้</b> แล้วใส่ชื่อกับรหัสร้าน</p>
+    <button class="btn primary" type="button" data-pastelink="1">🔗 วางลิงก์เข้าร่วมร้าน</button>
+    <button class="btn" type="button" data-opensync="1">เจ้าของร้าน: เชื่อมข้อมูลร้าน (GitHub)</button>
+    <small>ยังไม่มีลิงก์? ขอจากเจ้าของร้าน: ตั้งค่า → เก็บข้อมูลออนไลน์ → เพิ่มเครื่องอื่น</small>
   </div>
 </div>
 
@@ -3515,7 +3529,7 @@
     ['🏪 ร้านของคุณ', ['company', 'brand', 'theme']],
     ['🧾 เอกสารและการคิดเงิน', ['docs', 'services', 'pays', 'tax']],
     ['💬 ข้อความและการส่ง', ['sheetL', 'share', 'linebot', 'ui']],
-    ['🗂️ ข้อมูลและทีมงาน', ['sync', 'staff', 'kit', 'lock', 'custs', 'backup']]
+    ['🗂️ ข้อมูลและทีมงาน', ['sync', 'staff', 'lock', 'custs', 'backup']]
   ];
   var SL_GROUPS = [
     ['ข้อมูลลูกค้าและเอกสาร', ['customer', 'address', 'phone', 'tax', 'no', 'date', 'pay', 'contact', 'coTax']],
@@ -3707,10 +3721,6 @@
       fText('ส่งรูปภายในกี่วันหลังวันงาน', 'delivDays', { mode: 'numeric', note: 'ใช้เป็นกำหนดส่งเริ่มต้นของทุกงาน แก้เป็นรายงานได้ในหน้ารายละเอียดงาน' }) +
       sub('เครื่องนี้') +
       '<div class="field"><label for="stMe">ชื่อของคุณในเครื่องนี้</label><input id="stMe" type="text" autocomplete="off" placeholder="เช่น พี่โอ" value="' + esc(meRaw()) + '"><div class="hint">ใช้เฉพาะเครื่องนี้ · เครื่องอื่นจะเห็นว่าใครเพิ่มหรือแก้งาน</div></div>');
-    sec('kit', 'เช็กลิสต์ของก่อนออกงาน', (S.kit || []).length + ' รายการ · ติ๊กได้ในแต่ละงาน',
-      fText('ของที่ต้องเอาไปทุกงาน (บรรทัดละ 1 อย่าง)', 'kit', { lines: true, rows: 12, ph: 'เช่น กล้อง' }) +
-      '<p class="set-note">เปิดงานไหนก็จะเห็นรายการนี้ให้ติ๊ก ติ๊กแล้วบันทึกทันที ทุกเครื่องเห็นตรงกัน · ของที่ใช้เฉพาะบางงาน เพิ่มในหน้างานนั้นได้</p>');
-
     sec('lock', 'ล็อกหน้าตั้งค่า (PIN เจ้าของ)', lockOn() ? 'ล็อกอยู่ · ต้องใส่ PIN ก่อนเข้า' : 'ยังไม่ล็อก · ทุกเครื่องเข้าได้', lockSectionHTML());
 
     sec('sync', 'เก็บข้อมูลออนไลน์ (GitHub)', syncOn() ? 'เชื่อมกับ ' + SY.cfg.owner + '/' + SY.cfg.repo : 'ยังไม่เชื่อม · ข้อมูลอยู่ในเครื่องนี้', syncSectionHTML());
@@ -4288,7 +4298,6 @@
       else if (m.paid > 0) c.push(jc('ค้าง ฿' + money(m.due), 'warn'));
       else if (m.total) c.push(jc('ยังไม่รับเงิน', d != null && d <= 7 ? 'bad' : 'warn'));
     }
-    var k = kitChip(j); if (k) c.push(k);
     if (isMine(j)) c.unshift(jc('📌 งานของฉัน', 'wait'));
     return c.length ? '<div class="job-chips">' + c.slice(0, ROW_CHIPS).join('') + '</div>' : '';
   }
@@ -4658,7 +4667,7 @@
     $('jCal').hidden = !j.id || j.status === 'cancel' || !isoParts(j.evDate);
     $('jLine').hidden = !j.id || ro || !syncOn(); $('jLine').disabled = false; $('jLine').textContent = '📤 ส่งงานนี้ให้ทีมทาง LINE';
     $('j_dvDue').value = (j.deliv && j.deliv.due) || ''; $('j_dvLink').value = (j.deliv && j.deliv.link) || '';
-    renderJStatus(); renderJStaff(); renderJKit(); renderJDeliv(); updJobHint(); updCustHint(); renderJDocs();
+    renderJStatus(); renderJStaff(); renderJDeliv(); updJobHint(); updCustHint(); renderJDocs();
     jSnap = jobSnap();
     $('jobModal').hidden = false; document.body.style.overflow = 'hidden';
     $('jobBody').scrollTop = 0;
@@ -5721,6 +5730,7 @@
   var SYNC_TX = { off: 'เก็บในเครื่อง', busy: 'กำลังซิงก์…', pending: 'รอบันทึก…', ok: 'ซิงก์แล้ว', offline: 'ไม่มีเน็ต', auth: 'เชื่อมไม่ได้', error: 'ซิงก์ไม่สำเร็จ' };
   function setSync(st) {
     syncState = syncOn() ? st : 'off';
+    if (typeof renderGate === 'function') renderGate();
     var p = $('syncPill');
     p.className = 'sync-pill ' + syncState;
     $('syncTx').textContent = SYNC_TX[syncState];
@@ -6572,71 +6582,6 @@
     var k = kitDone(j);
     return k >= n ? jc('🎒 ครบ ✓', 'ok') : jc('🎒 ' + k + '/' + n, 'warn');
   }
-  var kitJust = '';
-  var KIT_TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
-  function renderJKit() {
-    var j = jEdit; if (!j) return;
-    var items = kitItems(j), done = (j.kit && j.kit.done) || [], extra = (j.kit && j.kit.extra) || [], ro = viewOnly();
-    var k = kitDone(j), n = items.length, full = n > 0 && k >= n;
-    var focused = document.activeElement && document.activeElement.getAttribute && document.activeElement.getAttribute('data-kit');
-    $('jKitWrap').classList.toggle('full', full);
-    $('jKitProg').hidden = !n;
-    $('jKitProg').setAttribute('aria-valuemax', n); $('jKitProg').setAttribute('aria-valuenow', k);
-    $('jKitBar').style.width = n ? Math.round(k / n * 100) + '%' : '0';
-    $('jKitN').innerHTML = !n ? '' : full ? '<b>' + k + '/' + n + '</b> · ✅ ครบแล้ว พร้อมออกงาน!' : '<b>' + k + '/' + n + '</b> · เหลืออีก ' + (n - k) + ' อย่าง';
-    $('jKit').innerHTML = n ? items.map(function (nm) {
-      var on = done.indexOf(nm) >= 0, own = extra.indexOf(nm) >= 0 && (S.kit || []).indexOf(nm) < 0;
-      return '<label class="kit-item' + (on ? ' on' : '') + (nm === kitJust ? ' just' : '') + '"><input type="checkbox" data-kit="' + esc(nm) + '"' + (on ? ' checked' : '') + (ro ? ' disabled' : '') + '>' +
-        '<span class="kit-box" aria-hidden="true">' + KIT_TICK + '</span><span class="kit-name">' + esc(nm) + (own ? '<small>เฉพาะงานนี้</small>' : '') + '</span>' +
-        (own && !ro ? '<button type="button" class="kit-x" data-kitdel="' + esc(nm) + '" aria-label="เอา ' + esc(nm) + ' ออก">×</button>' : '') + '</label>';
-    }).join('') : '<div class="hint">ยังไม่มีรายการ ตั้งได้ที่ ตั้งค่า → เช็กลิสต์ของก่อนออกงาน หรือเพิ่มเฉพาะงานนี้ด้านล่าง</div>';
-    kitJust = '';
-    if (focused) { var f = $('jKit').querySelector('[data-kit="' + (window.CSS && CSS.escape ? CSS.escape(focused) : focused) + '"]'); if (f) f.focus({ preventScroll: true }); }
-    $('jKitAll').hidden = ro || !n || full;
-    $('jKitNew').disabled = ro; $('jKitAdd').disabled = ro;
-  }
-
-  // change the checklist; a saved job is written straight away (like payments), a new one waits for "บันทึกงาน"
-  function kitChange(fn) {
-    if (!jEdit || viewOnly()) return;
-    var before = kitDone(jEdit), k = clone(jEdit.kit || {}); k.done = k.done || []; k.extra = k.extra || [];
-    var d0 = k.done.slice(), x0 = k.extra.slice(), now = Date.now();
-    fn(k);
-    // remember when each item changed, so two phones ticking at once both keep their ticks
-    k.mark = k.mark || {}; k.xmark = k.xmark || {};
-    d0.concat(k.done).forEach(function (n) { var on = k.done.indexOf(n) >= 0; if (on !== (d0.indexOf(n) >= 0)) k.mark[n] = [on ? 1 : 0, now]; });
-    x0.concat(k.extra).forEach(function (n) { var on = k.extra.indexOf(n) >= 0; if (on !== (x0.indexOf(n) >= 0)) k.xmark[n] = [on ? 1 : 0, now]; });
-    if (!k.extra.length) delete k.extra;
-    jEdit.kit = k;
-    if (jEdit.id) {
-      var cur = jobById(jEdit.id);
-      if (cur) { cur.kit = clone(k); cur.ts = Date.now(); cur.by = meName(); cur.byId = devId(); persistJob(cur); jEdit.ts = cur.ts; }
-    }
-    var n = kitItems(jEdit).length;
-    if (n && before < n && kitDone(jEdit) >= n) { toast('🎒 ของครบแล้ว พร้อมออกงาน! 💪'); try { if (navigator.vibrate) navigator.vibrate(15); } catch (x) {} }
-    renderJKit();
-  }
-  $('jKit').addEventListener('change', function (e) {
-    var c = e.target.closest('[data-kit]'); if (!c) return;
-    var n = c.getAttribute('data-kit'), on = c.checked;
-    kitJust = n;
-    kitChange(function (k) { k.done = k.done.filter(function (x) { return x !== n; }); if (on) k.done.push(n); });
-  });
-  $('jKit').addEventListener('click', function (e) {
-    var x = e.target.closest('[data-kitdel]'); if (!x) return;
-    e.preventDefault();
-    var n = x.getAttribute('data-kitdel');
-    kitChange(function (k) { k.extra = k.extra.filter(function (y) { return y !== n; }); k.done = k.done.filter(function (y) { return y !== n; }); });
-  });
-  $('jKitAll').addEventListener('click', function () { var all = kitItems(jEdit); kitChange(function (k) { k.done = all.slice(); }); });
-  function kitAdd() {
-    var n = $('jKitNew').value.trim(); if (!n) return;
-    $('jKitNew').value = '';
-    if (kitItems(jEdit).indexOf(n) >= 0) { toast('"' + n + '" มีในรายการแล้ว'); return; }
-    kitChange(function (k) { k.extra.push(n.slice(0, 60)); });
-  }
-  $('jKitAdd').addEventListener('click', kitAdd);
-  $('jKitNew').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); kitAdd(); } });
   function renderJStaff() {
     var cur = jEdit.staff || [], names = staffNames().slice(), gone = {};
     // someone removed from the team but still on this job: shown (crossed out) only here, so it can be taken off
@@ -7048,7 +6993,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'f554d490e810';
+  var BUILD = '54d1cbefeff8';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
@@ -7633,6 +7578,10 @@
   updateHistBadge();
   goPage(lsGet(PKEY, 'home'));
   setSync('off');
+  // the hosted app works only for devices linked to the shop (owner connected GitHub, or joined from the shop's link)
+  function gateNeeded() { return /\.github\.io$/i.test(location.hostname || '') && !syncOn(); }
+  function renderGate() { var g = $('gate'), on = gateNeeded(); if (g) g.hidden = !on; document.body.classList.toggle('gated', on); }
+  renderGate();
   var jm = /^#join=([\w-]+)$/.exec(location.hash || '');
   if (jm) {
     joinBlob = jm[1];
@@ -7645,7 +7594,7 @@
     sheetHTML: sheetHTML, applySheetVars: applySheetVars, fitA4: fitA4,
     goPage: goPage, jobs: jobs, jobMoney: jobMoney, openJob: openJob, openPay: openPay,
     mergeSettings: mergeSettings, invite: function () { return INV; }, teamRaw: teamRaw, openDevice: openDevice, BUILD: function () { return BUILD; }, teamNames: teamNames, staffNames: staffNames, syncNow: syncNow, sync: function () { return { state: syncState, err: syncErr, SY: SY }; },
-    delivOf: delivOf, openMsg: openMsg, confetti: confetti, quickISO: quickISO, openCust: openCust, viewOnly: viewOnly, yearReport: yearReport, reportCSV: reportCSV, openSearch: openSearch, openSettings: openSettings, setMe: setMe, merge3: merge3, calSpan: function (j) { return calSpan(j); }, parseBooking: function (t) { return parseBooking(t); }, sellDate: function (v) { return sellDate(v); }, restoreFile: function (f) { restore(f); }, renderCalPage: function () { renderCalPage(); }, renderSettings: function () { renderSettings(); }, gcalLink: function (j) { return gcalLink(j); }, icsOf: function (j) { return icsOf(j); }, calShouldAsk: function (j, o) { return calShouldAsk(j, o); }, bkCheck: function (d) { return bkCheck(d); }, offOf: function (d) { return offOf(d); }, baseOfSettings: function (v) { return baseOf('settings', v); }, syncKeys: function () { return SYNC_KEYS; } };
+    delivOf: delivOf, openMsg: openMsg, confetti: confetti, quickISO: quickISO, openCust: openCust, viewOnly: viewOnly, yearReport: yearReport, reportCSV: reportCSV, openSearch: openSearch, openSettings: openSettings, setMe: setMe, merge3: merge3, calSpan: function (j) { return calSpan(j); }, gateNeeded: function () { return gateNeeded(); }, parseBooking: function (t) { return parseBooking(t); }, sellDate: function (v) { return sellDate(v); }, restoreFile: function (f) { restore(f); }, renderCalPage: function () { renderCalPage(); }, renderSettings: function () { renderSettings(); }, gcalLink: function (j) { return gcalLink(j); }, icsOf: function (j) { return icsOf(j); }, calShouldAsk: function (j, o) { return calShouldAsk(j, o); }, bkCheck: function (d) { return bkCheck(d); }, offOf: function (d) { return offOf(d); }, baseOfSettings: function (v) { return baseOf('settings', v); }, syncKeys: function () { return SYNC_KEYS; } };
 })();
 </script>
 </body>
