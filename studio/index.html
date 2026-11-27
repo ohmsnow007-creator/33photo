@@ -2368,7 +2368,7 @@
       photos: 'สวัสดีครับ {customer}\nรูปงาน{job} ({date}) เสร็จเรียบร้อยแล้วครับ 🎉\nดาวน์โหลดได้ที่ลิงก์นี้เลยครับ\n{link}\nถ้าชอบผลงาน ฝากรีวิวหรือแนะนำเพื่อนๆ ด้วยนะครับ ขอบคุณที่ใช้บริการ {company} ครับ',
       thanks: 'สวัสดีครับ {customer}\nขอบคุณที่ไว้วางใจให้ {company} ดูแลงาน{job} นะครับ\nทีมงานกำลังคัดและแต่งรูปให้ คาดว่าส่งได้ภายใน {deliverBy} ครับ\nมีอะไรสอบถามได้ตลอดเลยครับ 🙏',
       accept: 'สวัสดีครับ {customer}\n{company} รับงานเรียบร้อยครับ 🙏\nรบกวนตรวจรายละเอียดอีกครั้งนะครับ\n\n📸 งาน: {job}\n📅 วันงาน: {date}\n⏰ เวลา: {time}\n📍 สถานที่: {venue}\n💰 ราคา: ฿{total}\n✅ ชำระแล้ว: ฿{paid}\n💳 คงเหลือ: ฿{due}\n\nถ้ามีอะไรผิดหรืออยากเปลี่ยน แจ้งได้เลยครับ\nโทร {phone}',
-      form: 'สวัสดีครับ ขอบคุณที่สนใจ {company} 🙏\nรบกวนกรอกรายละเอียดด้านล่าง แล้วส่งกลับมาเพื่อจองคิวนะครับ\n\nชื่อลูกค้า :\nเบอร์โทร :\nชื่องาน / ประเภทงาน :\nวันงาน Ex. 01/01/2569 :\nเวลา (เริ่ม-จบ) :\nสถานที่จัดงาน :\nลิงก์ Google Maps :\nบริการที่สนใจ :\nหมายเหตุเพิ่มเติม :',
+      form: 'สวัสดีครับ ขอบคุณที่สนใจ {company} 🙏\nรบกวนกรอกรายละเอียดด้านล่าง แล้วส่งกลับมาเพื่อจองคิวนะครับ\n\nชื่อลูกค้า :\nเบอร์โทร :\nชื่องาน :\nวันงาน Ex. 01/01/2569 :\nเวลา (เริ่ม-จบ) :\nสถานที่จัดงาน :\nลิงก์ Google Maps :\nบริการที่สนใจ :\nหมายเหตุเพิ่มเติม :',
       price: '📸 ราคาบริการ {company}\n\n{list}\n\n📅 เช็กคิวว่าง: {availLink}\nสนใจวันไหน ทักมาจองได้เลยครับ 🙏'
     }
   };
@@ -7043,7 +7043,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'd4f8898e3ae4';
+  var BUILD = '7e2e04504238';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
@@ -7271,8 +7271,9 @@
   }
   function sellVals() { return { company: S.company.name, phone: S.company.phone, list: sellPrices(), availLink: typeof availPage === 'function' ? availPage() : '' }; }
   var OLD_FORM = 'สวัสดีครับ ขอบคุณที่สนใจ {company} 🙏\nรบกวนกรอกรายละเอียดด้านล่าง แล้วส่งกลับมาเพื่อจองคิวนะครับ\n\nชื่อ-นามสกุล :\nเบอร์โทร :\nชื่องาน / ประเภทงาน :\nวันงาน :\nเวลา (เริ่ม-จบ) :\nสถานที่จัดงาน :\nลิงก์ Google Maps :\nบริการที่สนใจ :\nจำนวนแขก (โดยประมาณ) :\nหมายเหตุเพิ่มเติม :';
+  var OLD_FORM2 = 'สวัสดีครับ ขอบคุณที่สนใจ {company} 🙏\nรบกวนกรอกรายละเอียดด้านล่าง แล้วส่งกลับมาเพื่อจองคิวนะครับ\n\nชื่อลูกค้า :\nเบอร์โทร :\nชื่องาน / ประเภทงาน :\nวันงาน Ex. 01/01/2569 :\nเวลา (เริ่ม-จบ) :\nสถานที่จัดงาน :\nลิงก์ Google Maps :\nบริการที่สนใจ :\nหมายเหตุเพิ่มเติม :';
   function renderSell() {
-    if (S.msgs && S.msgs.form === OLD_FORM && !viewOnly()) { S.msgs.form = DEFAULTS.msgs.form; saveS(); }
+    if (S.msgs && (S.msgs.form === OLD_FORM || S.msgs.form === OLD_FORM2) && !viewOnly()) { S.msgs.form = DEFAULTS.msgs.form; saveS(); }
     Array.prototype.forEach.call($('sellKind').children, function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-k') === sellKind)); });
     var paste = sellKind === 'paste', msgs = S.msgs || DEFAULTS.msgs;
     $('sellSend').hidden = paste; $('sellPaste').hidden = !paste;
