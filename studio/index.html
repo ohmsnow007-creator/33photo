@@ -5273,8 +5273,9 @@
       html += '<div class="seg" id="cpDev" role="group" aria-label="เลือกมือถือ" style="--n:2"><button type="button" data-dev="ios" aria-pressed="' + ios + '">iPhone</button><button type="button" data-dev="and" aria-pressed="' + !ios + '">Android / คอม</button></div>' +
         (ios ? '<ol class="cp-steps"><li><span>กดปุ่ม <b>เพิ่มในปฏิทิน iPhone</b> ด้านล่าง แล้วกด <b>สมัครรับ</b></span></li>' +
             '<li><span>ให้งานใหม่ขึ้นเร็ว<small>ตั้งค่า → ปฏิทิน → บัญชี → ดึงข้อมูลใหม่ → ทุก 15 นาที</small></span></li></ol>'
-          : '<ol class="cp-steps"><li><span>กดปุ่ม <b>เพิ่มใน Google Calendar</b> แล้วกด <b>เพิ่ม</b><small>ถ้าในมือถือไม่ขึ้นหน้าเพิ่มปฏิทิน ให้กดปุ่มเดียวกันในคอม (บัญชี Google เดียวกัน)</small></span></li>' +
-            '<li><span>ในแอป Google Calendar → ตั้งค่า → เปิด <b>ซิงค์</b> ปฏิทิน "📸 งาน"</span></li></ol>') +
+          : '<ol class="cp-steps"><li><span>กด <b>คัดลอกลิงก์ปฏิทิน</b> ด้านล่าง</span></li>' +
+            '<li><span>เปิด <b>calendar.google.com</b> (ในคอม หรือเบราว์เซอร์มือถือแบบเดสก์ท็อป) ด้วย Gmail เดียวกับมือถือ<small>ด้านซ้าย "ปฏิทินอื่นๆ" → ＋ → <b>จาก URL</b> → วางลิงก์ → เพิ่มปฏิทิน</small></span></li>' +
+            '<li><span>ในแอป Google Calendar → ☰ → การตั้งค่า → "📸 งาน 33PHOTO" → เปิด <b>ซิงค์</b><small>งานขึ้นภายในไม่กี่นาทีถึงหลายชั่วโมง (Google กำหนด)</small></span></li></ol>') +
         '<div class="cp-acts">' + (ios ? iBtn + gBtn : gBtn + iBtn) + '<button class="btn" type="button" id="calCopy">' + cpSvg('copy', 18) + 'คัดลอกลิงก์ปฏิทิน</button></div>' +
         '<p class="cp-note">' + cpSvg('lock', 15) + '<span>ลิงก์ลับ มีเบอร์และรายละเอียดลูกค้า ให้เฉพาะคนในร้าน</span></p>';
     } else {
@@ -6893,7 +6894,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '319bcee92c07';
+  var BUILD = '6fc5dcc98179';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
