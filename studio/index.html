@@ -1423,7 +1423,8 @@
   .setup-done { font-size: 0.88rem; color: #2b8a3e; }
   #setBody.searching .setup-card { display: none; }
   /* ===== feel: emojis, motion, confetti ===== */
-  .page > * { animation: pgIn .32s ease-out both; }
+  .page > * { animation: pgIn .32s ease-out backwards; }
+  #pageJobs > .home-head { animation: none; }
   .page > *:nth-child(2) { animation-delay: .03s; } .page > *:nth-child(3) { animation-delay: .06s; } .page > *:nth-child(4) { animation-delay: .09s; } .page > *:nth-child(n+5) { animation-delay: .12s; }
   @keyframes pgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   .btn, .mini, .chipbtn, .nav-btn, .staff-chip, .seg button { transition: transform .12s ease, background-color .15s, border-color .15s, color .15s; }
@@ -6970,7 +6971,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '318cd1b3ef2d';
+  var BUILD = 'c6f6283a1d14';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
