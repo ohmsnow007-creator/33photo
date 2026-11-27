@@ -875,6 +875,12 @@
   .job-date b { font-family: var(--font-display); font-size: 1.3rem; font-weight: 600; }
   .job-date small { font-size: 0.7rem; color: var(--muted); }
   .job-date.today { background: var(--ink); color: var(--ink-fg); border-color: var(--ink); }
+  .job-date.st-wait { border: 2.5px solid #2f7bf6; background: rgba(47,123,246,.12); }
+  .job-date.st-ok { border: 2.5px solid #2fb35a; background: rgba(47,179,90,.12); }
+  .job-date.today.st-wait { background: #2f7bf6; border-color: #2f7bf6; color: #fff; }
+  .job-date.today.st-ok { background: #2fb35a; border-color: #2fb35a; color: #fff; }
+  .st-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.8rem; color: var(--muted); margin: 2px 2px 0; }
+  .st-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 4px; vertical-align: -1px; margin-right: 5px; }
   .job-date.today small { color: inherit; opacity: .8; }
   .job-main { min-width: 0; display: grid; gap: 2px; }
   .job-t { font-family: var(--font-display); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1346,7 +1352,8 @@
   .day-it { font: inherit; color: inherit; text-align: left; width: 100%; cursor: pointer; display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; align-items: start;
     padding: 9px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--field); }
   .day-it:hover { border-color: var(--muted); }
-  .day-it.tentative { border-style: dashed; }
+  .day-it.tentative { border: 2px solid #2f7bf6 !important; background: rgba(47,123,246,.10) !important; }
+  .day-it.st-ok { border-left: 4px solid #2fb35a !important; }
   .day-time { font-family: var(--font-display); font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.25; font-size: 0.95rem; }
   .day-time small { display: block; font-family: var(--font-body); font-weight: 400; font-size: 0.72rem; color: var(--muted); }
   .day-main { min-width: 0; display: grid; gap: 1px; }
@@ -1697,6 +1704,7 @@
   <section class="card" id="homeNext">
     <div class="card-h"><h2><span class="em">🗓️</span>งานถัดไป<small class="h-sub">หลังจากพรุ่งนี้</small></h2><button class="mini" type="button" data-go="jobs">ดูทั้งหมด</button></div>
     <div class="job-list" id="homeUpcoming"></div>
+    <div class="st-legend" aria-hidden="true"><span><i style="background:#2f7bf6"></i>รอลูกค้ายืนยัน</span><span><i style="background:#2fb35a"></i>จองแล้ว พร้อมทำงาน</span></div>
   </section>
   <section class="card sync-card" id="homeSync" hidden>
     <h2><span class="em">☁️</span>เก็บข้อมูลออนไลน์บน GitHub</h2>
@@ -1738,6 +1746,7 @@
       <button type="button" data-f="all" aria-pressed="false">ทั้งหมด</button>
     </div>
   </div>
+  <div class="st-legend" aria-hidden="true"><span><i style="background:#2f7bf6"></i>รอลูกค้ายืนยัน</span><span><i style="background:#2fb35a"></i>จองแล้ว พร้อมทำงาน</span><span>❌ ยังไม่รับเงิน</span></div>
   <div class="job-list" id="jobsList"></div>
   <div class="trash-link"><button class="btn dashed" id="jobsTrash" type="button" hidden>🗑️ ถังขยะ</button></div>
 </main>
@@ -4317,13 +4326,12 @@
     var tn = staffNames(), miss = (j.staff || []).filter(function (n) { return tn.indexOf(n) < 0; });
     if (miss.length) c.push(jc('⚠️ ' + miss.join(', ') + ' ไม่มีในทีม', 'warn'));
     if (j.status === 'cancel') c.push(jc('ยกเลิก', 'bad'));
-    else if (j.status === 'tentative') c.push(jc('รอยืนยัน', 'wait'));
     else if (j.status === 'booked' && d != null && d < 0) c.push(jc('ยังไม่ปิดงาน', 'warn'));
     var dv = delivOf(j); if (dv && !dv.done) c.push(delivChip(j));
     if (j.status !== 'cancel' && !viewOnly()) {
       if (m.total && m.paid >= m.total) c.push(jc('✓ ชำระครบ', 'ok'));
       else if (m.paid > 0) c.push(jc('ค้าง ฿' + money(m.due), 'warn'));
-      else if (m.total) c.push(jc('ยังไม่รับเงิน', d != null && d <= 7 ? 'bad' : 'warn'));
+      else if (m.total) c.push(jc('❌ ยังไม่รับเงิน', d != null && d <= 7 ? 'bad' : 'warn'));
     }
     if (isMine(j)) c.unshift(jc('📌 งานของฉัน', 'wait'));
     return c.length ? '<div class="job-chips">' + c.slice(0, ROW_CHIPS).join('') + '</div>' : '';
@@ -4334,7 +4342,7 @@
     var st = j.staff || [], sub = [eventTime(j), String(j.evVenue || '').split('\n')[0], st.length ? '👥 ' + st.join(', ') : ''].filter(Boolean).join(' · ');
     var amt = viewOnly() ? 0 : opt && opt.due ? m.due : m.total;
     return '<button type="button" class="job-row' + (j.status === 'cancel' ? ' cancel' : '') + '" ' + (opt && opt.due ? 'data-payjob' : 'data-job') + '="' + esc(j.id) + '">' +
-      '<div class="job-date' + (d === 0 ? ' today' : '') + '">' + (p ? '<small>' + ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'][dt.getDay()] + '.</small><b>' + p.d + '</b><small>' + MSHORT[p.m - 1] + '</small>' : '<b>–</b><small>ไม่มีวัน</small>') + '</div>' +
+      '<div class="job-date' + (d === 0 ? ' today' : '') + (j.status === 'tentative' ? ' st-wait' : j.status === 'booked' || j.status === 'done' ? ' st-ok' : '') + '" title="' + (j.status === 'tentative' ? 'รอลูกค้ายืนยัน' : j.status === 'cancel' ? 'ยกเลิก' : 'จองแล้ว พร้อมทำงาน') + '">' + (p ? '<small>' + ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'][dt.getDay()] + '.</small><b>' + p.d + '</b><small>' + MSHORT[p.m - 1] + '</small>' : '<b>–</b><small>ไม่มีวัน</small>') + '</div>' +
       '<div class="job-main"><div class="job-t">' + esc(jobName(j)) + (j.title && j.cName ? ' · ' + esc(j.cName) : '') + '</div>' +
         (sub ? '<div class="job-sub">' + esc(sub) + '</div>' : '') +
         rowChips(j, m) + '</div>' +
@@ -5310,7 +5318,7 @@
     if (!m.total) return { tag: '', lines: [] };
     if (m.due <= 0) return { tag: '', lines: ['✅ ชำระครบแล้ว ' + calBaht(m.total)] };
     var onSite = (j.evDate || '') >= todayISO();
-    return { tag: ' · 💰' + calBaht(m.due), lines: [(onSite ? '💰 เก็บเงินหน้างาน: ' : '💰 ค้างชำระ: ') + calBaht(m.due), '   ราคา ' + calBaht(m.total) + (m.paid > 0 ? ' · ชำระแล้ว ' + calBaht(m.paid) : ' · ยังไม่ได้รับเงิน')] };
+    return { tag: ' · 💰' + calBaht(m.due), lines: [(onSite ? '💰 เก็บเงินหน้างาน: ' : '💰 ค้างชำระ: ') + calBaht(m.due), '   ราคา ' + calBaht(m.total) + (m.paid > 0 ? ' · ชำระแล้ว ' + calBaht(m.paid) : ' · ❌ ยังไม่ได้รับเงิน')] };
   }
   function calTitle(j) { return (j.status === 'tentative' ? '⏳ (รอยืนยัน) ' : j.status === 'done' ? '🟢 ' : '🟠 ') + ([calOne(j.title), calOne(j.cName)].filter(Boolean).join(' · ') || 'งาน') + calMoney(j).tag; }
   function calMap(j) {
@@ -7069,7 +7077,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'fe640705e5c6';
+  var BUILD = '7a19ef56f165';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
@@ -7193,7 +7201,7 @@
     function item(j) {
       var st = j.staff || [], sub = [String(j.evVenue || '').split('\n')[0], st.length ? 'ทีม: ' + st.join(', ') : ''].filter(Boolean).join(' · ');
       var m = jobMoney(j);
-      return '<button type="button" class="day-it' + (j.status === 'tentative' ? ' tentative' : '') + '" data-job="' + esc(j.id) + '">' +
+      return '<button type="button" class="day-it' + (j.status === 'tentative' ? ' tentative' : ' st-ok') + '" data-job="' + esc(j.id) + '">' +
         '<span class="day-time">' + esc(j.evStart || 'ทั้งวัน') + (j.evEnd ? '<small>ถึง ' + esc(j.evEnd) + '</small>' : '') + '</span>' +
         '<span class="day-main"><b>' + esc(jobName(j)) + (j.title && j.cName ? ' · ' + esc(j.cName) : '') + '</b>' +
         (sub ? '<small>' + esc(sub) + '</small>' : '') +
