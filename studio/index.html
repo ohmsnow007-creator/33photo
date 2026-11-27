@@ -5188,16 +5188,17 @@
   function calP2(n) { return String(n).padStart(2, '0'); }
   function calHM(x) { var m = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(String(x || '').trim()); return m ? [+m[1], +m[2]] : null; }
   // Bangkok wall time (UTC+7) -> 20261129T090000Z, whatever time zone the phone is set to
-  function calUTC(iso, h, mi, add) { var q = isoParts(iso), t = new Date(Date.UTC(q.y, q.m - 1, q.d + (add || 0), h - 7, mi)); return t.getUTCFullYear() + calP2(t.getUTCMonth() + 1) + calP2(t.getUTCDate()) + 'T' + calP2(t.getUTCHours()) + calP2(t.getUTCMinutes()) + '00Z'; }
+  // local: Bangkok wall time as written (for the .ics with TZID); otherwise UTC (Google link)
+  function calUTC(iso, h, mi, add, local) { var q = isoParts(iso), t = new Date(Date.UTC(q.y, q.m - 1, q.d + (add || 0), local ? h : h - 7, mi)); return t.getUTCFullYear() + calP2(t.getUTCMonth() + 1) + calP2(t.getUTCDate()) + 'T' + calP2(t.getUTCHours()) + calP2(t.getUTCMinutes()) + '00' + (local ? '' : 'Z'); }
   function calDay(iso, add) { var q = isoParts(iso), t = new Date(Date.UTC(q.y, q.m - 1, q.d + (add || 0))); return t.getUTCFullYear() + calP2(t.getUTCMonth() + 1) + calP2(t.getUTCDate()); }
   // [start, end, allDay]; same rules as the feed: no time = all day, no end = 2 hours, end before start = past midnight
-  function calSpan(j) {
+  function calSpan(j, local) {
     if (!j || !isoParts(j.evDate)) return null;
     var st = calHM(j.evStart), en = calHM(j.evEnd);
     if (!st) return [calDay(j.evDate), calDay(j.evDate, 1), true];
     var sm = st[0] * 60 + st[1], em = en ? en[0] * 60 + en[1] : sm + 120;
     if (en && em <= sm) em += 1440;
-    return [calUTC(j.evDate, st[0], st[1]), calUTC(j.evDate, Math.floor(em / 60) % 24, em % 60, em >= 1440 ? 1 : 0), false];
+    return [calUTC(j.evDate, st[0], st[1], 0, local), calUTC(j.evDate, Math.floor(em / 60) % 24, em % 60, em >= 1440 ? 1 : 0, local), false];
   }
   function calOne(x) { return String(x == null ? '' : x).replace(/\s+/g, ' ').trim(); }
   function calTitle(j) { return (j.status === 'tentative' ? '⏳ (รอยืนยัน) ' : j.status === 'done' ? '🟢 ' : '🟠 ') + ([calOne(j.title), calOne(j.cName)].filter(Boolean).join(' · ') || 'งาน'); }
@@ -5236,12 +5237,13 @@
     return out.join('\r\n');
   }
   function icsOf(j) {
-    var sp = calSpan(j);
+    var sp = calSpan(j, true);
     if (!sp) return '';
     var now = new Date(), stamp = now.getUTCFullYear() + calP2(now.getUTCMonth() + 1) + calP2(now.getUTCDate()) + 'T' + calP2(now.getUTCHours()) + calP2(now.getUTCMinutes()) + calP2(now.getUTCSeconds()) + 'Z';
-    var L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//33PHOTO//Studio//TH', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'BEGIN:VEVENT',
+    var L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//33PHOTO//Studio//TH', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+      'BEGIN:VTIMEZONE', 'TZID:Asia/Bangkok', 'BEGIN:STANDARD', 'DTSTART:19700101T000000', 'TZOFFSETFROM:+0700', 'TZOFFSETTO:+0700', 'TZNAME:+07', 'END:STANDARD', 'END:VTIMEZONE', 'BEGIN:VEVENT',
       'UID:' + String(j.id || uid()).replace(/[^A-Za-z0-9_-]/g, '') + '-phone@33photo-studio', 'DTSTAMP:' + stamp,
-      sp[2] ? 'DTSTART;VALUE=DATE:' + sp[0] : 'DTSTART:' + sp[0], sp[2] ? 'DTEND;VALUE=DATE:' + sp[1] : 'DTEND:' + sp[1],
+      sp[2] ? 'DTSTART;VALUE=DATE:' + sp[0] : 'DTSTART;TZID=Asia/Bangkok:' + sp[0], sp[2] ? 'DTEND;VALUE=DATE:' + sp[1] : 'DTEND;TZID=Asia/Bangkok:' + sp[1],
       'SUMMARY:' + icsEsc(calTitle(j))];
     if (calOne(j.evVenue)) L.push('LOCATION:' + icsEsc(calOne(j.evVenue)));
     L.push('DESCRIPTION:' + icsEsc(calDesc(j)));
@@ -6968,7 +6970,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'a45b49121244';
+  var BUILD = '318cd1b3ef2d';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
