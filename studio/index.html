@@ -907,7 +907,7 @@
   .cal-day.today .cal-n { background: var(--ink); color: var(--ink-fg); }
   .cal-day.sel { outline: 2px solid var(--ink); outline-offset: -1px; }
   .cal-day.clash { border-color: #e5a01a; background: rgba(229,160,26,.07); }
-  .cal-day.off { border-color: rgba(229,72,77,.65); background: rgba(229,72,77,.16); }
+  .cal-day.off { border-color: rgba(229,72,77,.8); background: rgba(229,72,77,.26); }
   .cal-day.off .cal-n { color: #ff6b6f; font-weight: 700; }
   .cal-day.off.today .cal-n { background: #e5484d; color: #fff; }
   .cal-off { display: block; font-size: 0.66rem; line-height: 1.2; color: #ff8a8d; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
@@ -4233,7 +4233,7 @@
       var list = byDay[iso] || [], live = list.filter(function (j) { return j.status !== 'cancel'; });
       var cls = 'cal-day' + (dt.getMonth() !== m - 1 ? ' out' : '') + (dt.getDay() === 0 ? ' sun' : '') + (iso === today ? ' today' : '') + (iso === calSel ? ' sel' : '') + (live.length > 1 ? ' clash' : '') + (offOf(iso) ? ' off' : '');
       cells += '<button type="button" class="' + cls + '" data-day="' + iso + '" aria-label="' + esc(eventDate(iso, false) + (offOf(iso) ? ' ปิดรับงาน' + (offOf(iso).why ? ' ' + offOf(iso).why : '') : '') + (list.length ? ' มี ' + list.length + ' งาน' : '')) + '"><span class="cal-n">' + dt.getDate() + '</span>' +
-        (offOf(iso) ? '<span class="cal-off" aria-hidden="true">🚫 ' + esc(offOf(iso).why || 'ปิด') + '</span>' : '') +
+
         list.slice(0, 3).map(function (j) { return '<span class="cal-ev ' + esc(j.status || 'booked') + (unseenOf(j.id) ? ' unseen' : '') + '" data-job="' + esc(j.id) + '">' + esc((j.evStart ? j.evStart + ' ' : '') + jobName(j)) + '</span>'; }).join('') +
         (list.length > 3 ? '<span class="cal-more">+' + (list.length - 3) + ' งาน</span>' : '') +
         (live.length ? '<span class="cal-dots">' + live.slice(0, 4).map(function (j) { return '<i class="' + esc(j.status || 'booked') + '"></i>'; }).join('') + '</span>' : '') + '</button>';
@@ -6406,7 +6406,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'b8b7d909dcdc';
+  var BUILD = '978f4e3df2b1';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
