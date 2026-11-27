@@ -5351,6 +5351,13 @@
     var html = '<section class="cp-hero"><span class="cp-hero-ic">' + cpSvg('cal', 30) + '</span><div><h1>ปฏิทินในมือถือ</h1>' +
       '<p>งานทุกงานขึ้นในปฏิทินมือถือของทุกคนในร้านเอง เพิ่ม แก้ เลื่อน หรือยกเลิกงานในแอปนี้ ปฏิทินเปลี่ยนตามอัตโนมัติ</p>' +
       (u ? '<span class="cp-pill ok" role="status"><i></i>พร้อมใช้ · อัปเดตอัตโนมัติ</span>' : '<span class="cp-pill warn" role="status"><i></i>ปฏิทินอัตโนมัติยังไม่พร้อม</span>') + '</div></section>';
+    var ap = availPage(), mx = availMaxN();
+    if (ap) html += '<section class="card">' + cpHead('share', '#06c755', 'ลิงก์เช็กคิวว่าง · ส่งให้ลูกค้า') +
+      '<p class="cp-note" style="margin:0">' + cpSvg('lock', 15) + '<span>ลูกค้าเห็นแค่วันว่าง / มีงานแล้ว / เต็ม / ปิดรับ ไม่เห็นชื่อ เบอร์ หรือสถานที่ กดวันแล้วทักจองทาง LINE ได้เลย</span></p>' +
+      '<div class="cp-acts"><button class="btn primary" type="button" id="avCopy">' + cpSvg('copy', 18) + 'คัดลอกลิงก์เช็กคิวว่าง</button>' +
+      '<button class="btn" type="button" id="avShare">' + cpSvg('share', 18) + 'ส่งลิงก์ให้ลูกค้า</button><a class="btn" href="' + esc(ap) + '" target="_blank" rel="noopener">' + cpSvg('eye', 18) + 'เปิดดูหน้าที่ลูกค้าเห็น</a></div>' +
+      (viewOnly() ? '' : '<div class="av-max"><span>ขึ้นว่า <b>เต็ม</b> เมื่อวันนั้นมีงาน</span><div class="av-step"><button class="btn" type="button" data-avmax="-1" aria-label="ลด"' + (mx <= 1 ? ' disabled' : '') + '>−</button><b id="avMaxN">' + mx + '</b><button class="btn" type="button" data-avmax="1" aria-label="เพิ่ม"' + (mx >= 10 ? ' disabled' : '') + '>+</button><span>งาน</span></div></div>') +
+      '</section>';
     html += '<div class="cp-grid"><section class="card">' + cpHead('phone', 'var(--hl)', 'เพิ่มเข้ามือถือ · ทำครั้งเดียวต่อเครื่อง');
     if (u) {
       html += '<div class="seg" id="cpDev" role="group" aria-label="เลือกมือถือ" style="--n:2"><button type="button" data-dev="ios" aria-pressed="' + ios + '">iPhone</button><button type="button" data-dev="and" aria-pressed="' + !ios + '">Android / คอม</button></div>' +
@@ -5367,13 +5374,6 @@
     html += '</section><section class="card">' + cpHead('eye', '#8b5cf6', 'ในปฏิทินจะเห็นแบบนี้') + cpPreview() +
       '<div class="cal-legend"><span>🟠 ยังไม่ถึง / ยังไม่เสร็จ</span><span>🟢 เสร็จแล้ว</span><span>⏳ รอยืนยัน</span><span>🚫 ร้านปิดรับงาน</span></div>' +
       '<p class="cp-note">' + cpSvg('clock', 15) + '<span>กดที่งานเห็นลูกค้า เบอร์ เวลา สถานที่ แผนที่ ทีม และหมายเหตุ · ปฏิทินมือถือดูอย่างเดียว ลบผิดไม่ได้ · Google อัปเดตเองทุก 6–24 ชม.</span></p></section></div>';
-    var ap = availPage(), mx = availMaxN();
-    if (ap) html += '<section class="card">' + cpHead('share', '#06c755', 'ลิงก์เช็กคิวว่าง · ส่งให้ลูกค้า') +
-      '<p class="cp-note" style="margin:0">' + cpSvg('lock', 15) + '<span>ลูกค้าเห็นแค่วันว่าง / มีงานแล้ว / เต็ม / ปิดรับ ไม่เห็นชื่อ เบอร์ หรือสถานที่ กดวันแล้วทักจองทาง LINE ได้เลย</span></p>' +
-      '<div class="cp-acts"><button class="btn primary" type="button" id="avShare">' + cpSvg('share', 18) + 'ส่งลิงก์ให้ลูกค้า</button>' +
-      '<button class="btn" type="button" id="avCopy">' + cpSvg('copy', 18) + 'คัดลอกลิงก์</button><a class="btn" href="' + esc(ap) + '" target="_blank" rel="noopener">' + cpSvg('eye', 18) + 'เปิดดูหน้าที่ลูกค้าเห็น</a></div>' +
-      (viewOnly() ? '' : '<div class="av-max"><span>ขึ้นว่า <b>เต็ม</b> เมื่อวันนั้นมีงาน</span><div class="av-step"><button class="btn" type="button" data-avmax="-1" aria-label="ลด"' + (mx <= 1 ? ' disabled' : '') + '>−</button><b id="avMaxN">' + mx + '</b><button class="btn" type="button" data-avmax="1" aria-label="เพิ่ม"' + (mx >= 10 ? ' disabled' : '') + '>+</button><span>งาน</span></div></div>') +
-      '</section>';
     html += '<section class="card">' + cpHead('bolt', '#e08a16', 'งานด่วน · ตั้งเฉพาะเครื่องนี้') +
       '<label class="toggle"><input type="checkbox" role="switch" id="calAskTg"' + (calAskOn() ? ' checked' : '') + '><span class="tg-tx">ถามให้ลงปฏิทินทันที เมื่อลงงานที่จะถึงภายใน ' + CAL_SOON + ' วัน<small>กดครั้งเดียวงานขึ้นทันที ไม่ต้องรอ แต่จะเห็นซ้ำ 2 อันเมื่อปฏิทินอัตโนมัติอัปเดต ลบอันที่ใส่เองได้' + (isIOS() ? ' · iPhone ที่ตั้งดึงข้อมูลทุก 15 นาที ปิดได้เลย' : '') + '</small></span></label>' +
       '<p class="cp-note">' + cpSvg('cal', 15) + '<span>ทุกงานมีปุ่ม "📅 ลงปฏิทินในมือถือ" ในหน้างานด้วย</span></p></section>';
@@ -6994,7 +6994,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'ea6f15c00591';
+  var BUILD = 'e80efee4babe';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
