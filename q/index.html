@@ -58,6 +58,11 @@
   .st { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; padding: 4px 12px; border-radius: 999px; font-size: 0.92rem; width: fit-content; }
   .st.free { color: var(--free); background: var(--free-bg); } .st.part { color: var(--part); background: var(--part-bg); } .st.full { color: var(--full); background: var(--full-bg); } .st.off { color: var(--off); background: var(--off-bg); }
   .pick p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+  .slots { display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px; background: var(--field); }
+  .slots b { font-size: 0.9rem; }
+  .slots ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .slots li { padding: 4px 10px; border-radius: 999px; background: var(--part-bg); color: var(--part); font-weight: 600; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+  .slots small { color: var(--muted); font-size: 0.82rem; }
   .acts { display: grid; gap: 8px; }
   .btn { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 50px; border-radius: 14px; font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; border: 1px solid var(--border); background: var(--field); color: var(--fg); }
   .btn.line { background: var(--line); border-color: var(--line); color: #fff; }
@@ -134,8 +139,12 @@
       if (shop.line) acts += '<a class="btn line" href="https://line.me/R/oaMessage/' + encodeURIComponent(shop.line) + '/?' + encodeURIComponent(text) + '" target="_blank" rel="noopener">💬 จองวันนี้ทาง LINE</a>';
       if (shop.phone) acts += '<a class="btn" href="tel:' + esc(shop.phone.replace(/[^\d+]/g, '')) + '">📞 โทร ' + esc(shop.phone) + '</a>';
     } else if (shop.line) acts += '<a class="btn" href="https://line.me/R/ti/p/' + encodeURIComponent(shop.line) + '" target="_blank" rel="noopener">💬 สอบถามวันอื่นทาง LINE</a>';
-    box.innerHTML = '<h3>' + esc(thai(d)) + '</h3><span class="st ' + s + '">' + esc(ST[s]) + '</span>' +
-      '<p>' + (s === 'free' ? 'วันนี้ยังไม่มีงาน จองได้เลย' : s === 'part' ? 'มีงานอยู่แล้ว แต่ยังรับเพิ่มได้ ทักมาเช็กเวลาก่อนนะ' : s === 'full' ? 'วันนี้คิวเต็มแล้ว ลองเลือกวันอื่น' : 'ร้านปิดรับงานวันนี้') + '</p>' +
+    var sl = (A.slots && A.slots[d]) || [], slotsH = '';
+    if ((s === 'part' || s === 'full') && sl.length) slotsH = '<div class="slots"><b>🕐 ช่วงเวลาที่มีงานแล้ว</b><ul>' +
+      sl.map(function (x) { return '<li>' + (x ? esc(x.replace('-', '–')) + ' น.' : 'มีงาน (ยังไม่ระบุเวลา)') + '</li>'; }).join('') + '</ul>' +
+      (s === 'part' ? '<small>ช่วงเวลาอื่นยังรับงานได้ ทักมาเช็กได้เลย</small>' : '') + '</div>';
+    box.innerHTML = '<h3>' + esc(thai(d)) + '</h3><span class="st ' + s + '">' + esc(ST[s]) + '</span>' + slotsH +
+      '<p>' + (s === 'free' ? 'วันนี้ยังไม่มีงาน จองได้เลย' : s === 'part' ? 'มีงานอยู่แล้ว แต่ยังรับเพิ่มได้ ดูช่วงเวลาด้านบน แล้วทักมาจองได้เลย' : s === 'full' ? 'วันนี้คิวเต็มแล้ว ลองเลือกวันอื่น' : 'ร้านปิดรับงานวันนี้') + '</p>' +
       (acts ? '<div class="acts">' + acts + '</div>' : '');
     box.hidden = false;
     if (box.scrollIntoView) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
