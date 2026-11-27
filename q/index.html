@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>เช็กคิวว่าง</title>
+<meta name="description" content="ดูวันว่างสำหรับจองงาน">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f3ef; --surface: #ffffff; --field: #f0efea; --fg: #1d1d1f; --muted: #6b6b70; --border: #e2e0da;
+    --free: #1f9d55; --free-bg: #e3f5ea; --part: #c77700; --part-bg: #fff1d9; --full: #d93b40; --full-bg: #fde4e4; --off: #6b6b70; --off-bg: #e9e8e4;
+    --ink: #1d1d1f; --ink-fg: #fff; --line: #06c755;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #131315; --surface: #1c1c1f; --field: #26262a; --fg: #f2f2f3; --muted: #a1a1a8; --border: #313136;
+      --free: #4ade80; --free-bg: rgba(74,222,128,.14); --part: #f5b041; --part-bg: rgba(245,176,65,.16); --full: #ff6b6f; --full-bg: rgba(255,107,111,.16); --off: #8e8e95; --off-bg: #2a2a2e;
+      --ink: #f2f2f3; --ink-fg: #131315; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); }
+  body { font-family: 'IBM Plex Sans Thai', system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 16px; line-height: 1.5; -webkit-text-size-adjust: 100%;
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  main { max-width: 560px; margin: 0 auto; display: grid; gap: 14px; }
+  .head { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 48px; height: 48px; border-radius: 14px; background: var(--ink); color: var(--ink-fg); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.15rem; flex: none; }
+  .head h1 { margin: 0; font-size: 1.25rem; font-weight: 700; line-height: 1.25; }
+  .head p { margin: 2px 0 0; color: var(--muted); font-size: 0.9rem; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 14px; }
+  .mnav { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .mnav h2 { flex: 1; margin: 0; text-align: center; font-size: 1.05rem; font-weight: 600; }
+  .nb { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--border); background: var(--field); color: var(--fg); font: inherit; font-size: 1.3rem; cursor: pointer; }
+  .nb:disabled { opacity: .35; cursor: default; }
+  .grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+  .dow { text-align: center; font-size: 0.78rem; color: var(--muted); padding: 2px 0 4px; }
+  .d { aspect-ratio: 1 / 1.05; min-height: 44px; border-radius: 12px; border: 1.5px solid transparent; font: inherit; color: var(--fg); background: var(--field); cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0; transition: transform .12s, border-color .15s; }
+  .d b { font-size: 1rem; font-weight: 600; line-height: 1; }
+  .d i { width: 7px; height: 7px; border-radius: 50%; }
+  .d.free { background: var(--free-bg); } .d.free i { background: var(--free); }
+  .d.part { background: var(--part-bg); } .d.part i { background: var(--part); }
+  .d.full { background: var(--full-bg); } .d.full i { background: var(--full); } .d.full b { color: var(--full); }
+  .d.off { background: var(--off-bg); } .d.off b { color: var(--off); text-decoration: line-through; } .d.off i { background: var(--off); }
+  .d.past, .d.blank { background: none; cursor: default; } .d.past b { color: var(--muted); opacity: .45; } .d.past i, .d.blank i { display: none; }
+  .d.today { border-color: var(--ink); }
+  .d.sel { border-color: var(--ink); box-shadow: 0 0 0 2px var(--ink) inset; }
+  .d:not(.past):not(.blank):active { transform: scale(.94); }
+  .d:focus-visible, .nb:focus-visible, .btn:focus-visible { outline: 3px solid #5b9bff; outline-offset: 2px; }
+  .legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; font-size: 0.86rem; color: var(--muted); }
+  .legend span { display: flex; align-items: center; gap: 8px; }
+  .legend i { width: 12px; height: 12px; border-radius: 4px; flex: none; }
+  .pick { display: grid; gap: 10px; }
+  .pick h3 { margin: 0; font-size: 1.05rem; font-weight: 600; }
+  .st { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; padding: 4px 12px; border-radius: 999px; font-size: 0.92rem; width: fit-content; }
+  .st.free { color: var(--free); background: var(--free-bg); } .st.part { color: var(--part); background: var(--part-bg); } .st.full { color: var(--full); background: var(--full-bg); } .st.off { color: var(--off); background: var(--off-bg); }
+  .pick p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+  .acts { display: grid; gap: 8px; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 50px; border-radius: 14px; font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; border: 1px solid var(--border); background: var(--field); color: var(--fg); }
+  .btn.line { background: var(--line); border-color: var(--line); color: #fff; }
+  .foot { text-align: center; color: var(--muted); font-size: 0.8rem; }
+  .msg { text-align: center; color: var(--muted); padding: 30px 10px; }
+  .msg .btn { margin: 12px auto 0; max-width: 220px; }
+  @media (prefers-reduced-motion: reduce) { .d { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header class="head">
+    <div class="logo" id="logo" aria-hidden="true">33</div>
+    <div><h1 id="shop">เช็กคิวว่าง</h1><p>แตะวันที่เพื่อดูว่าว่างไหม แล้วจองได้เลย</p></div>
+  </header>
+  <section class="card" aria-label="ปฏิทินคิว">
+    <div class="mnav">
+      <button class="nb" type="button" id="prev" aria-label="เดือนก่อน">‹</button>
+      <h2 id="mon" aria-live="polite">…</h2>
+      <button class="nb" type="button" id="next" aria-label="เดือนถัดไป">›</button>
+    </div>
+    <div class="grid" id="grid"><div class="msg" style="grid-column:1/-1">⏳ กำลังโหลด…</div></div>
+  </section>
+  <section class="card legend" aria-label="ความหมายของสี">
+    <span><i style="background:var(--free)"></i>ว่าง</span>
+    <span><i style="background:var(--part)"></i>มีงานแล้ว · ยังรับได้</span>
+    <span><i style="background:var(--full)"></i>เต็ม</span>
+    <span><i style="background:var(--off)"></i>ปิดรับงาน</span>
+  </section>
+  <section class="card pick" id="pick" hidden aria-live="polite"></section>
+  <p class="foot" id="foot"></p>
+</main>
+<script>
+(function () {
+  'use strict';
+  var SRC = 'https://gist.githubusercontent.com/ohmsnow007-creator/5d893dc39f8c9442d2ad06e0cbb59c52/raw/avail.json';
+  var MONTHS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+  var DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+  var $ = function (id) { return document.getElementById(id); };
+  var A = null, cur = null, sel = '', offSet = {};
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function iso(y, m, d) { return y + '-' + pad(m) + '-' + pad(d); }
+  function today() { return new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10); }
+  function thai(isoD) { var p = isoD.split('-').map(Number), dt = new Date(p[0], p[1] - 1, p[2]); return 'วัน' + DAYS[dt.getDay()] + 'ที่ ' + p[2] + ' ' + MONTHS[p[1] - 1] + ' ' + (p[0] + 543); }
+  function status(d) {
+    if (d < today()) return 'past';
+    if (A.until && d > A.until) return 'past';
+    if (offSet[d]) return 'off';
+    var n = A.days[d] || 0;
+    return !n ? 'free' : n >= A.max ? 'full' : 'part';
+  }
+  var ST = { free: 'ว่าง ✅', part: 'มีงานแล้ว · ยังรับได้', full: 'เต็มแล้ว', off: 'ปิดรับงาน', past: '' };
+  function render() {
+    var y = cur[0], m = cur[1], first = new Date(y, m - 1, 1).getDay(), days = new Date(y, m, 0).getDate(), t = today(), h = '';
+    $('mon').textContent = MONTHS[m - 1] + ' ' + (y + 543);
+    ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'].forEach(function (d) { h += '<div class="dow" aria-hidden="true">' + d + '</div>'; });
+    for (var i = 0; i < first; i++) h += '<div class="d blank" aria-hidden="true"></div>';
+    for (var d = 1; d <= days; d++) {
+      var k = iso(y, m, d), s = status(k);
+      h += '<button type="button" class="d ' + s + (k === t ? ' today' : '') + (k === sel ? ' sel' : '') + '"' + (s === 'past' ? ' disabled' : ' data-d="' + k + '"') +
+        ' aria-label="' + esc(thai(k) + (ST[s] ? ' ' + ST[s] : '')) + '"><b>' + d + '</b><i></i></button>';
+    }
+    $('grid').innerHTML = h;
+    var t0 = t.split('-').map(Number), u = (A.until || t).split('-').map(Number);
+    $('prev').disabled = y * 12 + m <= t0[0] * 12 + t0[1];
+    $('next').disabled = y * 12 + m >= u[0] * 12 + u[1];
+  }
+  function pick(d) {
+    sel = d; render();
+    var s = status(d), box = $('pick'), shop = A.shop || {}, acts = '';
+    var text = 'สวัสดีครับ สนใจจองงาน' + thai(d) + ' ยังว่างไหมครับ';
+    if (s !== 'off' && s !== 'full') {
+      if (shop.line) acts += '<a class="btn line" href="https://line.me/R/oaMessage/' + encodeURIComponent(shop.line) + '/?' + encodeURIComponent(text) + '" target="_blank" rel="noopener">💬 จองวันนี้ทาง LINE</a>';
+      if (shop.phone) acts += '<a class="btn" href="tel:' + esc(shop.phone.replace(/[^\d+]/g, '')) + '">📞 โทร ' + esc(shop.phone) + '</a>';
+    } else if (shop.line) acts += '<a class="btn" href="https://line.me/R/ti/p/' + encodeURIComponent(shop.line) + '" target="_blank" rel="noopener">💬 สอบถามวันอื่นทาง LINE</a>';
+    box.innerHTML = '<h3>' + esc(thai(d)) + '</h3><span class="st ' + s + '">' + esc(ST[s]) + '</span>' +
+      '<p>' + (s === 'free' ? 'วันนี้ยังไม่มีงาน จองได้เลย' : s === 'part' ? 'มีงานอยู่แล้ว แต่ยังรับเพิ่มได้ ทักมาเช็กเวลาก่อนนะ' : s === 'full' ? 'วันนี้คิวเต็มแล้ว ลองเลือกวันอื่น' : 'ร้านปิดรับงานวันนี้') + '</p>' +
+      (acts ? '<div class="acts">' + acts + '</div>' : '');
+    box.hidden = false;
+    if (box.scrollIntoView) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  $('grid').addEventListener('click', function (e) { var b = e.target.closest('[data-d]'); if (b) pick(b.getAttribute('data-d')); });
+  $('prev').addEventListener('click', function () { cur = cur[1] === 1 ? [cur[0] - 1, 12] : [cur[0], cur[1] - 1]; render(); });
+  $('next').addEventListener('click', function () { cur = cur[1] === 12 ? [cur[0] + 1, 1] : [cur[0], cur[1] + 1]; render(); });
+  function load() {
+    $('grid').innerHTML = '<div class="msg" style="grid-column:1/-1">⏳ กำลังโหลด…</div>';
+    fetch(SRC + '?t=' + Math.floor(Date.now() / 60000), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (a) {
+      if (!a || typeof a.days !== 'object') throw new Error('bad');
+      A = a; A.max = Math.max(1, +a.max || 2); offSet = {}; (a.off || []).forEach(function (d) { offSet[d] = 1; });
+      var shop = a.shop || {};
+      if (shop.name) { $('shop').textContent = 'เช็กคิวว่าง · ' + shop.name; document.title = 'เช็กคิวว่าง · ' + shop.name; $('logo').textContent = String(shop.name).replace(/[^0-9A-Za-zก-๙]/g, '').slice(0, 2) || '33'; }
+      var t = today().split('-').map(Number); cur = [t[0], t[1]];
+      var up = a.updated ? new Date(a.updated) : null;
+      $('foot').textContent = up ? 'อัปเดตล่าสุด ' + up.toLocaleString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + ' น.' : '';
+      render();
+    }).catch(function () {
+      $('grid').innerHTML = '<div class="msg" style="grid-column:1/-1">โหลดคิวไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่<button class="btn" type="button" id="retry">ลองใหม่</button></div>';
+      $('retry').addEventListener('click', load);
+    });
+  }
+  load();
+})();
+</script>
+</body>
+</html>
