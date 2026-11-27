@@ -846,11 +846,11 @@
   .muted { color: var(--muted); }
   .home-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .home-acts { display: flex; gap: 8px; }
-  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-  @media (max-width: 760px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; display: grid; gap: 2px; min-width: 0; }
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .stat { padding: 10px 12px; display: grid; gap: 1px; min-width: 0; text-align: center; }
+  .stat + .stat { border-left: 1px solid var(--border); }
   .stat small { color: var(--muted); font-size: 0.8rem; }
-  .stat b { font-family: var(--font-display); font-size: 1.45rem; font-weight: 600; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stat b { font-family: var(--font-display); font-size: 1.2rem; font-weight: 600; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .stat.warn b { color: #c27a00; }
   .stat .sx { font-size: 0.75rem; color: var(--muted); }
   .home-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; align-items: start; }
@@ -885,7 +885,7 @@
   .job-amt { text-align: right; display: grid; gap: 2px; font-family: var(--font-display); font-weight: 600; font-variant-numeric: tabular-nums; }
   .job-amt small { font-family: var(--font-body); font-weight: 400; font-size: 0.75rem; color: var(--muted); }
   .job-amt small.soon { color: #c27a00; font-weight: 500; }
-  .month-h { font-family: var(--font-display); font-size: 0.85rem; color: var(--muted); margin: 10px 2px 0; display: flex; justify-content: space-between; }
+  .month-h { font-family: var(--font-display); font-size: 0.85rem; color: var(--muted); margin: 6px -2px 0; padding: 8px 4px; display: flex; justify-content: space-between; position: sticky; top: var(--nav-h, 58px); z-index: 5; background: var(--bg, var(--surface)); }
   .jobs-tools { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px); gap: 10px; }
   @media (max-width: 640px) { .jobs-tools { grid-template-columns: minmax(0, 1fr); } }
   .import-card { border-style: dashed; }
@@ -1256,6 +1256,59 @@
 
   /* ===== today / tomorrow ===== */
   .day-card { display: grid; gap: 12px; border-color: rgba(47,123,246,.4); }
+  .h-sub { font-family: var(--font-body); font-weight: 400; font-size: 0.8rem; color: var(--muted); margin-left: 8px; }
+  .todo-card { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .todo-card.past-card, .todo-card.dv-card { border-color: var(--border); }
+  .todo-g { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; border: 0 !important; }
+  .todo-g + .todo-g { border-top: 1px solid var(--border) !important; padding-top: 12px; }
+  .todo-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .todo-h h3 { margin: 0; font-family: var(--font-display); font-size: 0.92rem; font-weight: 500; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  .todo-h h3 small { font-family: var(--font-body); font-weight: 400; font-size: 0.8rem; color: var(--muted); }
+  .todo-h h3 small.late { color: #c92a2a; font-weight: 500; }
+  .todo-list:not(.all) > :nth-child(n+4) { display: none; }
+  .todo-more { justify-self: center; }
+  .todo-list { gap: 6px; grid-template-columns: minmax(0, 1fr); }
+  .todo-row { font: inherit; color: inherit; text-align: left; width: 100%; cursor: pointer; display: flex; align-items: center; gap: 10px; min-height: 44px;
+    padding: 8px 12px; border-radius: 10px; background: var(--field); border: 1px solid var(--border); }
+  .todo-row:hover { border-color: var(--muted); }
+  .todo-d { flex: none; width: 52px; font-size: 0.8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .todo-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-display); font-weight: 500; font-size: 0.92rem; }
+  .todo-x { flex: none; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+  .todo-x.warn { color: #c27a00; } .todo-x.bad { color: #e5484d; }
+  .past-row .todo-row { flex: 1; min-width: 0; }
+  .todo-ok { color: var(--muted); font-size: 0.9rem; text-align: center; padding: 6px 0; }
+  .n-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 7px; margin-left: 8px; border-radius: 11px; background: #e5484d; color: #fff; font-family: var(--font-body); font-size: 0.75rem; font-weight: 600; vertical-align: middle; }
+  #pageHome { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-content: start; }
+  #pageHome[hidden] { display: none; }
+  #pageHome > div:empty { display: none; }
+  @media (min-width: 980px) {
+    #pageHome { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    #pageHome > * { grid-column: 1 / -1; }
+    #pageHome > #homeTodo, #pageHome > #homeNext { grid-column: auto; align-self: start; }
+    #pageHome > #homeTodo[hidden] + * , #pageHome > #homeNext:only-of-type { grid-column: 1 / -1; }
+  }
+  #pageHome > .home-head { margin-bottom: 0; }
+  #pageHome .page-h1 { font-size: 1.15rem; }
+  #pageHome #homeToday { font-size: 0.85rem; }
+  .home-acts .btn { min-height: 40px; }
+  @media (max-width: 520px) {
+    #pageHome > .home-head { flex-wrap: nowrap; align-items: center; }
+    #pageHome > .home-head > div:first-child { min-width: 0; }
+    #pageHome .page-h1 { font-size: 1.02rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .home-acts { flex: none; gap: 6px; }
+    .home-acts .btn { padding: 0 12px; font-size: 0.88rem; }
+    .stat { padding: 9px 4px; }
+    .stat b { font-size: 1rem; }
+    .stat small { font-size: 0.72rem; }
+    .past-row { flex-direction: row !important; }
+    .past-done { min-height: 0 !important; padding: 0 10px; }
+    #pageJobs .home-head { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 8px; }
+    #jobsMine .cl { display: none; }
+    #jobsMine { min-width: 44px; justify-content: center; }
+  }
+  .day-it { padding: 8px 10px !important; grid-template-columns: 56px minmax(0, 1fr) auto !important; align-items: center !important; }
+  .day-due { display: grid; text-align: right; font-family: var(--font-display); font-weight: 600; font-size: 0.88rem; color: #c27a00; font-variant-numeric: tabular-nums; line-height: 1.2; }
+  .day-due small { font-family: var(--font-body); font-weight: 400; font-size: 0.7rem; color: var(--muted); }
   .day-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   @media (max-width: 700px) { .day-cols { grid-template-columns: minmax(0, 1fr); gap: 12px; } }
   .day-col { display: grid; gap: 6px; align-content: start; min-width: 0; }
@@ -1302,7 +1355,7 @@
   /* ===== view-only devices ===== */
   body.viewonly .nav-btn[data-go="bill"], body.viewonly .nav-btn[data-go="report"], body.viewonly .home-acts, body.viewonly #jobsNew,
   body.viewonly #homeImport, body.viewonly .home-grid > section:nth-child(2), body.viewonly #homeStats .stat:nth-child(n+3),
-  body.viewonly [data-newjob], body.viewonly [data-newday] { display: none !important; }
+  body.viewonly [data-newjob], body.viewonly [data-newday], body.viewonly #homeDueG { display: none !important; }
   body.viewonly .home-grid { grid-template-columns: minmax(0, 1fr); }
   body.viewonly #homeStats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ro #jDocs, .ro .sec-money, .ro #jMsgs, .ro .sec-msg, .ro #jSave, .ro #jDel, .ro .staff-chip.add, .ro #jStaff + .hint { display: none !important; }
@@ -1434,7 +1487,9 @@
   @media (max-width: 520px) {
     .job-row { grid-template-columns: 48px minmax(0, 1fr); gap: 4px 12px; padding: 10px 12px; }
     .job-row .job-date { grid-row: span 2; align-self: start; }
-    .job-row .job-amt { grid-column: 2; display: flex; align-items: baseline; gap: 8px; text-align: left; font-size: 0.95rem; }
+    .job-row { grid-template-columns: 48px minmax(0, 1fr) auto; gap: 2px 10px; padding: 9px 10px; }
+    .job-row .job-date { grid-row: auto; align-self: center; }
+    .job-row .job-amt { grid-column: auto; display: grid; gap: 1px; text-align: right; font-size: 0.88rem; align-self: center; }
     .job-row .job-amt:empty { display: none; }
     .job-chips { margin-top: 4px; }
   }
@@ -1563,10 +1618,30 @@
   <div id="homeAlert"></div>
   <section class="card day-card" id="homeDay"></section>
   <div class="stats" id="homeStats"></div>
+  <section class="card todo-card" id="homeTodo">
+    <div class="card-h"><h2 id="homeTodoH"><span class="em">📋</span>ต้องจัดการ</h2></div>
+    <div class="todo-ok" id="homeTodoOk" hidden>🎉 เรียบร้อย ไม่มีงานค้าง</div>
+    <div class="todo-g past-card" id="homePast" hidden>
+      <div class="todo-h"><h3 id="homePastH">งานผ่านไปแล้ว ยังไม่ปิด</h3><button class="mini" type="button" id="homePastAll">✓ ปิดทั้งหมด</button></div>
+      <div class="job-list todo-list" id="homePastList"></div>
+    </div>
+    <div class="todo-g dv-card" id="homeDeliv" hidden>
+      <div class="todo-h"><h3 id="homeDelivH">ต้องส่งรูปลูกค้า</h3><button class="mini" type="button" id="homeDelivAll">ดูทั้งหมด</button></div>
+      <div class="job-list todo-list" id="homeDelivList"></div>
+    </div>
+    <div class="todo-g" id="homeDueG" hidden>
+      <div class="todo-h"><h3><span class="em">💰</span>ตามเก็บเงิน</h3><span class="muted" id="homeDueSum"></span></div>
+      <div class="job-list todo-list" id="homeDue"></div>
+    </div>
+  </section>
   <section class="card install-card" id="homeInstall" hidden></section>
   <section class="card" id="homeMine" hidden>
-    <div class="card-h"><h2><span class="em">📌</span>งานของฉัน</h2><button class="mini" type="button" data-gomine="1">ดูงานของฉันทั้งหมด</button></div>
+    <div class="card-h"><h2><span class="em">📌</span>งานของฉัน</h2><button class="mini" type="button" data-gomine="1">ดูทั้งหมด</button></div>
     <div class="job-list" id="homeMineList"></div>
+  </section>
+  <section class="card" id="homeNext">
+    <div class="card-h"><h2><span class="em">🗓️</span>งานถัดไป<small class="h-sub">หลังจากพรุ่งนี้</small></h2><button class="mini" type="button" data-go="jobs">ดูทั้งหมด</button></div>
+    <div class="job-list" id="homeUpcoming"></div>
   </section>
   <section class="card sync-card" id="homeSync" hidden>
     <h2><span class="em">☁️</span>เก็บข้อมูลออนไลน์บน GitHub</h2>
@@ -1578,25 +1653,6 @@
     <p id="homeImportTx"></p>
     <div><button class="btn" type="button" id="homeImportBtn">สร้างงานจากบิลเก่า</button></div>
   </section>
-  <section class="card past-card" id="homePast" hidden>
-    <div class="card-h"><h2 id="homePastH">งานผ่านไปแล้ว ยังไม่ปิด</h2><button class="mini" type="button" id="homePastAll">✓ ปิดทั้งหมด</button></div>
-    <p class="set-note" style="margin:0 0 8px">วันงานผ่านไปแล้วแต่สถานะยังเป็น "จองแล้ว" ถ้างานจบแล้วกด ✓ เสร็จแล้ว</p>
-    <div class="job-list" id="homePastList"></div>
-  </section>
-  <section class="card dv-card" id="homeDeliv" hidden>
-    <div class="card-h"><h2 id="homeDelivH">ต้องส่งรูปลูกค้า</h2><button class="mini" type="button" id="homeDelivAll">ดูทั้งหมด</button></div>
-    <div class="job-list" id="homeDelivList"></div>
-  </section>
-  <div class="home-grid">
-    <section class="card">
-      <div class="card-h"><h2><span class="em">🗓️</span>งานที่กำลังจะถึง</h2><button class="mini" type="button" data-go="jobs">ดูงานทั้งหมด</button></div>
-      <div class="job-list" id="homeUpcoming"></div>
-    </section>
-    <section class="card">
-      <div class="card-h"><h2><span class="em">💰</span>ต้องตามเก็บเงิน</h2><span class="muted" id="homeDueSum" style="font-size:.85rem"></span></div>
-      <div class="job-list" id="homeDue"></div>
-    </section>
-  </div>
 </main>
 
 <main class="page" id="pageJobs" hidden>
@@ -1607,8 +1663,8 @@
         <button type="button" data-v="list" aria-pressed="true">รายการ</button>
         <button type="button" data-v="cal" aria-pressed="false">ปฏิทิน</button>
       </div>
-      <button class="chipbtn" type="button" id="jobsMine" aria-pressed="false" title="แสดงเฉพาะงานที่มอบหมายให้คุณ">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>งานของฉัน
+      <button class="chipbtn" type="button" id="jobsMine" aria-pressed="false" title="แสดงเฉพาะงานที่มอบหมายให้คุณ" aria-label="งานของฉัน">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg><span class="cl">งานของฉัน</span>
       </button>
       <button class="btn primary" type="button" id="jobsNew">+ งานใหม่</button>
     </div>
@@ -4083,22 +4139,46 @@
     else if (!m.bills.length) out += jc('ยังไม่มีบิล');
     return out;
   }
+  // at most 2 chips per row, most important first; the rest is inside the job
+  var ROW_CHIPS = 2;
+  function rowChips(j, m) {
+    var c = [], d = dayDiff(j.evDate);
+    var u = unseenChip(j.id); if (u) c.push(u);
+    if (j.status !== 'cancel' && offOf(j.evDate)) c.push(jc('🚫 ตรงวันปิดรับงาน', 'bad'));
+    var tn = staffNames(), miss = (j.staff || []).filter(function (n) { return tn.indexOf(n) < 0; });
+    if (miss.length) c.push(jc('⚠️ ' + miss.join(', ') + ' ไม่มีในทีม', 'warn'));
+    if (j.status === 'cancel') c.push(jc('ยกเลิก', 'bad'));
+    else if (j.status === 'tentative') c.push(jc('รอยืนยัน', 'wait'));
+    else if (j.status === 'booked' && d != null && d < 0) c.push(jc('ยังไม่ปิดงาน', 'warn'));
+    var dv = delivOf(j); if (dv && !dv.done) c.push(delivChip(j));
+    if (j.status !== 'cancel' && !viewOnly()) {
+      if (m.total && m.paid >= m.total) c.push(jc('✓ ชำระครบ', 'ok'));
+      else if (m.paid > 0) c.push(jc('ค้าง ฿' + money(m.due), 'warn'));
+      else if (m.total) c.push(jc('ยังไม่รับเงิน', d != null && d <= 7 ? 'bad' : 'warn'));
+    }
+    var k = kitChip(j); if (k) c.push(k);
+    if (isMine(j)) c.unshift(jc('📌 งานของฉัน', 'wait'));
+    return c.length ? '<div class="job-chips">' + c.slice(0, ROW_CHIPS).join('') + '</div>' : '';
+  }
   function jobRow(j, opt) {
     var m = jobMoney(j), p = isoParts(j.evDate), d = dayDiff(j.evDate);
     var dt = p ? new Date(p.y, p.m - 1, p.d) : null;
-    var sub = [eventTime(j), String(j.evVenue || '').split('\n')[0]].filter(Boolean).join(' · ');
+    var st = j.staff || [], sub = [eventTime(j), String(j.evVenue || '').split('\n')[0], st.length ? '👥 ' + st.join(', ') : ''].filter(Boolean).join(' · ');
     var amt = viewOnly() ? 0 : opt && opt.due ? m.due : m.total;
     return '<button type="button" class="job-row' + (j.status === 'cancel' ? ' cancel' : '') + '" ' + (opt && opt.due ? 'data-payjob' : 'data-job') + '="' + esc(j.id) + '">' +
       '<div class="job-date' + (d === 0 ? ' today' : '') + '">' + (p ? '<small>' + ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'][dt.getDay()] + '.</small><b>' + p.d + '</b><small>' + MSHORT[p.m - 1] + '</small>' : '<b>–</b><small>ไม่มีวัน</small>') + '</div>' +
       '<div class="job-main"><div class="job-t">' + esc(jobName(j)) + (j.title && j.cName ? ' · ' + esc(j.cName) : '') + '</div>' +
         (sub ? '<div class="job-sub">' + esc(sub) + '</div>' : '') +
-        '<div class="job-chips">' + unseenChip(j.id) + (j.status !== 'cancel' && offOf(j.evDate) ? jc('🚫 ตรงวันปิดรับงาน', 'bad') : '') + staffChip(j) + kitChip(j) + delivChip(j) + jobChips(j, m) + '</div></div>' +
+        rowChips(j, m) + '</div>' +
       '<div class="job-amt">' + (amt ? '฿' + money(amt) : viewOnly() ? '' : '<span class="muted">–</span>') +
         '<small class="' + (d != null && d >= 0 && d <= 7 && j.status !== 'cancel' && j.status !== 'done' ? 'soon' : '') + '">' + (opt && opt.due ? 'ค้างรับ' : whenText(d)) + '</small></div>' +
     '</button>';
   }
 
   // ---------- pages ----------
+  // sticky month headers sit right under the (sticky) top bar, whose height changes with screen width
+  function setNavH() { var t = document.querySelector('.topnav'); if (t) document.documentElement.style.setProperty('--nav-h', t.offsetHeight + 'px'); }
+  window.addEventListener('resize', setNavH); setNavH();
   var PAGES = ['home', 'jobs', 'bill', 'report', 'cal'], page = 'home';
   function goPage(p) {
     if (PAGES.indexOf(p) < 0 || (viewOnly() && (p === 'bill' || p === 'report'))) p = 'home';
@@ -4151,14 +4231,19 @@
     var week = up.filter(function (j) { return dayDiff(j.evDate) <= 7; }).length;
     var hr = new Date().getHours(), greet = hr < 5 ? ['ดึกแล้วนะ', '🌙'] : hr < 12 ? ['อรุณสวัสดิ์', '☀️'] : hr < 17 ? ['สวัสดีตอนบ่าย', '🌤️'] : hr < 20 ? ['สวัสดีตอนเย็น', '🌇'] : ['สวัสดีตอนค่ำ', '🌙'];
     $('homeHello').innerHTML = esc(greet[0] + ' ' + (meRaw() || S.company.name || '')) + ' <span class="hello-wave">' + (hr >= 5 && hr < 20 ? '👋' : greet[1]) + '</span>';
-    $('homeToday').textContent = 'วันนี้ ' + eventDate(today, false).replace(/^วัน/, '');
+    $('homeToday').textContent = 'วัน' + eventDate(today, false).replace(/^วัน/, '').replace(/ \d{4}$/, '');
+    // one slim strip: whole baht only (exact amount in the tooltip)
+    var baht = function (n) { return '฿' + Math.round(num(n)).toLocaleString('en-US'); };
     $('homeStats').innerHTML =
-      '<div class="stat"><small><span class="em">📅</span>งานเดือนนี้</small><b>' + month + '</b><span class="sx">' + MONTHS[+ym.slice(5) - 1] + '</span></div>' +
-      '<div class="stat"><small><span class="em">⏰</span>งานใน 7 วันนี้</small><b>' + week + '</b><span class="sx">ทั้งหมดที่รออยู่ ' + up.length + ' งาน</span></div>' +
-      '<div class="stat' + (due ? ' warn' : '') + '"><small><span class="em">💸</span>รอเก็บเงิน</small><b>฿' + money(due) + '</b><span class="sx">' + dueList.length + ' งาน</span></div>' +
-      '<div class="stat"><small><span class="em">💰</span>รับเงินเดือนนี้</small><b>฿' + money(got) + '</b><span class="sx">จากบิลและบันทึกรับเงิน</span></div>';
-    $('homeUpcoming').innerHTML = up.length ? up.slice(0, 6).map(function (j) { return jobRow(j); }).join('') +
-      (up.length > 6 ? '<button class="btn dashed" type="button" data-go="jobs">ดูอีก ' + (up.length - 6) + ' งาน</button>' : '')
+      '<div class="stat"><small>งาน' + MSHORT[+ym.slice(5) - 1] + '</small><b>' + month + '</b></div>' +
+      '<div class="stat"><small>ใน 7 วัน</small><b>' + week + '</b></div>' +
+      '<div class="stat' + (due ? ' warn' : '') + '" title="รอเก็บเงิน ฿' + money(due) + ' · ' + dueList.length + ' งาน"><small>รอเก็บ</small><b>' + baht(due) + '</b></div>' +
+      '<div class="stat" title="รับเงินเดือนนี้ ฿' + money(got) + '"><small>รับแล้ว</small><b>' + baht(got) + '</b></div>';
+    // today and tomorrow are in the day card above: list what comes after
+    var next = up.filter(function (j) { return dayDiff(j.evDate) >= 2; });
+    $('homeUpcoming').innerHTML = next.length ? next.slice(0, 5).map(function (j) { return jobRow(j); }).join('') +
+      (next.length > 5 ? '<button class="btn dashed" type="button" data-go="jobs">ดูอีก ' + (next.length - 5) + ' งาน</button>' : '')
+      : up.length ? '<div class="list-empty">ไม่มีงานหลังจากพรุ่งนี้</div>'
       : '<div class="list-empty"><span class="big">🌴</span>ยังไม่มีงานที่กำลังจะถึง<br><button class="btn" type="button" data-newjob="1" style="margin-top:8px">+ เพิ่มงานแรก</button></div>';
     dueList.sort(byDate);
     var mine = meRaw() ? up.filter(isMine) : [];
@@ -4171,11 +4256,15 @@
     var late = dvl.filter(function (x) { return x.d.late; }).length;
     $('homeDeliv').hidden = !dvl.length;
     $('homeDelivH').innerHTML = '<span class="em">📷</span>ต้องส่งรูปลูกค้า<small>' + dvl.length + ' งาน</small>' + (late ? '<small class="late">เลยกำหนด ' + late + '</small>' : '');
-    $('homeDelivList').innerHTML = dvl.slice(0, 5).map(function (x) { return jobRow(x.j); }).join('') +
-      (dvl.length > 5 ? '<button class="btn dashed" type="button" id="homeDelivMore">ดูอีก ' + (dvl.length - 5) + ' งาน</button>' : '');
+    $('homeDelivList').innerHTML = dvl.map(function (x) { return todoRow(x.j, '<span class="todo-x ' + (x.d.late ? 'bad' : 'warn') + '">' + esc(delivText(x.j)) + '</span>'); }).join('');
     $('homeDueSum').textContent = dueList.length ? 'รวม ฿' + money(due) : '';
-    $('homeDue').innerHTML = dueList.length ? dueList.slice(0, 8).map(function (j) { return jobRow(j, { due: true }); }).join('')
+    $('homeDueG').hidden = !dueList.length;
+    $('homeDue').innerHTML = dueList.length ? dueList.map(function (j) { return todoRow(j, '<span class="todo-x warn">฿' + money(jobMoney(j).due) + '</span>', true); }).join('')
       : '<div class="list-empty"><span class="big">🎉</span>ไม่มียอดค้าง เก็บเงินครบทุกงานแล้ว</div>';
+    var todoN = pastOpen(live).length + dvl.length + (viewOnly() ? 0 : dueList.length);
+    $('homeTodoH').innerHTML = '<span class="em">📋</span>ต้องจัดการ' + (todoN ? '<span class="n-badge">' + todoN + '</span>' : '');
+    $('homeTodoOk').hidden = !!todoN;
+    todoMore();
     var orphan = orphanBills();
     $('homeImport').hidden = !orphan.length;
     if (orphan.length) $('homeImportTx').textContent = 'พบ ' + orphan.length + ' บิลที่มีวันงาน แต่ยังไม่อยู่ในหน้างาน กดปุ่มด้านล่างเพื่อสร้างงานจากบิลเหล่านี้ให้อัตโนมัติ บิลของลูกค้าคนเดียวกันในวันเดียวกันจะรวมเป็นงานเดียว';
@@ -4188,9 +4277,29 @@
     if (!pl.length) return;
     $('homePastH').innerHTML = '<span class="em">⏳</span>งานผ่านไปแล้ว ยังไม่ปิด<small>' + pl.length + ' งาน</small>';
     $('homePastAll').hidden = pl.length < 2;
-    $('homePastList').innerHTML = pl.slice(0, 6).map(function (j) { return '<div class="past-row">' + jobRow(j) + '<button class="btn past-done" type="button" data-pastdone="' + esc(j.id) + '">✓ เสร็จแล้ว</button></div>'; }).join('') +
-      (pl.length > 6 ? '<div class="hint" style="text-align:center">และอีก ' + (pl.length - 6) + ' งาน</div>' : '');
+    $('homePastList').innerHTML = pl.map(function (j) { return '<div class="past-row">' + todoRow(j, '') + '<button class="btn past-done" type="button" data-pastdone="' + esc(j.id) + '" aria-label="ปิดงาน ' + esc(jobName(j)) + ' เสร็จแล้ว">✓ เสร็จ</button></div>'; }).join('');
   }
+  // one line per job in the to-do card: name, short date, what is due
+  function todoRow(j, right, pay) {
+    var p = isoParts(j.evDate);
+    return '<button type="button" class="todo-row" ' + (pay ? 'data-payjob' : 'data-job') + '="' + esc(j.id) + '">' +
+      '<span class="todo-d">' + (p ? p.d + ' ' + MSHORT[p.m - 1] : '–') + '</span>' +
+      '<span class="todo-t">' + esc(jobName(j)) + (j.title && j.cName ? ' · ' + esc(j.cName) : '') + '</span>' + (right || '') + '</button>';
+  }
+  // each to-do group shows 3 rows; "ดูอีก" opens the rest in place
+  var TODO_SHOW = 3, todoOpen = {};
+  function todoMore() {
+    ['homePastList', 'homeDelivList', 'homeDue'].forEach(function (id) {
+      var el = $(id), extra = el.children.length - TODO_SHOW, b = el.nextElementSibling;
+      if (b && b.classList.contains('todo-more')) b.remove();
+      el.classList.toggle('all', !!todoOpen[id]);
+      if (extra > 0 && !el.querySelector('.list-empty')) el.insertAdjacentHTML('afterend', '<button class="mini todo-more" type="button" data-more="' + id + '" aria-expanded="' + !!todoOpen[id] + '">' + (todoOpen[id] ? 'ย่อ' : 'ดูอีก ' + extra + ' งาน') + '</button>');
+    });
+  }
+  $('homeTodo').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-more]');
+    if (b) { var id = b.getAttribute('data-more'); todoOpen[id] = !todoOpen[id]; todoMore(); }
+  });
   function markDone(ids) {
     if (viewOnly() || !ids.length) return;
     var arr = jobs(), n = 0, now = Date.now();
@@ -6784,7 +6893,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'f97f22b53abf';
+  var BUILD = '319bcee92c07';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
@@ -6912,7 +7021,8 @@
         '<span class="day-time">' + esc(j.evStart || 'ทั้งวัน') + (j.evEnd ? '<small>ถึง ' + esc(j.evEnd) + '</small>' : '') + '</span>' +
         '<span class="day-main"><b>' + esc(jobName(j)) + (j.title && j.cName ? ' · ' + esc(j.cName) : '') + '</b>' +
         (sub ? '<small>' + esc(sub) + '</small>' : '') +
-        '<span class="job-chips">' + unseenChip(j.id) + (j.status === 'tentative' ? jc('รอยืนยัน', 'wait') : '') + (m.due > 0 && !viewOnly() ? jc('เก็บเงินหน้างาน ฿' + money(m.due), 'warn') : '') + '</span></span></button>';
+        (unseenChip(j.id) || j.status === 'tentative' ? '<span class="job-chips">' + unseenChip(j.id) + (j.status === 'tentative' ? jc('รอยืนยัน', 'wait') : '') + '</span>' : '') + '</span>' +
+        (m.due > 0 && !viewOnly() ? '<span class="day-due" title="เก็บเงินหน้างาน ฿' + money(m.due) + '"><small>เก็บเงิน</small>฿' + Math.round(m.due).toLocaleString('en-US') + '</span>' : '') + '</button>';
     }
     function col(label, iso, arr) {
       return '<div class="day-col"><h2><span class="em">' + (label === 'วันนี้' ? '☀️' : '🌙') + '</span>' + label + '<small>' + esc(eventDate(iso, false).replace(/^วัน/, '').replace(/ \d{4}$/, '')) + '</small><span class="n">' + (arr.length ? arr.length + ' งาน' : '') + '</span></h2>' +
