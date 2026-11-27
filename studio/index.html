@@ -2038,7 +2038,7 @@
         <div class="field"><label for="j_price">ราคาที่ตกลง (บาท)</label><input id="j_price" class="num" type="text" inputmode="decimal" autocomplete="off" placeholder="ใช้ยอดจากบิล"></div>
       </div>
       <div class="field"><label for="j_cAddr">ที่อยู่</label><textarea id="j_cAddr" rows="2" placeholder="ถ้ามี"></textarea></div>
-      <div class="field"><label for="j_evVenue">สถานที่</label><textarea id="j_evVenue" rows="2" placeholder="เช่น โรงแรม... ห้องบอลรูม ชั้น 2"></textarea></div>
+      <div class="field"><label for="j_evVenue">สถานที่จัดงาน</label><textarea id="j_evVenue" rows="2" placeholder="เช่น โรงแรม... ห้องบอลรูม ชั้น 2"></textarea></div>
       <div class="field"><label for="j_mapUrl">🗺️ ลิงก์ Google Maps</label><input id="j_mapUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="วางลิงก์ที่ลูกค้าส่งมา เช่น https://maps.app.goo.gl/…"><div class="hint">บอท LINE จะส่งลิงก์นี้ให้ทีม · ถ้าวางลิงก์ไว้ในช่องที่อยู่ ระบบย้ายมาใส่ช่องนี้ให้ (บิลจะได้ไม่มีลิงก์)</div></div>
       <div class="field"><label for="j_note">โน้ตงาน</label><textarea id="j_note" rows="2" placeholder="เช่น ธีมสีขาวทอง, ต้องเข้าก่อน 1 ชม."></textarea></div>
       <p class="hint" id="jAfterHint" hidden>💡 ส่งข้อความถึงลูกค้าและตั้งกำหนดส่งรูป ทำได้หลังบันทึกงานแล้ว</p>
@@ -7053,7 +7053,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '2e470dd057ce';
+  var BUILD = '4c3e1e26bc20';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
