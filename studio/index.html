@@ -703,20 +703,20 @@
   .set-sub::after { content: ''; flex: 1; height: 1px; background: var(--border); }
   .set-in > .set-sub:first-child { margin-top: 0; }
 
-  .set-body .toggle { justify-content: space-between; gap: 14px; min-height: 54px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--field); cursor: pointer; }
+  .set-body .toggle, #pageCal .toggle { justify-content: space-between; gap: 14px; min-height: 54px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--field); cursor: pointer; }
   .set-row .toggle { background: var(--surface); }
   .tg-tx { flex: 1; order: -1; line-height: 1.35; }
   .tg-tx small { display: block; color: var(--muted); font-size: 0.78rem; }
-  .set-body .toggle input {
+  .set-body .toggle input, #pageCal .toggle input {
     -webkit-appearance: none; appearance: none; width: 48px; height: 28px; min-height: 0; padding: 0; margin: 0; flex: none;
     border: 0; border-radius: 14px; background: var(--border); position: relative; cursor: pointer; transition: background .2s;
   }
-  .set-body .toggle input::after {
+  .set-body .toggle input::after, #pageCal .toggle input::after {
     content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%;
     background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: transform .2s;
   }
-  .set-body .toggle input:checked { background: var(--hl); }
-  .set-body .toggle input:checked::after { transform: translateX(20px); }
+  .set-body .toggle input:checked, #pageCal .toggle input:checked { background: var(--hl); }
+  .set-body .toggle input:checked::after, #pageCal .toggle input:checked::after { transform: translateX(20px); }
 
   details.set-row { padding: 0; display: block; }
   details.set-row > summary { list-style: none; cursor: pointer; padding: 8px 10px 8px 12px; min-height: 54px; }
@@ -751,13 +751,19 @@
   .swatch { width: 44px; height: 44px; transition: transform .15s; }
   .swatch:hover { transform: scale(1.06); }
   .swatch.on { border-color: var(--hl); box-shadow: 0 0 0 3px var(--hl-soft); }
+  .calpg { display: grid; gap: 16px; margin-top: 16px; max-width: 720px; }
+  .calpg .card { display: grid; gap: 12px; }
+  .calpg h2 { margin: 0; }
+  .calpg ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; line-height: 1.55; }
+  .cal-legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; font-size: 0.92rem; }
+  .cal-legend span { display: flex; gap: 8px; align-items: baseline; }
   .bk-list { display: grid; gap: 8px; }
   .bk-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); }
   .bk-row .grow { flex: 1; min-width: 150px; display: grid; gap: 2px; }
   .bk-row small { color: var(--muted); }
   .bk-row.pre { border-style: dashed; }
   .cal-acts { display: grid; gap: 8px; margin-top: 4px; }
-  .cal-acts .btn { width: 100%; justify-content: center; text-align: center; min-height: 48px; }
+  .cal-acts .btn { width: 100%; justify-content: center; text-align: center; min-height: 48px; text-decoration: none; display: inline-flex; align-items: center; }
   .cal-job { padding: 10px 12px; border-radius: 12px; background: var(--soft, rgba(127,127,127,.08)); margin: 6px 0 10px; display: grid; gap: 2px; }
   .cal-job small { color: var(--muted); }
   .bk-status { display: grid; gap: 2px; padding: 12px 14px; border-radius: 12px; font-size: 0.85rem; color: var(--muted); }
@@ -788,6 +794,11 @@
   }
   .nav-btn:hover { color: var(--fg); background: var(--field); }
   .nav-btn[aria-current="page"] { color: var(--ink-fg); background: var(--ink); }
+  @media (max-width: 520px) {
+    .mainnav { gap: 2px; }
+    .nav-btn { flex-direction: column; gap: 2px; font-size: 0.74rem; min-height: 50px; padding: 4px 2px; position: relative; white-space: nowrap; }
+    .nav-btn .nav-dot { position: absolute; top: 2px; right: calc(50% - 22px); min-width: 16px; height: 16px; font-size: 0.62rem; padding: 0 4px; }
+  }
   .nav-dot { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #e5484d; color: #fff; font-size: 0.7rem; display: inline-flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums; }
   @media (max-width: 640px) {
     .topnav-in { flex-wrap: wrap; gap: 6px 8px; padding-top: 6px; padding-bottom: 6px; }
@@ -1493,6 +1504,9 @@
       <button class="nav-btn" type="button" data-go="report">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 16v-4M12 16V8M17 16v-7"/></svg>รายงาน
       </button>
+      <button class="nav-btn" type="button" data-go="cal">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2.5"/><path d="M9 7h6M9 11h6M9 15h3"/></svg>ปฏิทิน
+      </button>
     </nav>
     <button class="chipbtn" id="searchBtn" type="button" title="ค้นหางาน บิล ลูกค้า (Ctrl+K)" aria-label="ค้นหา">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -1601,6 +1615,13 @@
     <h2><span class="em">🧾</span>สรุปรายเดือน</h2>
     <div class="rep-table-wrap"><table class="rep-table" id="repTable"></table></div>
   </section>
+</main>
+
+<main class="page" id="pageCal" hidden>
+  <div class="home-head">
+    <div><h1 class="page-h1">📅 ปฏิทินในมือถือ</h1><div class="muted">งานทุกงานขึ้นในปฏิทินมือถือเอง เปลี่ยนตามแอปอัตโนมัติ</div></div>
+  </div>
+  <div class="calpg" id="calPage"></div>
 </main>
 
 <div class="app">
@@ -2114,7 +2135,7 @@
       { id: 'receipt', on: false, th: 'ใบเสร็จรับเงิน', en: 'RECEIPT', grand: 'ยอดรับชำระ', grandEn: 'Amount received', prefix: 'RC-' }
     ],
     offDays: [],
-    calUrl: '', calAsk: true,
+    calUrl: '',
     kit: ['กล้อง', 'คอมพิวเตอร์', 'จอคอมพิวเตอร์', 'เครื่องปริ้น', 'กระดาษสำรอง', 'ซองใส่รูป', 'ปลั๊กไฟ', 'สายไฟ', 'ผ้าปูโต๊ะ', 'ขาฉาก', 'ขาไฟ', 'ฉาก', 'ไฟ ซ้ายขวา', 'ไฟกลาง', 'ซอฟต์บ็อกซ์', 'กล่องแว่น', 'พร็อพ'],
     services: [
       { name: 'งานถ่ายภาพ', price: '', hours: '', details: [] },
@@ -3292,7 +3313,7 @@
   var GROUPS = [
     ['🏪 ร้านของคุณ', ['company', 'brand', 'theme']],
     ['🧾 เอกสารและการคิดเงิน', ['docs', 'services', 'pays', 'tax']],
-    ['💬 ข้อความและการส่ง', ['sheetL', 'share', 'linebot', 'cal', 'ui']],
+    ['💬 ข้อความและการส่ง', ['sheetL', 'share', 'linebot', 'ui']],
     ['🗂️ ข้อมูลและทีมงาน', ['sync', 'staff', 'kit', 'lock', 'custs', 'backup']]
   ];
   var SL_GROUPS = [
@@ -3431,7 +3452,6 @@
       '<p class="set-note">{rate} {pct} {name} {phone} {doc} {no} คือช่องที่ระบบเติมให้อัตโนมัติ</p>' + lblRows(SHEET_LABELS, SL_GROUPS, true));
 
     var lbc = lineCfg();
-    sec('cal', 'ปฏิทินในมือถือ', calReady() ? 'งานขึ้นในปฏิทินอัตโนมัติ' + (S.calAsk !== false ? ' · งานด่วนถามทันที' : '') : 'ยังไม่เปิดปฏิทินอัตโนมัติ' + (S.calAsk !== false ? ' · งานด่วนถามทันที' : ''), calSectionHTML());
     sec('linebot', 'บอท LINE แจ้งเตือน', !lbc.on ? 'ปิดอยู่' : [lbc.newJob ? 'แจ้งงานใหม่' : '', lbc.morning ? 'สรุปเช้า ' + lbc.hour + ' โมง' : ''].filter(Boolean).join(' · ') || 'เปิดอยู่ แต่ไม่ได้เลือกให้ส่งอะไร', lineSectionHTML());
     sec('share', 'ส่งให้ลูกค้า (LINE)', 'ส่งเป็น ' + (S.share.format === 'png' ? 'รูปภาพ' : 'PDF') + ' · ข้อความสำเร็จรูป',
       fSelect('ส่งเป็นอะไรโดยปกติ', 'share.format', [['pdf', 'PDF'], ['png', 'รูปภาพ']]) +
@@ -3894,7 +3914,6 @@
         break;
       case 'bkSave': backup(); break;
       case 'bkCloudList': cloudList(); break;
-      case 'calCopy': copyText(calFeed()).then(function (ok) { toast(ok ? 'คัดลอกลิงก์ปฏิทินแล้ว' : 'คัดลอกไม่ได้'); }); break;
       case 'bkLoad': pickFile('.json,application/json', restore); break;
       case 'bkOld': importOld(); break;
       case 'bkReset':
@@ -4052,7 +4071,7 @@
   }
 
   // ---------- pages ----------
-  var PAGES = ['home', 'jobs', 'bill', 'report'], page = 'home';
+  var PAGES = ['home', 'jobs', 'bill', 'report', 'cal'], page = 'home';
   function goPage(p) {
     if (PAGES.indexOf(p) < 0 || (viewOnly() && (p === 'bill' || p === 'report'))) p = 'home';
     page = p;
@@ -4060,6 +4079,7 @@
     $('pageHome').hidden = p !== 'home';
     $('pageJobs').hidden = p !== 'jobs';
     $('pageReport').hidden = p !== 'report';
+    $('pageCal').hidden = p !== 'cal';
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function (b) {
       if (b.getAttribute('data-go') === p) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
     });
@@ -4067,6 +4087,7 @@
     if (p === 'home') renderHome();
     if (p === 'jobs') renderJobs();
     if (p === 'report') renderReport();
+    if (p === 'cal') renderCalPage();
     if (p === 'bill') { renderJobSel(); updateEvHint(); draw(); setTimeout(fitPreview, 30); }
     window.scrollTo(0, 0);
   }
@@ -4969,7 +4990,7 @@
     return [calUTC(j.evDate, st[0], st[1]), calUTC(j.evDate, Math.floor(em / 60) % 24, em % 60, em >= 1440 ? 1 : 0), false];
   }
   function calOne(x) { return String(x == null ? '' : x).replace(/\s+/g, ' ').trim(); }
-  function calTitle(j) { return (j.status === 'tentative' ? '⏳ (รอยืนยัน) ' : '📸 ') + ([calOne(j.title), calOne(j.cName)].filter(Boolean).join(' · ') || 'งาน'); }
+  function calTitle(j) { return (j.status === 'tentative' ? '⏳ (รอยืนยัน) ' : j.status === 'done' ? '🟢 ' : '🟠 ') + ([calOne(j.title), calOne(j.cName)].filter(Boolean).join(' · ') || 'งาน'); }
   function calMap(j) {
     var own = calOne(j.mapUrl);
     if (/^https?:\/\/\S+$/i.test(own)) return own;
@@ -5020,7 +5041,7 @@
     return L.map(icsFold).join('\r\n') + '\r\n';
   }
   function calShouldAsk(j, old) {
-    if (!j || S.calAsk === false || viewOnly() || j.status === 'cancel') return false;
+    if (!j || !calAskOn() || viewOnly() || j.status === 'cancel') return false;
     var d = dayDiff(j.evDate);
     if (d == null || d < 0 || d > CAL_SOON) return false;
     if (!old || !old.id || old.status === 'cancel') return true;
@@ -5060,19 +5081,39 @@
     if (!viewOnly()) { jSnap = jobSnap(); refreshPages(); }
     openCalAdd(j, false);
   });
-  function calSectionHTML() {
-    var u = calFeed(), web = u.replace(/^https:/i, 'webcal:');
-    return (u ? '<div class="bk-status ok"><b>✅ ปฏิทินงานพร้อมใช้</b><span>งานทุกงาน และวันที่ร้านปิดรับงาน ขึ้นในปฏิทินมือถือเอง เพิ่ม แก้ เลื่อน หรือยกเลิกงาน ปฏิทินก็เปลี่ยนตาม</span></div>' +
-        sub('เพิ่มเข้ามือถือ (ทำครั้งเดียวต่อเครื่อง)') +
-        '<div class="cal-acts"><a class="btn primary" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/r?cid=' + encodeURIComponent(web) + '">📅 Google Calendar (Android / คอม)</a>' +
-        '<a class="btn" href="' + esc(web) + '">🍎 ปฏิทิน iPhone</a><button class="btn" type="button" id="calCopy">คัดลอกลิงก์ปฏิทิน</button></div>' +
-        '<p class="set-note">Android: ถ้ากดแล้วไม่ขึ้นหน้า "เพิ่มปฏิทิน" ให้เปิดปุ่มนี้ในคอม (บัญชี Google เดียวกัน) ครั้งเดียว แล้วในแอป Google Calendar → ตั้งค่า → เปิด "ซิงค์" ปฏิทิน 📸 งาน</p>' +
-        '<p class="set-note">Google อัปเดตเองทุก 6–24 ชม. (Google กำหนด) · iPhone ตั้งให้เร็วขึ้นได้ที่ ตั้งค่า → ปฏิทิน → บัญชี → ดึงข้อมูลใหม่ → ทุก 15 นาที · ลิงก์นี้เป็นลิงก์ลับ อย่าส่งให้คนนอก (ในปฏิทินไม่มีเบอร์ลูกค้า)</p>'
-      : '<div class="bk-status warn"><b>ยังไม่ได้เปิดปฏิทินอัตโนมัติ</b><span>ต้องตั้งค่าบน GitHub ครั้งเดียว ระหว่างนี้ใช้ปุ่ม "📅 ลงปฏิทินในมือถือ" ในหน้างานได้</span></div>') +
-      sub('งานด่วน') +
-      fCheck('⚡ ถามให้ลงปฏิทินทันที เมื่อลงงานที่จะถึงภายใน ' + CAL_SOON + ' วัน', 'calAsk', 'กดครั้งเดียว งานขึ้นในปฏิทินมือถือทันที ไม่ต้องรอปฏิทินอัตโนมัติ') +
-      '<p class="set-note">ทุกงานมีปุ่ม "📅 ลงปฏิทินในมือถือ" ในหน้างานด้วย</p>';
+  // urgent-job popup is a choice per phone (an iPhone refreshing every 15 minutes doesn't need it)
+  var CAL_ASK_KEY = 'bill33suite.calAsk';
+  function calAskOn() { return lsGet(CAL_ASK_KEY, true) !== false; }
+  function renderCalPage() {
+    var box = $('calPage');
+    if (!box) return;
+    var u = calFeed(), web = u.replace(/^https:/i, 'webcal:'), ios = isIOS();
+    var gBtn = '<a class="btn' + (ios ? '' : ' primary') + '" target="_blank" rel="noopener" href="https://calendar.google.com/calendar/r?cid=' + encodeURIComponent(web) + '">📅 เพิ่มใน Google Calendar</a>';
+    var iBtn = '<a class="btn' + (ios ? ' primary' : '') + '" href="' + esc(web) + '">🍎 เพิ่มในปฏิทิน iPhone</a>';
+    var html = '';
+    if (u) {
+      html += '<section class="card"><h2>📲 เพิ่มเข้ามือถือ (ครั้งเดียวต่อเครื่อง)</h2>' +
+        '<div class="cal-acts">' + (ios ? iBtn + gBtn : gBtn + iBtn) + '<button class="btn" type="button" id="calCopy">คัดลอกลิงก์ปฏิทิน</button></div>' +
+        (ios ? '<ol><li>กด "🍎 เพิ่มในปฏิทิน iPhone" แล้วกด <b>สมัครรับ</b></li><li>ให้งานขึ้นเร็ว: ตั้งค่า → ปฏิทิน → บัญชี → ดึงข้อมูลใหม่ → <b>ทุก 15 นาที</b></li></ol>'
+          : '<ol><li>กด "📅 เพิ่มใน Google Calendar" แล้วกด <b>เพิ่ม</b></li><li>ถ้าไม่ขึ้นหน้าเพิ่มปฏิทิน ให้กดปุ่มเดียวกันในคอม (บัญชี Google เดียวกัน)</li><li>ในแอป Google Calendar → ตั้งค่า → เปิด <b>ซิงค์</b> ปฏิทิน "📸 งาน"</li></ol>') +
+        '<p class="set-note">ลิงก์นี้เป็นลิงก์ลับ ให้เฉพาะคนในร้าน</p></section>';
+    } else {
+      html += '<section class="card"><div class="bk-status warn"><b>ปฏิทินอัตโนมัติยังไม่พร้อม</b><span>เจ้าของร้านต้องตั้งค่าบน GitHub ก่อน ระหว่างนี้ใช้ปุ่ม "📅 ลงปฏิทินในมือถือ" ในหน้างานได้</span></div></section>';
+    }
+    html += '<section class="card"><h2>👀 ในปฏิทินจะเห็น</h2><div class="cal-legend">' +
+      '<span>🟠 <span>งานที่ยังไม่ถึง / ยังไม่เสร็จ</span></span><span>🟢 <span>งานที่เสร็จแล้ว</span></span><span>⏳ <span>งานรอยืนยัน</span></span><span>🚫 <span>วันที่ร้านปิดรับงาน</span></span></div>' +
+      '<p class="set-note">กดที่งานจะเห็นรายละเอียด ลูกค้า เวลา สถานที่ และแผนที่ · แก้งานในแอปนี้ ปฏิทินเปลี่ยนตามเอง (ปฏิทินมือถือเป็นแบบดูอย่างเดียว ลบผิดไม่ได้) · Google อัปเดตเองทุก 6–24 ชม.</p></section>';
+    html += '<section class="card"><h2>⚡ งานด่วน (ตั้งเฉพาะเครื่องนี้)</h2>' +
+      '<label class="toggle"><input type="checkbox" role="switch" id="calAskTg"' + (calAskOn() ? ' checked' : '') + '><span class="tg-tx">⚡ ถามให้ลงปฏิทินทันที เมื่อลงงานที่จะถึงภายใน ' + CAL_SOON + ' วัน<small>กดครั้งเดียว งานขึ้นทันที ไม่ต้องรอ แต่จะเห็นซ้ำ 2 อันเมื่อปฏิทินอัตโนมัติอัปเดต ลบอันที่ใส่เองได้' + (ios ? ' · iPhone ที่ตั้งดึงข้อมูลทุก 15 นาที ปิดได้เลย' : '') + '</small></span></label>' +
+      '<p class="set-note">ทุกงานมีปุ่ม "📅 ลงปฏิทินในมือถือ" ในหน้างานด้วย</p></section>';
+    box.innerHTML = html;
   }
+  $('pageCal').addEventListener('click', function (e) {
+    if (e.target.closest('#calCopy')) copyText(calFeed()).then(function (ok) { toast(ok ? 'คัดลอกลิงก์ปฏิทินแล้ว' : 'คัดลอกไม่ได้'); });
+  });
+  $('pageCal').addEventListener('change', function (e) {
+    if (e.target.id === 'calAskTg') { lsSet(CAL_ASK_KEY, !!e.target.checked); toast(e.target.checked ? '⚡ เปิดถามลงปฏิทินงานด่วนแล้ว' : 'ปิดถามลงปฏิทินงานด่วนแล้ว'); }
+  });
 
   // ================= automatic backups on GitHub (backups/, made weekly by .github/backup/backup.mjs) =================
   var RESTORE_KEYS = ['settings', 'history', 'customers', 'jobs', 'trash'], restoring = false;
@@ -5337,6 +5378,7 @@
     if (names.indexOf('team') >= 0 && checkKicked()) return;
     if ($('jobModal').hidden) refreshPages(); else { updateNavDot(); if (names.indexOf('team') >= 0 && jEdit) renderJStaff(); }
     if (page === 'bill') { renderJobSel(); updateEvHint(); }
+    if (page === 'cal') renderCalPage();
     draw();
   }
   var SYNC_TX = { off: 'เก็บในเครื่อง', busy: 'กำลังซิงก์…', pending: 'รอบันทึก…', ok: 'ซิงก์แล้ว', offline: 'ไม่มีเน็ต', auth: 'เชื่อมไม่ได้', error: 'ซิงก์ไม่สำเร็จ' };
@@ -6669,7 +6711,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '208ac2a0a2c7';
+  var BUILD = '92535af4649f';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
@@ -7150,7 +7192,7 @@
     sheetHTML: sheetHTML, applySheetVars: applySheetVars, fitA4: fitA4,
     goPage: goPage, jobs: jobs, jobMoney: jobMoney, openJob: openJob, openPay: openPay,
     mergeSettings: mergeSettings, invite: function () { return INV; }, teamRaw: teamRaw, openDevice: openDevice, BUILD: function () { return BUILD; }, teamNames: teamNames, staffNames: staffNames, syncNow: syncNow, sync: function () { return { state: syncState, err: syncErr, SY: SY }; },
-    delivOf: delivOf, openMsg: openMsg, confetti: confetti, quickISO: quickISO, openCust: openCust, viewOnly: viewOnly, yearReport: yearReport, reportCSV: reportCSV, openSearch: openSearch, openSettings: openSettings, setMe: setMe, merge3: merge3, calSpan: function (j) { return calSpan(j); }, renderSettings: function () { renderSettings(); }, gcalLink: function (j) { return gcalLink(j); }, icsOf: function (j) { return icsOf(j); }, calShouldAsk: function (j, o) { return calShouldAsk(j, o); }, bkCheck: function (d) { return bkCheck(d); }, offOf: function (d) { return offOf(d); }, baseOfSettings: function (v) { return baseOf('settings', v); }, syncKeys: function () { return SYNC_KEYS; } };
+    delivOf: delivOf, openMsg: openMsg, confetti: confetti, quickISO: quickISO, openCust: openCust, viewOnly: viewOnly, yearReport: yearReport, reportCSV: reportCSV, openSearch: openSearch, openSettings: openSettings, setMe: setMe, merge3: merge3, calSpan: function (j) { return calSpan(j); }, renderCalPage: function () { renderCalPage(); }, renderSettings: function () { renderSettings(); }, gcalLink: function (j) { return gcalLink(j); }, icsOf: function (j) { return icsOf(j); }, calShouldAsk: function (j, o) { return calShouldAsk(j, o); }, bkCheck: function (d) { return bkCheck(d); }, offOf: function (d) { return offOf(d); }, baseOfSettings: function (v) { return baseOf('settings', v); }, syncKeys: function () { return SYNC_KEYS; } };
 })();
 </script>
 </body>
