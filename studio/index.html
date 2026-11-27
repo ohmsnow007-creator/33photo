@@ -2184,6 +2184,7 @@
       <div class="job-sec">👤 สำหรับพนักงาน · ไม่ต้องใช้ PIN</div>
       <div class="field"><label for="lockMe">ชื่อเล่นของคุณ</label><input id="lockMe" type="text" autocomplete="off" placeholder="เช่น พี่โอ, น้องเบล"><div class="hint">ชื่อนี้จะขึ้นในงานที่คุณเพิ่มหรือแก้ และใช้ดู "งานของฉัน" · บันทึกให้อัตโนมัติ ✓</div></div>
       <div class="btnrow" style="margin:0"><button class="btn" type="button" data-pastelink="1">🔗 วางลิงก์เข้าร้านใหม่</button></div>
+      <div class="btnrow" style="margin:0"><button class="btn danger" type="button" data-leave="1">ออกจากระบบและล้างข้อมูลในเครื่องนี้</button></div>
       <p class="lock-note" id="lockForgot"></p>
     </div>
   </div>
@@ -4125,6 +4126,8 @@
         confirmBox('ยกเลิกการเชื่อม GitHub?', 'ข้อมูลในเครื่องนี้ยังอยู่ ข้อมูลบน GitHub ก็ยังอยู่ แค่หยุดบันทึกขึ้นออนไลน์จากเครื่องนี้', 'ยกเลิกการเชื่อม', function () { syncDisconnect(false); });
         break;
       case 'syOffWipe':
+        askLeave(); break;
+      case 'syOffWipeOld':
         if (anyDirty()) { toast('ยังมีข้อมูลที่ยังไม่ขึ้น GitHub กดซิงก์ตอนนี้ก่อน'); break; }
         confirmBox('ออกจากระบบและล้างเครื่องนี้?', 'ลบรหัสเข้าถึงและข้อมูลทั้งหมดในเครื่องนี้ ข้อมูลทั้งหมดยังอยู่บน GitHub เชื่อมใหม่เมื่อไหร่ก็ดึงกลับมาได้', 'ออกและล้าง', function () { syncDisconnect(true); });
         break;
@@ -6074,6 +6077,28 @@
   $('joinPass').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); doJoin(); } });
   $('joinClose').addEventListener('click', closeJoin);
 
+  // log out + wipe: this device's name leaves the team list on every phone first, then the phone is cleared
+  function askLeave() {
+    if (anyDirty()) { toast('ยังมีข้อมูลที่ยังไม่ขึ้น GitHub รอให้ขึ้นว่า "ซิงก์แล้ว" ก่อน แล้วลองใหม่', 'err'); if (syncOn()) syncNow(); return; }
+    var me = myTeamEntry();
+    confirmBox('ออกจากระบบและล้างเครื่องนี้?', 'ลบรหัสเข้าถึงและข้อมูลทั้งหมดในเครื่องนี้' + (me ? ' และเอาชื่อ "' + me.name + '" ออกจากรายชื่อทีมงาน' : '') + ' · ข้อมูลร้านบน GitHub ยังอยู่ครบ เข้าใหม่ได้ด้วยลิงก์ร้าน', 'ออกและล้าง', leaveAndWipe);
+  }
+  function myTeamEntry() { var id = devId(); return teamRaw().filter(function (e) { return e && e.id === id && e.name && !e.hide; })[0] || null; }
+  function leaveAndWipe() {
+    var me = myTeamEntry();
+    if (!syncOn() || !me) { syncDisconnect(true); return; }
+    teamPut(me.id, me.name, true, { left: Date.now() });
+    SY.dirty.team = (SY.dirty.team || 0) + 1; sySave();
+    toast('⏳ กำลังเอาชื่อออกจากทีม…');
+    // a sync may already be running: keep pushing until team.json is on GitHub (a few tries)
+    (function push(n) {
+      Promise.resolve(syncNow()).then(function () {
+        if (!(SY.dirty.team > 0)) { syncDisconnect(true); return; }
+        if (n > 0) { setTimeout(function () { push(n - 1); }, 700); return; }
+        toast('❌ ส่งขึ้น GitHub ไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่ (ยังไม่ได้ล้างเครื่อง)', 'err');
+      });
+    })(4);
+  }
   function syncDisconnect(wipe) {
     SY = { sha: {}, base: {}, dirty: {} };
     if (wipe) { [SKEY, KEY, HKEY, CKEY, BKEY, JKEY, PKEY, YKEY, UKEY, TKEY].forEach(function (k) { localStorage.removeItem(k); }); location.reload(); return; }
@@ -6485,6 +6510,7 @@
     });
   }
   document.addEventListener('click', function (e) {
+    if (e.target.closest('[data-leave]')) { if (!$('lockModal').hidden) closeLock(); askLeave(); return; }
     if (e.target.closest('[data-pastelink]')) { if (!$('lockModal').hidden) closeLock(); openPasteLink(); return; }
     if (e.target.closest('[data-opensync]')) { openSyncSettings(); return; }
     if (e.target.closest('[data-gomine]')) { if (!meRaw()) return; mineOn = true; rawSet(MKEY, true); jobsV = 'list'; goPage('jobs'); }
@@ -6993,7 +7019,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '54d1cbefeff8';
+  var BUILD = '8778c3d92486';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
