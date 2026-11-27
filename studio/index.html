@@ -5306,8 +5306,10 @@
   function calMap(j) {
     var own = calOne(j.mapUrl);
     if (/^https?:\/\/\S+$/i.test(own)) return own;
-    var v = calOne(j.evVenue);
-    return v ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(v) : '';
+    // only a link someone sent (never a search made from the venue name)
+    var found = '';
+    [j.evVenue, j.cAddr, j.note].some(function (f) { var m = SELL_MAPS.exec(String(f || '')); if (m) found = m[0]; return !!m; });
+    return found;
   }
   function calDesc(j) {
     var d = [], st = calHM(j.evStart) ? calOne(j.evStart) : '', en = calHM(j.evEnd) ? calOne(j.evEnd) : '';
@@ -7051,7 +7053,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '64173c52cd12';
+  var BUILD = '8102e4a59c76';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
