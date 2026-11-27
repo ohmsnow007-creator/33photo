@@ -1257,6 +1257,29 @@
   /* ===== today / tomorrow ===== */
   .day-card { display: grid; gap: 12px; border-color: rgba(47,123,246,.4); }
   .h-sub { font-family: var(--font-body); font-weight: 400; font-size: 0.8rem; color: var(--muted); margin-left: 8px; }
+  .bill-top { display: grid; gap: 12px; }
+  .step h2 { display: flex; align-items: center; gap: 10px; }
+  .step-n { width: 26px; height: 26px; flex: none; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700;
+    color: var(--muted); background: var(--field); border: 1px solid var(--border); transition: background-color .2s, color .2s; }
+  .step.done .step-n { color: #fff; background: #2fb35a; border-color: #2fb35a; font-size: 0; }
+  .step.done .step-n::after { content: '✓'; font-size: 0.85rem; }
+  .step-v { margin-left: auto; font-family: var(--font-body); font-weight: 500; font-size: 0.82rem; color: var(--muted); max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #stSumV { color: var(--fg); font-family: var(--font-display); font-weight: 600; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+  .svc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .svc-chips:empty { display: none; }
+  .svc-chip { font: inherit; font-size: 0.85rem; min-height: 38px; padding: 0 12px; border-radius: 19px; cursor: pointer; color: var(--fg); background: var(--field); border: 1px dashed var(--border); }
+  .svc-chip:hover { border-color: var(--muted); }
+  .svc-chip b { color: var(--muted); font-weight: 500; margin-left: 4px; }
+  .more-opts { padding: 0 !important; }
+  .more-opts > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 14px 16px; min-height: 52px; }
+  .more-opts > summary::-webkit-details-marker { display: none; }
+  .more-opts > summary::after { content: '›'; margin-left: auto; font-size: 1.3rem; color: var(--muted); transition: transform .2s; }
+  .more-opts[open] > summary::after { transform: rotate(90deg); }
+  .mo-t { font-family: var(--font-display); font-weight: 500; flex: none; }
+  #billMoreSum { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 0.8rem; }
+  #billMoreSum.warn { color: #e5a01a; }
+  .mo-in { display: grid; gap: 14px; padding: 0 16px 16px; }
+  @media (prefers-reduced-motion: reduce) { .more-opts > summary::after, .step-n { transition: none; } }
   .todo-card { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .todo-card.past-card, .todo-card.dv-card { border-color: var(--border); }
   .todo-g { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; border: 0 !important; }
@@ -1731,24 +1754,75 @@
   </nav>
 
   <div class="form-col tab-active" id="panel-form" role="tabpanel" aria-labelledby="tab-form">
-    <section class="card">
-      <h2 data-l="secDoc">ข้อมูลบิล</h2>
+    <section class="card bill-top">
       <div class="seg" id="docSeg" role="group" aria-label="ประเภทเอกสาร"></div>
       <div class="field">
-        <label for="jobSel">งาน</label>
+        <label for="jobSel">📋 ดึงข้อมูลจากงาน</label>
         <div class="job-link">
           <select id="jobSel"></select>
           <button type="button" class="btn" id="jobOpen" hidden>ดูงาน</button>
         </div>
         <div class="hint" id="jobSelHint"></div>
       </div>
-      <div class="field">
-        <span class="lbl" data-l="fLang">ภาษาบนบิล</span>
-        <div class="seg" id="langSeg" role="group" aria-label="ภาษาบนบิล" style="--n:2">
-          <button type="button" data-lang="th" aria-pressed="true">ไทย</button>
-          <button type="button" data-lang="en" aria-pressed="false">English</button>
-        </div>
+    </section>
+
+    <section class="card step" id="stCust">
+      <h2><span class="step-n" aria-hidden="true">1</span><span data-l="secCust">ข้อมูลลูกค้า</span><small class="step-v" id="stCustV"></small></h2>
+      <div id="custChipsWrap" hidden>
+        <div class="lbl" data-l="favCust">ลูกค้าที่ใช้บ่อย</div>
+        <div class="chips-row" id="custChips"></div>
       </div>
+      <div class="field">
+        <label for="cName" data-l="fCName">ชื่อลูกค้า / บริษัท</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="cName" type="text" autocomplete="off" list="custList" placeholder="เช่น คุณสมชาย ใจดี" style="flex:1;min-width:0">
+          <button type="button" class="star" id="starCust" title="บันทึกเป็นลูกค้าที่ใช้บ่อย">☆</button>
+        </div>
+        <datalist id="custList"></datalist>
+      </div>
+      <div class="field"><label for="cAddr" data-l="fCAddr">ที่อยู่</label><textarea id="cAddr" rows="2" placeholder="ที่อยู่ลูกค้า"></textarea></div>
+      <div class="grid2">
+        <div class="field"><label for="cPhone" data-l="fCPhone">เบอร์โทร</label><input id="cPhone" type="tel" inputmode="tel" autocomplete="off" placeholder="08x xxx xxxx"></div>
+        <div class="field"><label for="cTax" data-l="fCTax">เลขผู้เสียภาษี</label><input id="cTax" type="text" inputmode="numeric" autocomplete="off" placeholder="ถ้ามี"></div>
+      </div>
+    </section>
+
+    <section class="card step" id="stItems">
+      <h2><span class="step-n" aria-hidden="true">2</span><span data-l="secItems">รายการ</span><small class="step-v" id="stItemsV"></small></h2>
+      <div class="svc-chips" id="svcChips" aria-label="แตะเพื่อเพิ่มบริการ"></div>
+      <div id="items" style="display:grid;gap:10px"></div>
+      <button class="btn dashed" id="addItem" type="button" data-l="addItem">+ เพิ่มรายการ</button>
+    </section>
+
+    <section class="card step" id="stEvent">
+      <h2><span class="step-n" aria-hidden="true">3</span><span data-l="secEvent">รายละเอียดงาน</span><small class="step-v" id="stEventV"></small></h2>
+      <div class="field">
+        <label for="evDate" data-l="fEvDate">วันงาน</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="evDate" type="date" data-quick="1" style="flex:1;min-width:0">
+          <button type="button" class="btn" id="evClear" style="flex:none;padding:0 12px">ล้าง</button>
+        </div>
+        <div class="hint" id="evDateHint"></div>
+        <div class="ev-clash" id="evClash" hidden></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label for="evStart" data-l="fEvStart">เริ่ม</label><input id="evStart" type="time"></div>
+        <div class="field"><label for="evEnd" data-l="fEvEnd">ถึง</label><input id="evEnd" type="time"></div>
+      </div>
+      <div class="field qchips-slot" data-qfor="evDate"><label>⚡ เลือกวันงานแบบเร็ว</label></div>
+      <div class="field"><label for="evVenue" data-l="fEvVenue">สถานที่จัดงาน</label><textarea id="evVenue" rows="2" placeholder="เช่น โรงแรม... ห้องบอลรูม ชั้น 2"></textarea></div>
+    </section>
+
+    <section class="card step" id="stSum">
+      <h2><span class="step-n" aria-hidden="true">4</span><span data-l="secSum">สรุปยอด</span><small class="step-v" id="stSumV"></small></h2>
+      <div class="field"><label for="discount" data-l="fDisc">ส่วนลด (บาท)</label><input id="discount" class="num" type="text" inputmode="decimal" placeholder="0"></div>
+      <label class="toggle"><input type="checkbox" id="vat"> <span id="vatLbl">คิดภาษีมูลค่าเพิ่ม 7%</span></label>
+      <label class="toggle"><input type="checkbox" id="wht"> <span id="whtLbl">หักภาษี ณ ที่จ่าย 3%</span></label>
+    </section>
+
+    <details class="card more-opts" id="billMore">
+      <summary><span class="mo-t">⚙️ ตัวเลือกเพิ่มเติม</span><small id="billMoreSum"></small></summary>
+      <div class="mo-in">
       <div class="field">
         <label for="billNo" data-l="fNo">เลขที่</label>
         <input id="billNo" type="text" autocomplete="off">
@@ -1769,65 +1843,16 @@
           <button type="button" class="btn" id="payEdit" hidden>แก้ข้อความ</button>
         </div>
       </div>
-    </section>
-
-    <section class="card">
-      <h2 data-l="secCust">ข้อมูลลูกค้า</h2>
-      <div id="custChipsWrap" hidden>
-        <div class="lbl" data-l="favCust">ลูกค้าที่ใช้บ่อย</div>
-        <div class="chips-row" id="custChips"></div>
-      </div>
       <div class="field">
-        <label for="cName" data-l="fCName">ชื่อลูกค้า / บริษัท</label>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input id="cName" type="text" autocomplete="off" list="custList" placeholder="เช่น คุณสมชาย ใจดี" style="flex:1;min-width:0">
-          <button type="button" class="star" id="starCust" title="บันทึกเป็นลูกค้าที่ใช้บ่อย">☆</button>
+        <span class="lbl" data-l="fLang">ภาษาบนบิล</span>
+        <div class="seg" id="langSeg" role="group" aria-label="ภาษาบนบิล" style="--n:2">
+          <button type="button" data-lang="th" aria-pressed="true">ไทย</button>
+          <button type="button" data-lang="en" aria-pressed="false">English</button>
         </div>
-        <datalist id="custList"></datalist>
       </div>
-      <div class="field"><label for="cAddr" data-l="fCAddr">ที่อยู่</label><textarea id="cAddr" rows="2" placeholder="ที่อยู่ลูกค้า"></textarea></div>
-      <div class="grid2">
-        <div class="field"><label for="cPhone" data-l="fCPhone">เบอร์โทร</label><input id="cPhone" type="tel" inputmode="tel" autocomplete="off" placeholder="08x xxx xxxx"></div>
-        <div class="field"><label for="cTax" data-l="fCTax">เลขผู้เสียภาษี</label><input id="cTax" type="text" inputmode="numeric" autocomplete="off" placeholder="ถ้ามี"></div>
+      <div class="field"><label for="notes" data-l="secNotes">หมายเหตุ</label><textarea id="notes" rows="3" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)"></textarea></div>
       </div>
-    </section>
-
-    <section class="card">
-      <h2 data-l="secEvent">รายละเอียดงาน</h2>
-      <div class="field">
-        <label for="evDate" data-l="fEvDate">วันงาน</label>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input id="evDate" type="date" data-quick="1" style="flex:1;min-width:0">
-          <button type="button" class="btn" id="evClear" style="flex:none;padding:0 12px">ล้าง</button>
-        </div>
-        <div class="hint" id="evDateHint"></div>
-        <div class="ev-clash" id="evClash" hidden></div>
-      </div>
-      <div class="grid2">
-        <div class="field"><label for="evStart" data-l="fEvStart">เริ่ม</label><input id="evStart" type="time"></div>
-        <div class="field"><label for="evEnd" data-l="fEvEnd">ถึง</label><input id="evEnd" type="time"></div>
-      </div>
-      <div class="field qchips-slot" data-qfor="evDate"><label>⚡ เลือกวันงานแบบเร็ว</label></div>
-      <div class="field"><label for="evVenue" data-l="fEvVenue">สถานที่จัดงาน</label><textarea id="evVenue" rows="2" placeholder="เช่น โรงแรม... ห้องบอลรูม ชั้น 2"></textarea></div>
-    </section>
-
-    <section class="card">
-      <h2 data-l="secItems">รายการ</h2>
-      <div id="items" style="display:grid;gap:10px"></div>
-      <button class="btn dashed" id="addItem" type="button" data-l="addItem">+ เพิ่มรายการ</button>
-    </section>
-
-    <section class="card">
-      <h2 data-l="secSum">สรุปยอด</h2>
-      <div class="field"><label for="discount" data-l="fDisc">ส่วนลด (บาท)</label><input id="discount" class="num" type="text" inputmode="decimal" placeholder="0"></div>
-      <label class="toggle"><input type="checkbox" id="vat"> <span id="vatLbl">คิดภาษีมูลค่าเพิ่ม 7%</span></label>
-      <label class="toggle"><input type="checkbox" id="wht"> <span id="whtLbl">หักภาษี ณ ที่จ่าย 3%</span></label>
-    </section>
-
-    <section class="card">
-      <h2 data-l="secNotes">หมายเหตุ</h2>
-      <div class="field"><label for="notes" class="sr">หมายเหตุ</label><textarea id="notes" rows="3" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)"></textarea></div>
-    </section>
+    </details>
   </div>
 
   <div class="preview-col" id="panel-preview" role="tabpanel" aria-labelledby="tab-preview">
@@ -2686,6 +2711,7 @@
       $('barTotal').textContent = '฿' + money(totals().grand);
       var no = curNo();
       $('noHint').hidden = !(no && histHas(state.docType, no));
+      renderSvcChips(); billSteps();
     }, 0);
   }
   if (window.ResizeObserver) new ResizeObserver(fitPreview).observe(previewFrame);
@@ -2855,7 +2881,31 @@
 
   // ---------- items ----------
   var itemsEl = $('items');
+  // tap a service to add it (replaces the untouched starter row)
+  function renderSvcChips() {
+    var box = $('svcChips');
+    if (!box) return;
+    box.innerHTML = S.services.slice(0, 10).map(function (sv, i) {
+      return '<button type="button" class="svc-chip" data-svc="' + i + '">+ ' + esc(sv.name) + (String(sv.price).trim() ? '<b>฿' + esc(money(num(sv.price))).replace(/\.00$/, '') + '</b>' : '') + '</button>';
+    }).join('');
+  }
+  function billSteps() {
+    if (!$('stCust')) return;
+    var hasItem = state.items.some(function (it) { return num(it.price) > 0; });
+    $('stCust').classList.toggle('done', !!String(state.cName || '').trim());
+    $('stCustV').textContent = String(state.cName || '').trim();
+    $('stItems').classList.toggle('done', hasItem);
+    $('stItemsV').textContent = state.items.length > 1 ? state.items.length + ' รายการ' : '';
+    $('stEvent').classList.toggle('done', !!state.evDate);
+    $('stEventV').textContent = state.evDate ? thaiShort(state.evDate) + (state.evStart ? ' · ' + state.evStart : '') : 'ไม่บังคับ';
+    $('stSum').classList.toggle('done', hasItem);
+    $('stSumV').textContent = $('barTotal') ? $('barTotal').textContent : '';
+    var dup = $('noHint') && !$('noHint').hidden, py = payById(state.pay);
+    $('billMoreSum').textContent = (dup ? '⚠️ ' : '') + [$('billNo').value, state.date ? thaiShort(state.date) : '', state.lang === 'en' ? 'English' : 'ไทย', py ? py.t || '' : ''].filter(Boolean).join(' · ');
+    $('billMoreSum').classList.toggle('warn', dup);
+  }
   function renderItems() {
+    renderSvcChips();
     itemsEl.innerHTML = '';
     state.items.forEach(function (it, i) { itemsEl.appendChild(itemEl(it, i)); });
   }
@@ -2942,6 +2992,15 @@
     });
     return box;
   }
+  $('svcChips').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-svc]'), sv = b && S.services[+b.getAttribute('data-svc')];
+    if (!sv) return;
+    var it = { service: sv.name, custom: '', hours: sv.hours || '', price: String(sv.price).trim() ? money(num(sv.price)) : '' };
+    var only = state.items.length === 1 && JSON.stringify(state.items[0]) === JSON.stringify(blankItem());
+    if (only || !state.items.length) state.items = [it]; else state.items.push(it);
+    persist(); renderItems(); draw();
+    toast('เพิ่ม ' + sv.name + ' แล้ว');
+  });
   $('addItem').addEventListener('click', function () {
     state.items.push(blankItem());
     persist(); renderItems(); draw();
@@ -6894,7 +6953,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '6fc5dcc98179';
+  var BUILD = '6ed9aab0bca1';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
