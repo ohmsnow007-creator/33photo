@@ -2039,7 +2039,7 @@
         <div class="field"><label for="j_cPhone">เบอร์โทร</label><input id="j_cPhone" type="tel" inputmode="tel" autocomplete="off" placeholder="08x xxx xxxx"></div>
         <div class="field"><label for="j_price">ราคาที่ตกลง (บาท)</label><input id="j_price" class="num" type="text" inputmode="decimal" autocomplete="off" placeholder="ใช้ยอดจากบิล"></div>
       </div>
-      <div class="field"><label for="j_cAddr">ที่อยู่ลูกค้า</label><textarea id="j_cAddr" rows="2" placeholder="ถ้ามี"></textarea></div>
+      <div class="field"><label for="j_cAddr">ที่อยู่</label><textarea id="j_cAddr" rows="2" placeholder="ถ้ามี"></textarea></div>
       <div class="field"><label for="j_note">โน้ตงาน</label><textarea id="j_note" rows="2" placeholder="เช่น ธีมสีขาวทอง, ต้องเข้าก่อน 1 ชม."></textarea></div>
       <p class="hint" id="jAfterHint" hidden>💡 ส่งข้อความถึงลูกค้าและตั้งกำหนดส่งรูป ทำได้หลังบันทึกงานแล้ว</p>
       <div id="jAfter">
@@ -2368,7 +2368,7 @@
       photos: 'สวัสดีครับ {customer}\nรูปงาน{job} ({date}) เสร็จเรียบร้อยแล้วครับ 🎉\nดาวน์โหลดได้ที่ลิงก์นี้เลยครับ\n{link}\nถ้าชอบผลงาน ฝากรีวิวหรือแนะนำเพื่อนๆ ด้วยนะครับ ขอบคุณที่ใช้บริการ {company} ครับ',
       thanks: 'สวัสดีครับ {customer}\nขอบคุณที่ไว้วางใจให้ {company} ดูแลงาน{job} นะครับ\nทีมงานกำลังคัดและแต่งรูปให้ คาดว่าส่งได้ภายใน {deliverBy} ครับ\nมีอะไรสอบถามได้ตลอดเลยครับ 🙏',
       accept: 'สวัสดีครับ {customer}\n{company} รับงานเรียบร้อยครับ 🙏\nรบกวนตรวจรายละเอียดอีกครั้งนะครับ\n\n📸 งาน: {job}\n📅 วันงาน: {date}\n⏰ เวลา: {time}\n📍 สถานที่: {venue}\n💰 ราคา: ฿{total}\n✅ ชำระแล้ว: ฿{paid}\n💳 คงเหลือ: ฿{due}\n\nถ้ามีอะไรผิดหรืออยากเปลี่ยน แจ้งได้เลยครับ\nโทร {phone}',
-      form: 'สวัสดีครับ ขอบคุณที่สนใจ {company} 🙏\nรบกวนกรอกรายละเอียดด้านล่าง แล้วส่งกลับมาเพื่อจองคิวนะครับ\n\nชื่อลูกค้า :\nเบอร์โทร :\nชื่องาน :\nวันงาน Ex. 01/01/2569 :\nเวลา (เริ่ม-จบ) :\nสถานที่จัดงาน :\nลิงก์ Google Maps :\nบริการที่สนใจ :\nหมายเหตุเพิ่มเติม :',
+      form: 'สวัสดีครับ ขอบคุณที่สนใจ {company} 🙏\nรบกวนกรอกรายละเอียดด้านล่าง แล้วส่งกลับมาเพื่อจองคิวนะครับ\n\nชื่อลูกค้า :\nเบอร์โทร :\nชื่องาน :\nวันงาน Ex. 01/01/2569 :\nเวลา (เริ่ม-จบ) :\nที่อยู่ :\nสถานที่จัดงาน Ex อาคาร1 :\nลิงก์ Google Maps (ถ้ามี) :\nบริการที่สนใจ :\nหมายเหตุเพิ่มเติม :',
       price: '📸 ราคาบริการ {company}\n\n{list}\n\n📅 เช็กคิวว่าง: {availLink}\nสนใจวันไหน ทักมาจองได้เลยครับ 🙏'
     }
   };
@@ -7043,7 +7043,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '31fbd23fbc16';
+  var BUILD = '598495af3d31';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
@@ -7271,9 +7271,10 @@
   }
   function sellVals() { return { company: S.company.name, phone: S.company.phone, list: sellPrices(), availLink: typeof availPage === 'function' ? availPage() : '' }; }
   var OLD_FORM = 'สวัสดีครับ ขอบคุณที่สนใจ {company} 🙏\nรบกวนกรอกรายละเอียดด้านล่าง แล้วส่งกลับมาเพื่อจองคิวนะครับ\n\nชื่อ-นามสกุล :\nเบอร์โทร :\nชื่องาน / ประเภทงาน :\nวันงาน :\nเวลา (เริ่ม-จบ) :\nสถานที่จัดงาน :\nลิงก์ Google Maps :\nบริการที่สนใจ :\nจำนวนแขก (โดยประมาณ) :\nหมายเหตุเพิ่มเติม :';
+  var OLD_FORM3 = 'สวัสดีครับ ขอบคุณที่สนใจ {company} 🙏\nรบกวนกรอกรายละเอียดด้านล่าง แล้วส่งกลับมาเพื่อจองคิวนะครับ\n\nชื่อลูกค้า :\nเบอร์โทร :\nชื่องาน :\nวันงาน Ex. 01/01/2569 :\nเวลา (เริ่ม-จบ) :\nสถานที่จัดงาน :\nลิงก์ Google Maps :\nบริการที่สนใจ :\nหมายเหตุเพิ่มเติม :';
   var OLD_FORM2 = 'สวัสดีครับ ขอบคุณที่สนใจ {company} 🙏\nรบกวนกรอกรายละเอียดด้านล่าง แล้วส่งกลับมาเพื่อจองคิวนะครับ\n\nชื่อลูกค้า :\nเบอร์โทร :\nชื่องาน / ประเภทงาน :\nวันงาน Ex. 01/01/2569 :\nเวลา (เริ่ม-จบ) :\nสถานที่จัดงาน :\nลิงก์ Google Maps :\nบริการที่สนใจ :\nหมายเหตุเพิ่มเติม :';
   function renderSell() {
-    if (S.msgs && (S.msgs.form === OLD_FORM || S.msgs.form === OLD_FORM2) && !viewOnly()) { S.msgs.form = DEFAULTS.msgs.form; saveS(); }
+    if (S.msgs && (S.msgs.form === OLD_FORM || S.msgs.form === OLD_FORM2 || S.msgs.form === OLD_FORM3) && !viewOnly()) { S.msgs.form = DEFAULTS.msgs.form; saveS(); }
     Array.prototype.forEach.call($('sellKind').children, function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-k') === sellKind)); });
     var paste = sellKind === 'paste', msgs = S.msgs || DEFAULTS.msgs;
     $('sellSend').hidden = paste; $('sellPaste').hidden = !paste;
@@ -7335,7 +7336,7 @@
       else if (/เบอร์|โทร|tel|phone|มือถือ/.test(k)) j.cPhone = v;
       else if (/ที่อยู่|address/.test(k)) j.cAddr = v;
       else if (/ชื่อ|นามสกุล|ลูกค้า|name/.test(k)) j.cName = v;
-      else if (/สถานที่|location|venue|ที่จัด/.test(k)) { var u2 = SELL_MAPS.exec(v); if (u2) { j.mapUrl = j.mapUrl || u2[0]; v = v.replace(u2[0], '').trim(); } if (v) j.evVenue = v; }
+      else if (/สถานที่|location|venue|ที่จัด/.test(k)) { if (/^อาคาร\s*1$/.test(v)) return; var u2 = SELL_MAPS.exec(v); if (u2) { j.mapUrl = j.mapUrl || u2[0]; v = v.replace(u2[0], '').trim(); } if (v) j.evVenue = v; }
       else if (/บริการ|แพ็กเกจ|แพคเกจ|package|service/.test(k)) { if (!j.title) j.title = v; else notes.push('บริการที่สนใจ: ' + v); }
       // the customer's own remark becomes the job note as is (first); anything else follows with its label
       else if (/หมายเหตุ|โน้ต|note|remark/.test(k)) remark.push(v);
