@@ -5167,13 +5167,13 @@
           : '<ol class="cp-steps"><li><span>กดปุ่ม <b>เพิ่มใน Google Calendar</b> แล้วกด <b>เพิ่ม</b><small>ถ้าในมือถือไม่ขึ้นหน้าเพิ่มปฏิทิน ให้กดปุ่มเดียวกันในคอม (บัญชี Google เดียวกัน)</small></span></li>' +
             '<li><span>ในแอป Google Calendar → ตั้งค่า → เปิด <b>ซิงค์</b> ปฏิทิน "📸 งาน"</span></li></ol>') +
         '<div class="cp-acts">' + (ios ? iBtn + gBtn : gBtn + iBtn) + '<button class="btn" type="button" id="calCopy">' + cpSvg('copy', 18) + 'คัดลอกลิงก์ปฏิทิน</button></div>' +
-        '<p class="cp-note">' + cpSvg('lock', 15) + '<span>ลิงก์ลับ ให้เฉพาะคนในร้าน · ในปฏิทินไม่มีเบอร์ลูกค้า</span></p>';
+        '<p class="cp-note">' + cpSvg('lock', 15) + '<span>ลิงก์ลับ มีเบอร์และรายละเอียดลูกค้า ให้เฉพาะคนในร้าน</span></p>';
     } else {
       html += '<p class="cp-note">' + cpSvg('lock', 15) + '<span>เจ้าของร้านต้องตั้งค่าบน GitHub ก่อน ระหว่างนี้ใช้ปุ่ม "📅 ลงปฏิทินในมือถือ" ในหน้างานได้</span></p>';
     }
     html += '</section><section class="card">' + cpHead('eye', '#8b5cf6', 'ในปฏิทินจะเห็นแบบนี้') + cpPreview() +
       '<div class="cal-legend"><span>🟠 ยังไม่ถึง / ยังไม่เสร็จ</span><span>🟢 เสร็จแล้ว</span><span>⏳ รอยืนยัน</span><span>🚫 ร้านปิดรับงาน</span></div>' +
-      '<p class="cp-note">' + cpSvg('clock', 15) + '<span>กดที่งานเห็นลูกค้า เวลา สถานที่ และแผนที่ · ปฏิทินมือถือดูอย่างเดียว ลบผิดไม่ได้ · Google อัปเดตเองทุก 6–24 ชม.</span></p></section></div>';
+      '<p class="cp-note">' + cpSvg('clock', 15) + '<span>กดที่งานเห็นลูกค้า เบอร์ เวลา สถานที่ แผนที่ ทีม และหมายเหตุ · ปฏิทินมือถือดูอย่างเดียว ลบผิดไม่ได้ · Google อัปเดตเองทุก 6–24 ชม.</span></p></section></div>';
     html += '<section class="card">' + cpHead('bolt', '#e08a16', 'งานด่วน · ตั้งเฉพาะเครื่องนี้') +
       '<label class="toggle"><input type="checkbox" role="switch" id="calAskTg"' + (calAskOn() ? ' checked' : '') + '><span class="tg-tx">ถามให้ลงปฏิทินทันที เมื่อลงงานที่จะถึงภายใน ' + CAL_SOON + ' วัน<small>กดครั้งเดียวงานขึ้นทันที ไม่ต้องรอ แต่จะเห็นซ้ำ 2 อันเมื่อปฏิทินอัตโนมัติอัปเดต ลบอันที่ใส่เองได้' + (isIOS() ? ' · iPhone ที่ตั้งดึงข้อมูลทุก 15 นาที ปิดได้เลย' : '') + '</small></span></label>' +
       '<p class="cp-note">' + cpSvg('cal', 15) + '<span>ทุกงานมีปุ่ม "📅 ลงปฏิทินในมือถือ" ในหน้างานด้วย</span></p></section>';
@@ -6784,7 +6784,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '55142ec57c98';
+  var BUILD = 'f97f22b53abf';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
