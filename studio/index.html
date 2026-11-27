@@ -1457,6 +1457,9 @@
   .gate p { margin: 0 0 6px; color: var(--muted); line-height: 1.6; }
   .gate .btn { min-height: 50px; justify-content: center; }
   .gate small { color: var(--muted); font-size: 0.8rem; line-height: 1.5; }
+  .gate-own { display: grid; gap: 10px; text-align: left; padding: 14px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); }
+  .gate-own[hidden] { display: none; }
+  .gate { overflow-y: auto; }
   body.gated { overflow: hidden; }
   .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 95; overflow: hidden; }
   .confetti i { position: absolute; top: -12px; width: 9px; height: 14px; border-radius: 2px; opacity: .95; animation: cfall var(--d, 1.6s) cubic-bezier(.25,.6,.5,1) forwards; }
@@ -2094,7 +2097,14 @@
     <h1 id="gateT">33PHOTO Studio</h1>
     <p>แอปนี้ใช้ได้เฉพาะคนในร้าน<br>เปิดจาก<b>ลิงก์ที่ร้านส่งให้</b> แล้วใส่ชื่อกับรหัสร้าน</p>
     <button class="btn primary" type="button" data-pastelink="1">🔗 วางลิงก์เข้าร่วมร้าน</button>
-    <button class="btn" type="button" data-opensync="1">เจ้าของร้าน: เชื่อมข้อมูลร้าน (GitHub)</button>
+    <button class="btn" type="button" id="gateOwnBtn" aria-expanded="false" aria-controls="gateOwn">เจ้าของร้าน: เชื่อมข้อมูลร้าน (GitHub)</button>
+    <form class="gate-own" id="gateOwn" hidden autocomplete="off">
+      <div class="field"><label for="gOwner">ชื่อบัญชี GitHub</label><input id="gOwner" type="text" autocapitalize="off" spellcheck="false"></div>
+      <div class="field"><label for="gRepo">ชื่อ repo</label><input id="gRepo" type="text" value="33photo-data" autocapitalize="off" spellcheck="false"></div>
+      <div class="field"><label for="gToken">รหัสเข้าถึง (token)</label><input id="gToken" type="password" autocapitalize="off" spellcheck="false" placeholder="github_pat_..."></div>
+      <div class="err-msg" id="gErr" hidden></div>
+      <button class="btn primary" type="submit" id="gGo">เชื่อมต่อ</button>
+    </form>
     <small>ยังไม่มีลิงก์? ขอจากเจ้าของร้าน: ตั้งค่า → เก็บข้อมูลออนไลน์ → เพิ่มเครื่องอื่น</small>
   </div>
 </div>
@@ -3818,7 +3828,7 @@
       }
     }, full ? 0 : 150);
   }
-  function openSettings() { if (viewOnly()) { openLock(openSettingsNow); return; } if (unlocked()) openSettingsNow(); else openLock(openSettingsNow); }
+  function openSettings() { if (gateNeeded()) { gateOwner(true); return; } if (viewOnly()) { openLock(openSettingsNow); return; } if (unlocked()) openSettingsNow(); else openLock(openSettingsNow); }
   function openSettingsNow() {
     if (!setJump) curSec = 'home';
     setJump = false; setEntry = curSec;
@@ -6512,7 +6522,7 @@
   document.addEventListener('click', function (e) {
     if (e.target.closest('[data-leave]')) { if (!$('lockModal').hidden) closeLock(); askLeave(); return; }
     if (e.target.closest('[data-pastelink]')) { if (!$('lockModal').hidden) closeLock(); openPasteLink(); return; }
-    if (e.target.closest('[data-opensync]')) { openSyncSettings(); return; }
+    if (e.target.closest('[data-opensync]')) { if (gateNeeded()) gateOwner(true); else openSyncSettings(); return; }
     if (e.target.closest('[data-gomine]')) { if (!meRaw()) return; mineOn = true; rawSet(MKEY, true); jobsV = 'list'; goPage('jobs'); }
   });
   function replaceToken() {
@@ -7019,7 +7029,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '8778c3d92486';
+  var BUILD = '0d959016635a';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
@@ -7606,6 +7616,24 @@
   setSync('off');
   // the hosted app works only for devices linked to the shop (owner connected GitHub, or joined from the shop's link)
   function gateNeeded() { return /\.github\.io$/i.test(location.hostname || '') && !syncOn(); }
+  function gateOwner(open) {
+    var f = $('gateOwn'); if (!f) return;
+    f.hidden = !open; $('gateOwnBtn').setAttribute('aria-expanded', String(!!open));
+    if (open) setTimeout(function () { (($('gOwner').value ? $('gToken') : $('gOwner'))).focus(); }, 30);
+  }
+  $('gateOwnBtn').addEventListener('click', function () { gateOwner($('gateOwn').hidden); });
+  $('gateOwn').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var cfg = { owner: $('gOwner').value.trim(), repo: $('gRepo').value.trim(), token: $('gToken').value.trim() }, err = $('gErr'), btn = $('gGo');
+    function fail(m) { err.textContent = m; err.hidden = false; btn.disabled = false; btn.textContent = 'เชื่อมต่อ'; }
+    if (!cfg.owner || !cfg.repo || !cfg.token) { fail('กรอกให้ครบทั้ง 3 ช่อง'); return; }
+    err.hidden = true; btn.disabled = true; btn.textContent = 'กำลังเชื่อม…';
+    connectCfg(cfg).then(function (msg) {
+      if (msg) { fail(msg); return; }
+      $('gToken').value = ''; btn.disabled = false; btn.textContent = 'เชื่อมต่อ';
+      renderGate(); goPage('home'); toast('เชื่อมข้อมูลร้านแล้ว');
+    });
+  });
   function renderGate() { var g = $('gate'), on = gateNeeded(); if (g) g.hidden = !on; document.body.classList.toggle('gated', on); }
   renderGate();
   var jm = /^#join=([\w-]+)$/.exec(location.hash || '');
