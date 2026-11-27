@@ -1360,6 +1360,8 @@
   .day-foot .mini.bad { color: #c92a2a; border-color: rgba(229,72,77,.5); }
   /* ===== messages to customers ===== */
   .msg-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  #jAfter { display: grid; gap: 12px; }
+  #jAfter[hidden] { display: none; }
   .sell-btn { font-weight: 600; }
   .sell-pane { display: grid; gap: 12px; }
   .sell-step { margin: 0; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
@@ -2037,6 +2039,8 @@
       </div>
       <div class="field"><label for="j_cAddr">ที่อยู่ลูกค้า</label><textarea id="j_cAddr" rows="2" placeholder="ถ้ามี"></textarea></div>
       <div class="field"><label for="j_note">โน้ตงาน</label><textarea id="j_note" rows="2" placeholder="เช่น ธีมสีขาวทอง, ต้องเข้าก่อน 1 ชม."></textarea></div>
+      <p class="hint" id="jAfterHint" hidden>💡 ส่งข้อความถึงลูกค้าและตั้งกำหนดส่งรูป ทำได้หลังบันทึกงานแล้ว</p>
+      <div id="jAfter">
       <div class="job-sec">การส่งงานลูกค้า</div>
       <div class="field">
         <span class="lbl">สถานะส่งรูป</span>
@@ -2054,6 +2058,7 @@
         <button type="button" class="btn" data-msg="due">💰 แจ้งยอดคงเหลือ</button>
         <button type="button" class="btn" data-msg="photos">📷 ส่งลิงก์รูป</button>
         <button type="button" class="btn" data-msg="thanks">🙏 ขอบคุณ</button>
+      </div>
       </div>
       <div class="job-sec sec-money">การเงินและเอกสาร</div>
       <div id="jDocs" style="display:grid;gap:10px"></div>
@@ -4674,6 +4679,8 @@
     $('svcList').innerHTML = S.services.map(function (s) { return '<option value="' + esc(s.name) + '">'; }).join('');
     $('jErr').hidden = true;
     $('jDel').hidden = !j.id;
+    // a job not saved yet has no photos to deliver and nothing to tell the customer about
+    $('jAfter').hidden = !j.id; $('jAfterHint').hidden = !!j.id;
     $('jCal').hidden = !j.id || j.status === 'cancel' || !isoParts(j.evDate);
     $('jLine').hidden = !j.id || ro || !syncOn(); $('jLine').disabled = false; $('jLine').textContent = '📤 ส่งงานนี้ให้ทีมทาง LINE';
     $('j_dvDue').value = (j.deliv && j.deliv.due) || ''; $('j_dvLink').value = (j.deliv && j.deliv.link) || '';
@@ -7026,7 +7033,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '6b647b9c6f28';
+  var BUILD = '3bdf7ee15e2d';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
