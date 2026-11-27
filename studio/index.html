@@ -2031,8 +2031,6 @@
         <div class="field"><label for="j_evEnd">ถึง</label><input id="j_evEnd" type="time"></div>
       </div>
       <div class="time-warn" id="jTimeWarn" hidden></div>
-      <div class="field"><label for="j_evVenue">สถานที่</label><textarea id="j_evVenue" rows="2" placeholder="เช่น โรงแรม... ห้องบอลรูม ชั้น 2"></textarea></div>
-      <div class="field"><label for="j_mapUrl">🗺️ ลิงก์ Google Maps</label><input id="j_mapUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="วางลิงก์ที่ลูกค้าส่งมา เช่น https://maps.app.goo.gl/…"><div class="hint">บอท LINE จะส่งลิงก์นี้ให้ทีม · ถ้าวางลิงก์ไว้ในที่อยู่ลูกค้า ระบบย้ายมาใส่ช่องนี้ให้ (บิลจะได้ไม่มีลิงก์)</div></div>
       <div class="job-sec">ลูกค้า</div>
       <div class="field"><label for="j_cName">ชื่อลูกค้า / บริษัท</label><input id="j_cName" type="text" list="custList" autocomplete="off" placeholder="เช่น คุณสมชาย ใจดี"><div id="jCustHint"></div></div>
       <div class="grid2">
@@ -2040,6 +2038,8 @@
         <div class="field"><label for="j_price">ราคาที่ตกลง (บาท)</label><input id="j_price" class="num" type="text" inputmode="decimal" autocomplete="off" placeholder="ใช้ยอดจากบิล"></div>
       </div>
       <div class="field"><label for="j_cAddr">ที่อยู่</label><textarea id="j_cAddr" rows="2" placeholder="ถ้ามี"></textarea></div>
+      <div class="field"><label for="j_evVenue">สถานที่</label><textarea id="j_evVenue" rows="2" placeholder="เช่น โรงแรม... ห้องบอลรูม ชั้น 2"></textarea></div>
+      <div class="field"><label for="j_mapUrl">🗺️ ลิงก์ Google Maps</label><input id="j_mapUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="วางลิงก์ที่ลูกค้าส่งมา เช่น https://maps.app.goo.gl/…"><div class="hint">บอท LINE จะส่งลิงก์นี้ให้ทีม · ถ้าวางลิงก์ไว้ในช่องที่อยู่ ระบบย้ายมาใส่ช่องนี้ให้ (บิลจะได้ไม่มีลิงก์)</div></div>
       <div class="field"><label for="j_note">โน้ตงาน</label><textarea id="j_note" rows="2" placeholder="เช่น ธีมสีขาวทอง, ต้องเข้าก่อน 1 ชม."></textarea></div>
       <p class="hint" id="jAfterHint" hidden>💡 ส่งข้อความถึงลูกค้าและตั้งกำหนดส่งรูป ทำได้หลังบันทึกงานแล้ว</p>
       <div id="jAfter">
@@ -7053,7 +7053,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '8102e4a59c76';
+  var BUILD = '2e470dd057ce';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
