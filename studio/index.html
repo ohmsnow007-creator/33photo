@@ -5372,7 +5372,7 @@
       '<p class="cp-note" style="margin:0">' + cpSvg('lock', 15) + '<span>ลูกค้าเห็นแค่วันว่าง / มีงานแล้ว / เต็ม / ปิดรับ ไม่เห็นชื่อ เบอร์ หรือสถานที่ กดวันแล้วทักจองทาง LINE ได้เลย</span></p>' +
       '<div class="cp-acts"><button class="btn primary" type="button" id="avShare">' + cpSvg('share', 18) + 'ส่งลิงก์ให้ลูกค้า</button>' +
       '<button class="btn" type="button" id="avCopy">' + cpSvg('copy', 18) + 'คัดลอกลิงก์</button><a class="btn" href="' + esc(ap) + '" target="_blank" rel="noopener">' + cpSvg('eye', 18) + 'เปิดดูหน้าที่ลูกค้าเห็น</a></div>' +
-      (viewOnly() ? '' : '<div class="av-max"><span>ขึ้นว่า <b>เต็ม</b> เมื่อวันนั้นมีงาน</span><div class="av-step"><button class="btn" type="button" data-avmax="-1" aria-label="ลด"' + (mx <= 1 ? ' disabled' : '') + '>−</button><b id="avMaxN">' + mx + '</b><button class="btn" type="button" data-avmax="1" aria-label="เพิ่ม"' + (mx >= 10 ? ' disabled' : '') + '>+</button></div><span>งาน</span></div>') +
+      (viewOnly() ? '' : '<div class="av-max"><span>ขึ้นว่า <b>เต็ม</b> เมื่อวันนั้นมีงาน</span><div class="av-step"><button class="btn" type="button" data-avmax="-1" aria-label="ลด"' + (mx <= 1 ? ' disabled' : '') + '>−</button><b id="avMaxN">' + mx + '</b><button class="btn" type="button" data-avmax="1" aria-label="เพิ่ม"' + (mx >= 10 ? ' disabled' : '') + '>+</button><span>งาน</span></div></div>') +
       '</section>';
     html += '<section class="card">' + cpHead('bolt', '#e08a16', 'งานด่วน · ตั้งเฉพาะเครื่องนี้') +
       '<label class="toggle"><input type="checkbox" role="switch" id="calAskTg"' + (calAskOn() ? ' checked' : '') + '><span class="tg-tx">ถามให้ลงปฏิทินทันที เมื่อลงงานที่จะถึงภายใน ' + CAL_SOON + ' วัน<small>กดครั้งเดียวงานขึ้นทันที ไม่ต้องรอ แต่จะเห็นซ้ำ 2 อันเมื่อปฏิทินอัตโนมัติอัปเดต ลบอันที่ใส่เองได้' + (isIOS() ? ' · iPhone ที่ตั้งดึงข้อมูลทุก 15 นาที ปิดได้เลย' : '') + '</small></span></label>' +
@@ -6994,7 +6994,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '55b2dc5d0f7b';
+  var BUILD = 'ea6f15c00591';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
