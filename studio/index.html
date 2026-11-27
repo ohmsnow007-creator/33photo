@@ -1452,7 +1452,7 @@
     padding: max(24px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
   .gate[hidden] { display: none; }
   .gate-card { width: 100%; max-width: 380px; display: grid; gap: 12px; text-align: center; }
-  .gate-logo { width: 72px; height: 72px; margin: 0 auto 4px; border-radius: 20px; background: var(--ink); color: var(--ink-fg); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; }
+  .gate-logo { width: 80px; height: 80px; margin: 0 auto 4px; border-radius: 22px; display: block; object-fit: cover; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
   .gate h1 { margin: 0; font-family: var(--font-display); font-size: 1.35rem; font-weight: 600; }
   .gate p { margin: 0 0 6px; color: var(--muted); line-height: 1.6; }
   .gate .btn { min-height: 50px; justify-content: center; }
@@ -2093,19 +2093,16 @@
 
 <div class="gate" id="gate" hidden role="dialog" aria-modal="true" aria-labelledby="gateT">
   <div class="gate-card">
-    <div class="gate-logo" aria-hidden="true">33</div>
+    <img class="gate-logo" src="icon-192.png" alt="33PHOTO" width="80" height="80">
     <h1 id="gateT">33PHOTO Studio</h1>
-    <p>แอปนี้ใช้ได้เฉพาะคนในร้าน<br>เปิดจาก<b>ลิงก์ที่ร้านส่งให้</b> แล้วใส่ชื่อกับรหัสร้าน</p>
+    <p>แอปนี้ใช้ได้เฉพาะคนในทีม</p>
     <button class="btn primary" type="button" data-pastelink="1">🔗 วางลิงก์เข้าร่วมร้าน</button>
     <button class="btn" type="button" id="gateOwnBtn" aria-expanded="false" aria-controls="gateOwn">เจ้าของร้าน: เชื่อมข้อมูลร้าน (GitHub)</button>
     <form class="gate-own" id="gateOwn" hidden autocomplete="off">
-      <div class="field"><label for="gOwner">ชื่อบัญชี GitHub</label><input id="gOwner" type="text" autocapitalize="off" spellcheck="false"></div>
-      <div class="field"><label for="gRepo">ชื่อ repo</label><input id="gRepo" type="text" value="33photo-data" autocapitalize="off" spellcheck="false"></div>
       <div class="field"><label for="gToken">รหัสเข้าถึง (token)</label><input id="gToken" type="password" autocapitalize="off" spellcheck="false" placeholder="github_pat_..."></div>
       <div class="err-msg" id="gErr" hidden></div>
       <button class="btn primary" type="submit" id="gGo">เชื่อมต่อ</button>
     </form>
-    <small>ยังไม่มีลิงก์? ขอจากเจ้าของร้าน: ตั้งค่า → เก็บข้อมูลออนไลน์ → เพิ่มเครื่องอื่น</small>
   </div>
 </div>
 
@@ -7029,7 +7026,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '0d959016635a';
+  var BUILD = '6b647b9c6f28';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
@@ -7619,14 +7616,14 @@
   function gateOwner(open) {
     var f = $('gateOwn'); if (!f) return;
     f.hidden = !open; $('gateOwnBtn').setAttribute('aria-expanded', String(!!open));
-    if (open) setTimeout(function () { (($('gOwner').value ? $('gToken') : $('gOwner'))).focus(); }, 30);
+    if (open) setTimeout(function () { $('gToken').focus(); }, 30);
   }
   $('gateOwnBtn').addEventListener('click', function () { gateOwner($('gateOwn').hidden); });
   $('gateOwn').addEventListener('submit', function (e) {
     e.preventDefault();
-    var cfg = { owner: $('gOwner').value.trim(), repo: $('gRepo').value.trim(), token: $('gToken').value.trim() }, err = $('gErr'), btn = $('gGo');
+    var cfg = { owner: String(location.hostname || '').replace(/\.github\.io$/i, ''), repo: '33photo-data', token: $('gToken').value.trim() }, err = $('gErr'), btn = $('gGo');
     function fail(m) { err.textContent = m; err.hidden = false; btn.disabled = false; btn.textContent = 'เชื่อมต่อ'; }
-    if (!cfg.owner || !cfg.repo || !cfg.token) { fail('กรอกให้ครบทั้ง 3 ช่อง'); return; }
+    if (!cfg.token) { fail('ใส่รหัสเข้าถึง (token) ก่อน'); return; }
     err.hidden = true; btn.disabled = true; btn.textContent = 'กำลังเชื่อม…';
     connectCfg(cfg).then(function (msg) {
       if (msg) { fail(msg); return; }
