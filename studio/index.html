@@ -786,6 +786,10 @@
   .cp-ev.o { --k: var(--cp-o); } .cp-ev.g { --k: var(--cp-g); } .cp-ev.t { --k: var(--cp-t); } .cp-ev.x { --k: var(--cp-x); }
   .cal-legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; font-size: 0.86rem; }
   .cal-legend span { display: flex; gap: 8px; align-items: center; }
+  .av-max { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 0.9rem; color: var(--muted); }
+  .av-step { display: inline-flex; align-items: center; gap: 8px; }
+  .av-step .btn { width: 44px; min-height: 44px; padding: 0; justify-content: center; font-size: 1.2rem; }
+  .av-step b { min-width: 24px; text-align: center; color: var(--fg); font-size: 1.1rem; }
   .cp-urgent { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
   @media (prefers-reduced-motion: reduce) { .cp-pill i { animation: none; } }
   .bk-list { display: grid; gap: 8px; }
@@ -2247,7 +2251,7 @@
       { id: 'receipt', on: false, th: 'ใบเสร็จรับเงิน', en: 'RECEIPT', grand: 'ยอดรับชำระ', grandEn: 'Amount received', prefix: 'RC-' }
     ],
     offDays: [],
-    calUrl: '',
+    calUrl: '', availPage: '', availMax: 2,
     kit: ['กล้อง', 'คอมพิวเตอร์', 'จอคอมพิวเตอร์', 'เครื่องปริ้น', 'กระดาษสำรอง', 'ซองใส่รูป', 'ปลั๊กไฟ', 'สายไฟ', 'ผ้าปูโต๊ะ', 'ขาฉาก', 'ขาไฟ', 'ฉาก', 'ไฟ ซ้ายขวา', 'ไฟกลาง', 'ซอฟต์บ็อกซ์', 'กล่องแว่น', 'พร็อพ'],
     services: [
       { name: 'งานถ่ายภาพ', price: '', hours: '', details: [] },
@@ -5306,9 +5310,12 @@
     g: '<rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M8.5 14h3M8.5 17h6"/>',
     apple: '<path d="M16.4 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9-.7 0-1.9-.9-3.1-.8-1.6 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3.1.7c1.3 0 2.1-1.1 2.8-2.3.9-1.3 1.3-2.6 1.3-2.6s-2.5-1-2.5-3.8zM14.1 5.8c.6-.8 1.1-1.9 1-3-1 0-2.1.7-2.8 1.5-.6.7-1.1 1.8-1 2.9 1.1.1 2.1-.6 2.8-1.4z"/>',
     copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',
+    share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
     lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
     clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'
   };
+  function availPage() { var u = String(S.availPage || '').trim(); return /^https:\/\/[^\s"'<>]+$/.test(u) ? u : ''; }
+  function availMaxN() { var n = parseInt(S.availMax, 10); return n >= 1 && n <= 20 ? n : 2; }
   function cpSvg(k, sz) { return '<svg width="' + (sz || 18) + '" height="' + (sz || 18) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + CP_IC[k] + '</svg>'; }
   function cpHead(ic, color, title) { return '<h2><span class="cp-ic" style="--c:' + color + '">' + cpSvg(ic) + '</span>' + esc(title) + '</h2>'; }
   // what the phone calendar will show: the shop's own next jobs (sample rows when there are none)
@@ -5360,6 +5367,13 @@
     html += '</section><section class="card">' + cpHead('eye', '#8b5cf6', 'ในปฏิทินจะเห็นแบบนี้') + cpPreview() +
       '<div class="cal-legend"><span>🟠 ยังไม่ถึง / ยังไม่เสร็จ</span><span>🟢 เสร็จแล้ว</span><span>⏳ รอยืนยัน</span><span>🚫 ร้านปิดรับงาน</span></div>' +
       '<p class="cp-note">' + cpSvg('clock', 15) + '<span>กดที่งานเห็นลูกค้า เบอร์ เวลา สถานที่ แผนที่ ทีม และหมายเหตุ · ปฏิทินมือถือดูอย่างเดียว ลบผิดไม่ได้ · Google อัปเดตเองทุก 6–24 ชม.</span></p></section></div>';
+    var ap = availPage(), mx = availMaxN();
+    if (ap) html += '<section class="card">' + cpHead('share', '#06c755', 'ลิงก์เช็กคิวว่าง · ส่งให้ลูกค้า') +
+      '<p class="cp-note" style="margin:0">' + cpSvg('lock', 15) + '<span>ลูกค้าเห็นแค่วันว่าง / มีงานแล้ว / เต็ม / ปิดรับ ไม่เห็นชื่อ เบอร์ หรือสถานที่ กดวันแล้วทักจองทาง LINE ได้เลย</span></p>' +
+      '<div class="cp-acts"><button class="btn primary" type="button" id="avShare">' + cpSvg('share', 18) + 'ส่งลิงก์ให้ลูกค้า</button>' +
+      '<button class="btn" type="button" id="avCopy">' + cpSvg('copy', 18) + 'คัดลอกลิงก์</button><a class="btn" href="' + esc(ap) + '" target="_blank" rel="noopener">' + cpSvg('eye', 18) + 'เปิดดูหน้าที่ลูกค้าเห็น</a></div>' +
+      (viewOnly() ? '' : '<div class="av-max"><span>ขึ้นว่า <b>เต็ม</b> เมื่อวันนั้นมีงาน</span><div class="av-step"><button class="btn" type="button" data-avmax="-1" aria-label="ลด"' + (mx <= 1 ? ' disabled' : '') + '>−</button><b id="avMaxN">' + mx + '</b><button class="btn" type="button" data-avmax="1" aria-label="เพิ่ม"' + (mx >= 10 ? ' disabled' : '') + '>+</button></div><span>งาน</span></div>') +
+      '</section>';
     html += '<section class="card">' + cpHead('bolt', '#e08a16', 'งานด่วน · ตั้งเฉพาะเครื่องนี้') +
       '<label class="toggle"><input type="checkbox" role="switch" id="calAskTg"' + (calAskOn() ? ' checked' : '') + '><span class="tg-tx">ถามให้ลงปฏิทินทันที เมื่อลงงานที่จะถึงภายใน ' + CAL_SOON + ' วัน<small>กดครั้งเดียวงานขึ้นทันที ไม่ต้องรอ แต่จะเห็นซ้ำ 2 อันเมื่อปฏิทินอัตโนมัติอัปเดต ลบอันที่ใส่เองได้' + (isIOS() ? ' · iPhone ที่ตั้งดึงข้อมูลทุก 15 นาที ปิดได้เลย' : '') + '</small></span></label>' +
       '<p class="cp-note">' + cpSvg('cal', 15) + '<span>ทุกงานมีปุ่ม "📅 ลงปฏิทินในมือถือ" ในหน้างานด้วย</span></p></section>';
@@ -5368,6 +5382,15 @@
   $('pageCal').addEventListener('click', function (e) {
     var dv = e.target.closest('[data-dev]');
     if (dv) { calDev = dv.getAttribute('data-dev'); renderCalPage(); var f = $('calPage').querySelector('[data-dev="' + calDev + '"]'); if (f) f.focus(); return; }
+    if (e.target.closest('#avCopy')) { copyText(availPage()).then(function (ok) { toast(ok ? 'คัดลอกลิงก์เช็กคิวว่างแล้ว' : 'คัดลอกไม่ได้'); }); return; }
+    if (e.target.closest('#avShare')) {
+      var u = availPage(), tx = 'เช็กคิวว่าง ' + (S.company.name || '') + ' ดูวันว่างแล้วทักจองได้เลยครับ';
+      if (navigator.share) navigator.share({ title: 'เช็กคิวว่าง', text: tx, url: u }).catch(function () {});
+      else copyText(tx + '\n' + u).then(function (ok) { toast(ok ? 'คัดลอกข้อความพร้อมลิงก์แล้ว วางในแชตลูกค้าได้เลย' : 'คัดลอกไม่ได้'); });
+      return;
+    }
+    var am = e.target.closest('[data-avmax]');
+    if (am && !viewOnly()) { S.availMax = Math.max(1, Math.min(10, availMaxN() + +am.getAttribute('data-avmax'))); saveS(); renderCalPage(); toast('เต็มเมื่อมีงาน ' + S.availMax + ' งาน/วัน · หน้าลูกค้าอัปเดตใน 1–5 นาที'); return; }
     if (e.target.closest('#calCopy')) copyText(calFeed()).then(function (ok) { toast(ok ? 'คัดลอกลิงก์ปฏิทินแล้ว' : 'คัดลอกไม่ได้'); });
   });
   $('pageCal').addEventListener('change', function (e) {
@@ -6971,7 +6994,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'c6f6283a1d14';
+  var BUILD = '55b2dc5d0f7b';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
