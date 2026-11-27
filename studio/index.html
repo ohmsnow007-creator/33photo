@@ -2525,7 +2525,7 @@
       items: [blankItem()],
       evDate: '', evStart: '', evEnd: '', evVenue: '', lang: S.layout.lang === 'en' ? 'en' : 'th',
       discount: '', vat: !!S.tax.vatDefault, wht: false, notes: S.layout.defaultNotes || '',
-      pay: S.pays[0] ? S.pays[0].id : OTHER, payCustom: prev ? prev.payCustom || '' : ''
+      pay: S.pays[0] ? S.pays[0].id : OTHER, payCustom: prev ? prev.payCustom || '' : '', showPay: false
     };
     ensureNos(s);
     return s;
@@ -2660,7 +2660,7 @@
         '<div class="s-tel" data-h="tel">' + tx(L.contact) + '<b>' + esc(C.phone) + '</b></div></div>' +
       '<div class="s-box">' +
         '<div class="s-kv' + (en ? ' en' : '') + '">' + kv(L.customer, s.cName, 'kcust') + kv(L.address, s.cAddr, 'kaddr') + kv(L.phone, s.cPhone, 'kphone') + (s.cTax ? kv(L.tax, s.cTax, 'ktax') : '') + '</div>' +
-        '<div class="s-kv r">' + kv(L.no, s.nos[s.docType], 'metano') + kv(L.date, docDate(s.date, en), 'metadate') + (s.showPay ? kv(L.pay, payText(s), 'metapay') : '') + '</div>' +
+        '<div class="s-kv r">' + kv(L.no, s.nos[s.docType], 'metano') + kv(L.date, docDate(s.date, en), 'metadate') + (s.showPay !== false ? kv(L.pay, payText(s), 'metapay') : '') + '</div>' +
       '</div>' + ev +
       '<table class="s-table" data-h="table"><thead><tr data-h="thead"><th class="c-no">' + tx(L.thNo) + '</th><th>' + tx(L.thDesc) + '</th><th class="c-qty">' + tx(L.thQty) + '</th><th class="c-price">' + tx(L.thPrice) + '</th></tr></thead><tbody>' + rows + '</tbody></table>' +
       '<div class="s-sum"><div class="s-words" data-h="words"><div class="s-lbl" data-h="wordslbl">' + tx(L.words) + '</div><div class="s-words-v' + (en ? ' en' : '') + '">(' + tx(en ? bahtTextEn(t.grand) : bahtText(t.grand)) + ')</div>' +
@@ -2865,7 +2865,7 @@
   function fillForm() {
     simple.forEach(function (id) { $(id).value = state[id] || ''; });
     $('vat').checked = !!state.vat;
-    $('showPay').checked = !!state.showPay;
+    $('showPay').checked = state.showPay !== false;
     $('wht').checked = !!state.wht;
     renderDoc(); renderDate(); renderPay(); renderItems(); renderCustomers(); updateEvHint(); renderJobSel();
   }
@@ -2905,7 +2905,7 @@
     $('stSum').classList.toggle('done', hasItem);
     $('stSumV').textContent = $('barTotal') ? $('barTotal').textContent : '';
     var dup = $('noHint') && !$('noHint').hidden, py = payById(state.pay);
-    $('billMoreSum').textContent = (dup ? '⚠️ ' : '') + [$('billNo').value, state.date ? thaiShort(state.date) : '', state.lang === 'en' ? 'English' : 'ไทย', state.showPay && py ? py.t || '' : ''].filter(Boolean).join(' · ');
+    $('billMoreSum').textContent = (dup ? '⚠️ ' : '') + [$('billNo').value, state.date ? thaiShort(state.date) : '', state.lang === 'en' ? 'English' : 'ไทย', state.showPay !== false && py ? py.t || '' : ''].filter(Boolean).join(' · ');
     $('billMoreSum').classList.toggle('warn', dup);
   }
   function renderItems() {
@@ -4113,6 +4113,16 @@
       var d;
       try { d = JSON.parse(rd.result); } catch (e) { d = null; }
       if (!d || (d.app !== '33photo-studio' && d.app !== '33photo-bill-pro')) { toast('ไฟล์นี้ไม่ใช่ไฟล์สำรองของแอปนี้'); return; }
+      var label = 'ไฟล์วันที่ ' + thaiShort(String(d.at).slice(0, 10));
+      if (syncOn() && !viewOnly()) {
+        var dd = clone(d); dd.app = '33photo-studio';
+        if (!Array.isArray(dd.jobs) && !Array.isArray(dd.history)) dd.history = [];
+        confirmBox('กู้คืนข้อมูลจากไฟล์?', 'ทุกเครื่องจะกลับไปใช้ข้อมูลใน' + label + ' (งาน ' + (dd.jobs || []).length + ' งาน · บิล ' + (dd.history || []).length + ' ใบ) ' +
+          'งานหรือบิลที่เพิ่มหลังจากนั้นจะหายไป · ระบบเก็บข้อมูลตอนนี้ไว้บน GitHub ก่อนเสมอ ถ้าเปลี่ยนใจ กู้คืนกลับได้จาก "สำรองอัตโนมัติบน GitHub"', '↩️ กู้คืน', function () {
+          doCloudRestore(dd, label, function () { if (d.bill) rawSet(KEY, d.bill); });
+        });
+        return;
+      }
       confirmBox('กู้คืนข้อมูล?', 'ข้อมูลปัจจุบันจะถูกแทนที่ด้วยไฟล์สำรองวันที่ ' + thaiShort(String(d.at).slice(0, 10)) + ' (' + (d.history || []).length + ' บิล)', 'กู้คืน', function () {
         lsSet(SKEY, d.settings || {}); lsSet(KEY, d.bill || null); lsSet(HKEY, d.history || []); lsSet(CKEY, d.customers || []);
         if (Array.isArray(d.jobs)) lsSet(JKEY, d.jobs);
@@ -5416,7 +5426,7 @@
       throw e;
     });
   }
-  function doCloudRestore(d, label) {
+  function doCloudRestore(d, label, beforeReload) {
     if (restoring) return;
     toast('⏳ กำลังกู้คืน… อย่าปิดแอป');
     var done = {};
@@ -5452,6 +5462,7 @@
         if (k === 'jobs') setLastJobs(val);
       });
       sySave();
+      if (beforeReload) beforeReload();
       toast('✅ กู้คืนข้อมูล ' + label + ' แล้ว');
       setTimeout(function () { location.reload(); }, 900);
     }).then(null, function (e) {
@@ -6957,7 +6968,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'dd0b3eef6057';
+  var BUILD = 'a45b49121244';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
@@ -7439,7 +7450,7 @@
     sheetHTML: sheetHTML, applySheetVars: applySheetVars, fitA4: fitA4,
     goPage: goPage, jobs: jobs, jobMoney: jobMoney, openJob: openJob, openPay: openPay,
     mergeSettings: mergeSettings, invite: function () { return INV; }, teamRaw: teamRaw, openDevice: openDevice, BUILD: function () { return BUILD; }, teamNames: teamNames, staffNames: staffNames, syncNow: syncNow, sync: function () { return { state: syncState, err: syncErr, SY: SY }; },
-    delivOf: delivOf, openMsg: openMsg, confetti: confetti, quickISO: quickISO, openCust: openCust, viewOnly: viewOnly, yearReport: yearReport, reportCSV: reportCSV, openSearch: openSearch, openSettings: openSettings, setMe: setMe, merge3: merge3, calSpan: function (j) { return calSpan(j); }, renderCalPage: function () { renderCalPage(); }, renderSettings: function () { renderSettings(); }, gcalLink: function (j) { return gcalLink(j); }, icsOf: function (j) { return icsOf(j); }, calShouldAsk: function (j, o) { return calShouldAsk(j, o); }, bkCheck: function (d) { return bkCheck(d); }, offOf: function (d) { return offOf(d); }, baseOfSettings: function (v) { return baseOf('settings', v); }, syncKeys: function () { return SYNC_KEYS; } };
+    delivOf: delivOf, openMsg: openMsg, confetti: confetti, quickISO: quickISO, openCust: openCust, viewOnly: viewOnly, yearReport: yearReport, reportCSV: reportCSV, openSearch: openSearch, openSettings: openSettings, setMe: setMe, merge3: merge3, calSpan: function (j) { return calSpan(j); }, restoreFile: function (f) { restore(f); }, renderCalPage: function () { renderCalPage(); }, renderSettings: function () { renderSettings(); }, gcalLink: function (j) { return gcalLink(j); }, icsOf: function (j) { return icsOf(j); }, calShouldAsk: function (j, o) { return calShouldAsk(j, o); }, bkCheck: function (d) { return bkCheck(d); }, offOf: function (d) { return offOf(d); }, baseOfSettings: function (v) { return baseOf('settings', v); }, syncKeys: function () { return SYNC_KEYS; } };
 })();
 </script>
 </body>
