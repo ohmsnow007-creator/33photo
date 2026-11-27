@@ -4686,7 +4686,7 @@
     // a job not saved yet has no photos to deliver and nothing to tell the customer about
     $('jAfter').hidden = !j.id; $('jAfterHint').hidden = !!j.id;
     // photos exist only from the event day on (or once delivery was started)
-    var evd = dayDiff(j.evDate), shot = j.status === 'done' || (evd != null && evd <= 0) || !!(j.deliv && (j.deliv.stage || j.deliv.link || j.deliv.due));
+    var evd = dayDiff(j.evDate), shot = j.status === 'done' || (evd != null && evd <= 0) || !!(j.deliv && ((j.deliv.stage && j.deliv.stage !== 'shot') || j.deliv.link || j.deliv.due));
     $('jDelivWrap').hidden = !shot;
     Array.prototype.forEach.call(document.querySelectorAll('#jMsgs [data-after]'), function (b) { b.hidden = !shot; });
     $('jCal').hidden = !j.id || j.status === 'cancel' || !isoParts(j.evDate);
@@ -7041,7 +7041,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '1413e5de0c4a';
+  var BUILD = '8fb57fdd4087';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
