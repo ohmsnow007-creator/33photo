@@ -134,9 +134,6 @@
   function pick(d) {
     sel = d; render();
     var s = status(d), box = $('pick'), shop = A.shop || {}, acts = '';
-    if (s !== 'off' && s !== 'full') {
-      if (shop.phone) acts += '<a class="btn" href="tel:' + esc(shop.phone.replace(/[^\d+]/g, '')) + '">📞 โทร ' + esc(shop.phone) + '</a>';
-    }
     var sl = (A.slots && A.slots[d]) || [], slotsH = '';
     if ((s === 'part' || s === 'full') && sl.length) slotsH = '<div class="slots"><b>🕐 ช่วงเวลาที่มีงานแล้ว</b><ul>' +
       sl.map(function (x) { return '<li>' + (x ? esc(x.replace('-', '–')) + ' น.' : 'มีงาน (ยังไม่ระบุเวลา)') + '</li>'; }).join('') + '</ul>' +
