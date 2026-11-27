@@ -7043,7 +7043,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = '7e2e04504238';
+  var BUILD = '31fbd23fbc16';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
@@ -7321,7 +7321,7 @@
   }
   var SELL_MAPS = /https?:\/\/(?:maps\.app\.goo\.gl|goo\.gl\/maps|(?:www\.)?google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|g\.co\/kgs)\S*/i;
   function parseBooking(text) {
-    var j = {}, notes = [];
+    var j = {}, notes = [], remark = [];
     String(text || '').split(/\r?\n/).forEach(function (line) {
       var m = /^\s*([^:：]{1,40}?)\s*[:：]\s*(.*)$/.exec(line);
       if (!m) return;
@@ -7333,15 +7333,19 @@
       else if (/เวลา|time/.test(k)) { var t = sellTime(v); if (t[0]) { j.evStart = t[0]; if (t[1]) j.evEnd = t[1]; } else notes.push('เวลา: ' + v); }
       else if (/ชื่องาน|ประเภท|^งาน$|event/.test(k)) j.title = j.title ? j.title + ' · ' + v : v;
       else if (/เบอร์|โทร|tel|phone|มือถือ/.test(k)) j.cPhone = v;
+      else if (/ที่อยู่|address/.test(k)) j.cAddr = v;
       else if (/ชื่อ|นามสกุล|ลูกค้า|name/.test(k)) j.cName = v;
       else if (/สถานที่|location|venue|ที่จัด/.test(k)) { var u2 = SELL_MAPS.exec(v); if (u2) { j.mapUrl = j.mapUrl || u2[0]; v = v.replace(u2[0], '').trim(); } if (v) j.evVenue = v; }
-      else if (/บริการ|แพ็กเกจ|แพคเกจ|package|service/.test(k)) { if (!j.title) j.title = v; else notes.push('บริการ: ' + v); }
+      else if (/บริการ|แพ็กเกจ|แพคเกจ|package|service/.test(k)) { if (!j.title) j.title = v; else notes.push('บริการที่สนใจ: ' + v); }
+      // the customer's own remark becomes the job note as is (first); anything else follows with its label
+      else if (/หมายเหตุ|โน้ต|note|remark/.test(k)) remark.push(v);
       else notes.push(m[1].trim() + ': ' + v);
     });
     var all = String(text || '');
     if (!j.mapUrl) { var mu = SELL_MAPS.exec(all); if (mu) j.mapUrl = mu[0]; }
     if (!j.cPhone) { var ph = /0\d[\d\s-]{7,11}\d/.exec(all); if (ph) j.cPhone = ph[0].trim(); }
-    if (notes.length) j.note = notes.join('\n');
+    var nt = remark.concat(notes);
+    if (nt.length) j.note = nt.join('\n');
     return j;
   }
   function sellPreview() {
