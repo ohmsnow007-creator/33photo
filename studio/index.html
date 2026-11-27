@@ -5302,7 +5302,17 @@
     return [calUTC(j.evDate, st[0], st[1], 0, local), calUTC(j.evDate, Math.floor(em / 60) % 24, em % 60, em >= 1440 ? 1 : 0, local), false];
   }
   function calOne(x) { return String(x == null ? '' : x).replace(/\s+/g, ' ').trim(); }
-  function calTitle(j) { return (j.status === 'tentative' ? '⏳ (รอยืนยัน) ' : j.status === 'done' ? '🟢 ' : '🟠 ') + ([calOne(j.title), calOne(j.cName)].filter(Boolean).join(' · ') || 'งาน'); }
+  // what the team must collect on site (same lines as the calendar feed); view-only phones never see money
+  function calBaht(n) { return '฿' + (Math.round(n * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+  function calMoney(j) {
+    if (!j || !j.id || viewOnly() || j.status === 'cancel') return { tag: '', lines: [] };
+    var m = jobMoney(j);
+    if (!m.total) return { tag: '', lines: [] };
+    if (m.due <= 0) return { tag: '', lines: ['✅ ชำระครบแล้ว ' + calBaht(m.total)] };
+    var onSite = (j.evDate || '') >= todayISO();
+    return { tag: ' · 💰' + calBaht(m.due), lines: [(onSite ? '💰 เก็บเงินหน้างาน: ' : '💰 ค้างชำระ: ') + calBaht(m.due), '   ราคา ' + calBaht(m.total) + (m.paid > 0 ? ' · ชำระแล้ว ' + calBaht(m.paid) : ' · ยังไม่ได้รับเงิน')] };
+  }
+  function calTitle(j) { return (j.status === 'tentative' ? '⏳ (รอยืนยัน) ' : j.status === 'done' ? '🟢 ' : '🟠 ') + ([calOne(j.title), calOne(j.cName)].filter(Boolean).join(' · ') || 'งาน') + calMoney(j).tag; }
   function calMap(j) {
     var own = calOne(j.mapUrl);
     if (/^https?:\/\/\S+$/i.test(own)) return own;
@@ -5320,6 +5330,7 @@
     if (calOne(j.cName)) d.push('👤 ' + calOne(j.cName));
     if (calOne(j.cPhone)) d.push('📞 ' + calOne(j.cPhone));
     d.push('🕐 ' + (st ? st + (en ? '–' + en : '') + ' น.' : 'ทั้งวัน (ยังไม่ใส่เวลา)'));
+    calMoney(j).lines.forEach(function (x) { d.push(x); });
     var ven = calOne(String(j.evVenue || '').replace(/https?:\/\/\S+/g, ' '));
     if (ven) d.push('📍 สถานที่จัดงาน: ' + ven);
     if (calAddr(j)) d.push('🏠 ที่อยู่: ' + calAddr(j));
@@ -7058,7 +7069,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'c6297f6d0b16';
+  var BUILD = 'fe640705e5c6';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
