@@ -1789,6 +1789,7 @@
           <button type="button" class="btn" id="payEdit" hidden>แก้ข้อความ</button>
         </div>
       </div>
+      <label class="toggle"><input type="checkbox" id="showPay"> <span>แสดง "ชำระโดย" บนบิล</span></label>
       <div class="field">
         <span class="lbl" data-l="fLang">ภาษาบนบิล</span>
         <div class="seg" id="langSeg" role="group" aria-label="ภาษาบนบิล" style="--n:2">
@@ -2659,7 +2660,7 @@
         '<div class="s-tel" data-h="tel">' + tx(L.contact) + '<b>' + esc(C.phone) + '</b></div></div>' +
       '<div class="s-box">' +
         '<div class="s-kv' + (en ? ' en' : '') + '">' + kv(L.customer, s.cName, 'kcust') + kv(L.address, s.cAddr, 'kaddr') + kv(L.phone, s.cPhone, 'kphone') + (s.cTax ? kv(L.tax, s.cTax, 'ktax') : '') + '</div>' +
-        '<div class="s-kv r">' + kv(L.no, s.nos[s.docType], 'metano') + kv(L.date, docDate(s.date, en), 'metadate') + kv(L.pay, payText(s), 'metapay') + '</div>' +
+        '<div class="s-kv r">' + kv(L.no, s.nos[s.docType], 'metano') + kv(L.date, docDate(s.date, en), 'metadate') + (s.showPay ? kv(L.pay, payText(s), 'metapay') : '') + '</div>' +
       '</div>' + ev +
       '<table class="s-table" data-h="table"><thead><tr data-h="thead"><th class="c-no">' + tx(L.thNo) + '</th><th>' + tx(L.thDesc) + '</th><th class="c-qty">' + tx(L.thQty) + '</th><th class="c-price">' + tx(L.thPrice) + '</th></tr></thead><tbody>' + rows + '</tbody></table>' +
       '<div class="s-sum"><div class="s-words" data-h="words"><div class="s-lbl" data-h="wordslbl">' + tx(L.words) + '</div><div class="s-words-v' + (en ? ' en' : '') + '">(' + tx(en ? bahtTextEn(t.grand) : bahtText(t.grand)) + ')</div>' +
@@ -2864,6 +2865,7 @@
   function fillForm() {
     simple.forEach(function (id) { $(id).value = state[id] || ''; });
     $('vat').checked = !!state.vat;
+    $('showPay').checked = !!state.showPay;
     $('wht').checked = !!state.wht;
     renderDoc(); renderDate(); renderPay(); renderItems(); renderCustomers(); updateEvHint(); renderJobSel();
   }
@@ -2878,6 +2880,7 @@
     if (this.value.trim()) { this.value = money(num(this.value)); state.discount = this.value; persist(); }
   });
   $('vat').addEventListener('change', function () { state.vat = this.checked; persist(); draw(); });
+  $('showPay').addEventListener('change', function () { state.showPay = this.checked; persist(); draw(); });
   $('wht').addEventListener('change', function () { state.wht = this.checked; persist(); draw(); });
 
   // ---------- items ----------
@@ -2902,7 +2905,7 @@
     $('stSum').classList.toggle('done', hasItem);
     $('stSumV').textContent = $('barTotal') ? $('barTotal').textContent : '';
     var dup = $('noHint') && !$('noHint').hidden, py = payById(state.pay);
-    $('billMoreSum').textContent = (dup ? '⚠️ ' : '') + [$('billNo').value, state.date ? thaiShort(state.date) : '', state.lang === 'en' ? 'English' : 'ไทย', py ? py.t || '' : ''].filter(Boolean).join(' · ');
+    $('billMoreSum').textContent = (dup ? '⚠️ ' : '') + [$('billNo').value, state.date ? thaiShort(state.date) : '', state.lang === 'en' ? 'English' : 'ไทย', state.showPay && py ? py.t || '' : ''].filter(Boolean).join(' · ');
     $('billMoreSum').classList.toggle('warn', dup);
   }
   function renderItems() {
@@ -6954,7 +6957,7 @@
   }, 2500);
 
   // ================= auto-update (home-screen apps can't be refreshed by hand) =================
-  var BUILD = 'd84d585253bd';
+  var BUILD = 'dd0b3eef6057';
   function safeToReload() {
     return ['jobModal', 'payModal', 'msgModal', 'custModal', 'devModal', 'joinModal', 'lockModal', 'searchModal', 'shareModal', 'histModal', 'modal'].every(function (id) { return !$(id) || $(id).hidden; }) &&
       $('settings').hidden && !(typeof anyDirty === 'function' && syncOn() && anyDirty());
